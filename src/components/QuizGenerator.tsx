@@ -1,9 +1,9 @@
 
 import React, { useState, useReducer } from "react";
-import { QuizState, QuizQuestion, QuizResult } from "@/types/quiz";
+import { QuizState, QuizQuestion as QuizQuestionType, QuizResult } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
 import LoadingSpinner from "./LoadingSpinner";
-import QuizQuestion from "./QuizQuestion";
+import QuizQuestionComponent from "./QuizQuestion";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -210,7 +210,7 @@ const QuizGenerator: React.FC = () => {
 
           <div className="mb-8">
             {state.questions.map((question, index) => (
-              <QuizQuestion
+              <QuizQuestionComponent
                 key={question.id}
                 question={question}
                 userAnswer={state.answers[index]}
