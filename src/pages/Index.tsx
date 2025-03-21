@@ -11,7 +11,7 @@ const Index = () => {
             DeepSeek Quiz Generator
           </h1>
           <p className="text-center text-muted-foreground mt-2">
-            Generate personalized practice questions using DeepSeek AI
+            Generate personalized practice questions and track your progress
           </p>
         </div>
       </header>
@@ -26,7 +26,7 @@ const Index = () => {
             This application uses DeepSeek AI to generate customized quiz questions based on your specific learning objectives.
           </p>
           <p className="mt-2">
-            Powered by DeepSeek AI, React, and Tailwind CSS
+            Save your progress, review past quizzes, and focus on questions you need to practice more.
           </p>
         </div>
       </footer>

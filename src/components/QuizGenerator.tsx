@@ -1,11 +1,35 @@
 
-import React, { useState, useReducer } from "react";
-import { QuizState, QuizQuestionType, QuizResult } from "@/types/quiz";
+import React, { useState, useReducer, useEffect } from "react";
+import { QuizState, QuizQuestionType, QuizResult, QuizAttempt, QuizHistory } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
 import LoadingSpinner from "./LoadingSpinner";
 import QuizQuestionComponent from "./QuizQuestion";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  loadQuizHistory, 
+  saveQuizAttempt, 
+  addToReviewList, 
+  removeFromReviewList,
+  clearReviewList,
+  clearAllHistory 
+} from "@/utils/historyService";
+import QuizHistory from "./QuizHistory";
+import ReviewList from "./ReviewList";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Action types
+type QuizAction =
+  | { type: "SET_LOADING" }
+  | { type: "SET_QUESTIONS"; payload: QuizQuestionType[] }
+  | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
+  | { type: "COMPLETE_QUIZ"; payload: QuizResult }
+  | { type: "RESET_QUIZ" }
+  | { type: "LOAD_ATTEMPT"; payload: QuizAttempt }
+  | { type: "SET_ERROR"; payload: string };
 
 // Initial state for the quiz
 const initialState: QuizState = {
@@ -16,15 +40,6 @@ const initialState: QuizState = {
   status: "idle",
   error: null,
 };
-
-// Action types
-type QuizAction =
-  | { type: "SET_LOADING" }
-  | { type: "SET_QUESTIONS"; payload: QuizQuestionType[] }
-  | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
-  | { type: "COMPLETE_QUIZ"; payload: QuizResult }
-  | { type: "RESET_QUIZ" }
-  | { type: "SET_ERROR"; payload: string };
 
 // Reducer function to manage quiz state
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
@@ -48,6 +63,15 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
       return { ...state, result: action.payload, status: "completed" };
     case "RESET_QUIZ":
       return { ...initialState };
+    case "LOAD_ATTEMPT":
+      return {
+        questions: action.payload.questions,
+        answers: action.payload.userAnswers,
+        result: action.payload.result,
+        currentQuestion: 0,
+        status: "completed",
+        error: null,
+      };
     case "SET_ERROR":
       return { ...state, error: action.payload, status: "idle" };
     default:
@@ -58,6 +82,13 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 const QuizGenerator: React.FC = () => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState("");
+  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [] });
+  const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
+  
+  // Load quiz history from localStorage on component mount
+  useEffect(() => {
+    setHistory(loadQuizHistory());
+  }, []);
 
   // Generate quiz based on learning objectives
   const handleGenerate = async () => {
@@ -102,6 +133,7 @@ const QuizGenerator: React.FC = () => {
     // Calculate results
     let correctAnswers = 0;
     let incorrectAnswers = 0;
+    let incorrectQuestionIds: string[] = [];
 
     questions.forEach((question, index) => {
       const userAnswer = answers[index];
@@ -114,6 +146,7 @@ const QuizGenerator: React.FC = () => {
         correctAnswers++;
       } else {
         incorrectAnswers++;
+        incorrectQuestionIds.push(question.id);
       }
     });
 
@@ -139,12 +172,108 @@ const QuizGenerator: React.FC = () => {
     };
 
     dispatch({ type: "COMPLETE_QUIZ", payload: result });
+    
+    // Reset selected incorrect questions
+    setSelectedIncorrectQuestions(incorrectQuestionIds);
+
+    // Save the quiz attempt to history
+    const attempt: QuizAttempt = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      objectives,
+      questions,
+      userAnswers: answers,
+      result,
+    };
+    
+    saveQuizAttempt(attempt);
+    
+    // Update local history state
+    setHistory(loadQuizHistory());
+  };
+
+  // Add selected incorrect questions to review list
+  const handleAddToReviewList = () => {
+    if (selectedIncorrectQuestions.length === 0) {
+      toast.error("No questions selected to add to review list");
+      return;
+    }
+    
+    state.questions.forEach(question => {
+      if (selectedIncorrectQuestions.includes(question.id)) {
+        addToReviewList(question);
+      }
+    });
+    
+    toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
+    setHistory(loadQuizHistory());
+    setSelectedIncorrectQuestions([]);
+  };
+
+  // Toggle selection of incorrect question
+  const toggleSelectQuestion = (id: string) => {
+    setSelectedIncorrectQuestions(prev => 
+      prev.includes(id) 
+        ? prev.filter(qId => qId !== id) 
+        : [...prev, id]
+    );
+  };
+
+  // Select all incorrect questions
+  const selectAllIncorrectQuestions = () => {
+    const incorrectIds = state.questions
+      .filter((_, index) => {
+        const userAnswer = state.answers[index];
+        const correctAnswer = state.questions[index].correctAnswer;
+        
+        return state.questions[index].type === "fill_in" 
+          ? String(userAnswer).toLowerCase().trim() !== String(correctAnswer).toLowerCase().trim()
+          : userAnswer !== correctAnswer;
+      })
+      .map(q => q.id);
+    
+    setSelectedIncorrectQuestions(incorrectIds);
+  };
+
+  // Deselect all incorrect questions
+  const deselectAllIncorrectQuestions = () => {
+    setSelectedIncorrectQuestions([]);
+  };
+
+  // View a specific quiz attempt
+  const handleViewAttempt = (attempt: QuizAttempt) => {
+    dispatch({ type: "LOAD_ATTEMPT", payload: attempt });
+  };
+
+  // Handle removing a question from review list
+  const handleRemoveFromReviewList = (id: string) => {
+    removeFromReviewList(id);
+    setHistory(loadQuizHistory());
+  };
+
+  // Clear review list
+  const handleClearReviewList = () => {
+    clearReviewList();
+    setHistory(loadQuizHistory());
+  };
+
+  // Clear all history
+  const handleClearHistory = () => {
+    clearAllHistory();
+    setHistory({ attempts: [], reviewList: [] });
+  };
+
+  // Practice review list questions
+  const handlePracticeReviewQuestions = (questions: QuizQuestionType[]) => {
+    dispatch({ type: "SET_QUESTIONS", payload: questions });
+    setObjectives("Review List Practice");
   };
 
   // Reset the quiz
   const handleReset = () => {
     dispatch({ type: "RESET_QUIZ" });
     setObjectives("");
+    setSelectedIncorrectQuestions([]);
   };
 
   // Try again with the same objectives
@@ -154,6 +283,40 @@ const QuizGenerator: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Quiz Generator</h2>
+        
+        {/* History Sheet Trigger */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">History & Review</Button>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-md">
+            <Tabs defaultValue="history" className="mt-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="history">Quiz History</TabsTrigger>
+                <TabsTrigger value="review">Review List</TabsTrigger>
+              </TabsList>
+              <TabsContent value="history" className="mt-4">
+                <QuizHistory 
+                  attempts={history.attempts}
+                  onViewAttempt={handleViewAttempt}
+                  onClearHistory={handleClearHistory}
+                />
+              </TabsContent>
+              <TabsContent value="review" className="mt-4">
+                <ReviewList 
+                  questions={history.reviewList}
+                  onRemoveQuestion={handleRemoveFromReviewList}
+                  onClearAll={handleClearReviewList}
+                  onPracticeQuestions={handlePracticeReviewQuestions}
+                />
+              </TabsContent>
+            </Tabs>
+          </SheetContent>
+        </Sheet>
+      </div>
+
       {state.status === "idle" && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -161,8 +324,6 @@ const QuizGenerator: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="glass-card rounded-2xl p-8"
         >
-          <h2 className="text-2xl font-semibold mb-6 text-center">Quiz Generator</h2>
-          
           <div className="mb-6">
             <label htmlFor="objectives" className="block text-sm font-medium mb-2">
               Learning Objectives
@@ -200,7 +361,7 @@ const QuizGenerator: React.FC = () => {
       {(state.status === "active" || state.status === "completed") && (
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Quiz Questions</h2>
+            <h2 className="text-xl font-semibold">{objectives}</h2>
             <button
               className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors"
               onClick={handleReset}
@@ -210,16 +371,39 @@ const QuizGenerator: React.FC = () => {
           </div>
 
           <div className="mb-8">
-            {state.questions.map((question, index) => (
-              <QuizQuestionComponent
-                key={question.id}
-                question={question}
-                userAnswer={state.answers[index]}
-                onAnswer={(answer) => handleAnswer(index, answer)}
-                showResult={state.status === "completed"}
-                index={index}
-              />
-            ))}
+            {state.questions.map((question, index) => {
+              const isIncorrect = state.status === "completed" && 
+                state.answers[index] !== question.correctAnswer;
+              
+              return (
+                <div key={question.id} className="mb-6">
+                  <QuizQuestionComponent
+                    question={question}
+                    userAnswer={state.answers[index]}
+                    onAnswer={(answer) => handleAnswer(index, answer)}
+                    showResult={state.status === "completed"}
+                    index={index}
+                  />
+                  
+                  {/* Show checkbox for incorrect questions in completed state */}
+                  {state.status === "completed" && isIncorrect && (
+                    <div className="mt-2 ml-11 flex items-center space-x-2">
+                      <Checkbox 
+                        id={`add-to-review-${question.id}`}
+                        checked={selectedIncorrectQuestions.includes(question.id)}
+                        onCheckedChange={() => toggleSelectQuestion(question.id)}
+                      />
+                      <label 
+                        htmlFor={`add-to-review-${question.id}`}
+                        className="text-sm text-muted-foreground cursor-pointer"
+                      >
+                        Add to review list
+                      </label>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {state.status === "active" && (
@@ -268,14 +452,51 @@ const QuizGenerator: React.FC = () => {
                 </div>
               </div>
               
-              <p className="p-3 rounded-md bg-blue-500/10 text-blue-800">{state.result.feedback}</p>
+              <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
               
-              <button
-                className="w-full py-3 mt-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
+              {/* Add buttons for review list management if there are incorrect answers */}
+              {state.result.incorrectAnswers > 0 && (
+                <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Add incorrect questions to review list</span>
+                    <div className="space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={selectAllIncorrectQuestions}
+                        className="text-xs h-7"
+                      >
+                        Select All
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={deselectAllIncorrectQuestions}
+                        className="text-xs h-7"
+                      >
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleAddToReviewList}
+                    disabled={selectedIncorrectQuestions.length === 0}
+                    className="w-full mt-2"
+                  >
+                    Add {selectedIncorrectQuestions.length} Selected Question(s) to Review List
+                  </Button>
+                </div>
+              )}
+              
+              <Button
+                className="w-full py-3 mt-2"
                 onClick={handleTryAgain}
               >
                 Try Again
-              </button>
+              </Button>
             </motion.div>
           )}
         </div>

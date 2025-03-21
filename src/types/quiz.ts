@@ -19,6 +19,15 @@ export interface QuizResult {
   feedback?: string;
 }
 
+export interface QuizAttempt {
+  id: string;
+  date: string;
+  objectives: string;
+  questions: QuizQuestion[];
+  userAnswers: (string | number | null)[];
+  result: QuizResult;
+}
+
 export interface QuizState {
   questions: QuizQuestion[];
   currentQuestion: number;
@@ -26,4 +35,9 @@ export interface QuizState {
   result: QuizResult | null;
   status: 'idle' | 'loading' | 'active' | 'completed';
   error: string | null;
+}
+
+export interface QuizHistory {
+  attempts: QuizAttempt[];
+  reviewList: QuizQuestion[];
 }
