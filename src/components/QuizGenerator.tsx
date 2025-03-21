@@ -20,7 +20,7 @@ const initialState: QuizState = {
 // Action types
 type QuizAction =
   | { type: "SET_LOADING" }
-  | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
+  | { type: "SET_QUESTIONS"; payload: QuizQuestionType[] }
   | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
   | { type: "COMPLETE_QUIZ"; payload: QuizResult }
   | { type: "RESET_QUIZ" }
