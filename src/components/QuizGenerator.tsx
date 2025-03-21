@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useEffect } from "react";
-import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType } from "@/types/quiz";
+import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
 import LoadingSpinner from "./LoadingSpinner";
 import QuizQuestionComponent from "./QuizQuestion";
@@ -17,6 +17,7 @@ import {
 } from "@/utils/historyService";
 import QuizHistory from "./QuizHistory";
 import ReviewList from "./ReviewList";
+import DisputedQuestions from "./DisputedQuestions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -28,7 +29,8 @@ type QuizAction =
   | { type: "COMPLETE_QUIZ"; payload: QuizResult }
   | { type: "RESET_QUIZ" }
   | { type: "LOAD_ATTEMPT"; payload: QuizAttempt }
-  | { type: "SET_ERROR"; payload: string };
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "REMOVE_QUESTION"; payload: string };
 
 // Initial state for the quiz
 const initialState: QuizState = {
@@ -73,6 +75,43 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
       };
     case "SET_ERROR":
       return { ...state, error: action.payload, status: "idle" };
+    case "REMOVE_QUESTION":
+      const filteredQuestions = state.questions.filter(q => q.id !== action.payload);
+      const filteredAnswers = state.answers.filter((_, idx) => 
+        state.questions[idx].id !== action.payload
+      );
+      
+      let updatedResult = state.result;
+      if (state.status === "completed" && state.result) {
+        const totalQuestions = filteredQuestions.length;
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+        
+        filteredQuestions.forEach((question, index) => {
+          const isCorrect = filteredAnswers[index] === question.correctAnswer;
+          if (isCorrect) correctAnswers++;
+          else incorrectAnswers++;
+        });
+        
+        const score = totalQuestions > 0 
+          ? Math.round((correctAnswers / totalQuestions) * 100) 
+          : 0;
+          
+        updatedResult = {
+          totalQuestions,
+          correctAnswers,
+          incorrectAnswers,
+          score,
+          feedback: state.result.feedback
+        };
+      }
+      
+      return { 
+        ...state, 
+        questions: filteredQuestions, 
+        answers: filteredAnswers,
+        result: updatedResult
+      };
     default:
       return state;
   }
@@ -81,7 +120,7 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 const QuizGenerator: React.FC = () => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState("");
-  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [] });
+  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   
   // Load quiz history from localStorage on component mount
@@ -123,13 +162,11 @@ const QuizGenerator: React.FC = () => {
   const handleComplete = () => {
     const { questions, answers } = state;
     
-    // Check if all questions have been answered
     if (answers.some(answer => answer === null)) {
       toast.error("Please answer all questions before submitting");
       return;
     }
 
-    // Calculate results
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let incorrectQuestionIds: string[] = [];
@@ -172,10 +209,8 @@ const QuizGenerator: React.FC = () => {
 
     dispatch({ type: "COMPLETE_QUIZ", payload: result });
     
-    // Reset selected incorrect questions
     setSelectedIncorrectQuestions(incorrectQuestionIds);
 
-    // Save the quiz attempt to history
     const attempt: QuizAttempt = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -187,7 +222,12 @@ const QuizGenerator: React.FC = () => {
     
     saveQuizAttempt(attempt);
     
-    // Update local history state
+    setQuizHistory(loadQuizHistory());
+  };
+
+  // Handle question dispute
+  const handleDisputeQuestion = (questionId: string) => {
+    dispatch({ type: "REMOVE_QUESTION", payload: questionId });
     setQuizHistory(loadQuizHistory());
   };
 
@@ -259,7 +299,7 @@ const QuizGenerator: React.FC = () => {
   // Clear all history
   const handleClearHistory = () => {
     clearAllHistory();
-    setQuizHistory({ attempts: [], reviewList: [] });
+    setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
   };
 
   // Practice review list questions
@@ -280,21 +320,26 @@ const QuizGenerator: React.FC = () => {
     handleGenerate();
   };
 
+  // Update quiz history (used by DisputedQuestions component)
+  const handleUpdateHistory = () => {
+    setQuizHistory(loadQuizHistory());
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Quiz Generator</h2>
         
-        {/* History Sheet Trigger */}
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline">History & Review</Button>
           </SheetTrigger>
           <SheetContent className="w-full sm:max-w-md">
             <Tabs defaultValue="history" className="mt-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="history">Quiz History</TabsTrigger>
                 <TabsTrigger value="review">Review List</TabsTrigger>
+                <TabsTrigger value="disputed">Disputed</TabsTrigger>
               </TabsList>
               <TabsContent value="history" className="mt-4">
                 <QuizHistory 
@@ -309,6 +354,12 @@ const QuizGenerator: React.FC = () => {
                   onRemoveQuestion={handleRemoveFromReviewList}
                   onClearAll={handleClearReviewList}
                   onPracticeQuestions={handlePracticeReviewQuestions}
+                />
+              </TabsContent>
+              <TabsContent value="disputed" className="mt-4">
+                <DisputedQuestions 
+                  questions={quizHistory.disputedQuestions}
+                  onUpdate={handleUpdateHistory}
                 />
               </TabsContent>
             </Tabs>
@@ -382,9 +433,9 @@ const QuizGenerator: React.FC = () => {
                     onAnswer={(answer) => handleAnswer(index, answer)}
                     showResult={state.status === "completed"}
                     index={index}
+                    onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined}
                   />
                   
-                  {/* Show checkbox for incorrect questions in completed state */}
                   {state.status === "completed" && isIncorrect && (
                     <div className="mt-2 ml-11 flex items-center space-x-2">
                       <Checkbox 
@@ -453,7 +504,6 @@ const QuizGenerator: React.FC = () => {
               
               <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
               
-              {/* Add buttons for review list management if there are incorrect answers */}
               {state.result.incorrectAnswers > 0 && (
                 <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
                   <div className="flex justify-between items-center mb-2">

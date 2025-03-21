@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
+import DisputeForm from "./DisputeForm";
+import { isQuestionDisputed } from "@/utils/historyService";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -9,6 +11,7 @@ interface QuizQuestionProps {
   onAnswer: (answer: string | number) => void;
   showResult: boolean;
   index: number;
+  onDisputeQuestion?: (questionId: string) => void;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({
@@ -17,19 +20,40 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   onAnswer,
   showResult,
   index,
+  onDisputeQuestion,
 }) => {
   const [animatedIn, setAnimatedIn] = useState(false);
+  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [isAlreadyDisputed, setIsAlreadyDisputed] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimatedIn(true);
     }, 50 * index);
 
+    // Check if this question is already disputed
+    setIsAlreadyDisputed(isQuestionDisputed(question.id));
+
     return () => clearTimeout(timer);
-  }, [index]);
+  }, [index, question.id]);
 
   const isCorrect = showResult && userAnswer === question.correctAnswer;
   const isIncorrect = showResult && userAnswer !== null && userAnswer !== question.correctAnswer;
+
+  const handleOpenDispute = () => {
+    setIsDisputeOpen(true);
+  };
+
+  const handleCloseDispute = () => {
+    setIsDisputeOpen(false);
+  };
+
+  const handleDisputed = (questionId: string) => {
+    setIsAlreadyDisputed(true);
+    if (onDisputeQuestion) {
+      onDisputeQuestion(questionId);
+    }
+  };
 
   return (
     <div 
@@ -38,7 +62,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         "transform opacity-0 translate-y-4",
         animatedIn && "opacity-100 translate-y-0",
         showResult && isCorrect && "border-l-4 border-l-green-500",
-        showResult && isIncorrect && "border-l-4 border-l-red-500"
+        showResult && isIncorrect && "border-l-4 border-l-red-500",
+        isAlreadyDisputed && "opacity-50"
       )}
     >
       <div className="flex items-center gap-3 mb-3">
@@ -61,7 +86,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                   showResult && userAnswer === i && userAnswer !== question.correctAnswer && "border-red-500 bg-red-500/20"
                 )}
                 onClick={() => !showResult && onAnswer(i)}
-                disabled={showResult}
+                disabled={showResult || isAlreadyDisputed}
               >
                 {userAnswer === i && (
                   <span className="absolute inset-0 flex items-center justify-center">
@@ -87,7 +112,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             placeholder="Type your answer here..."
             value={userAnswer !== null ? String(userAnswer) : ""}
             onChange={(e) => !showResult && onAnswer(e.target.value)}
-            disabled={showResult}
+            disabled={showResult || isAlreadyDisputed}
           />
         </div>
       )}
@@ -97,20 +122,50 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           "mt-4 p-3 rounded-md transition-all duration-300 animate-fade-in",
           isCorrect ? "bg-green-500/10 text-green-800" : "bg-red-500/10 text-red-800"
         )}>
-          <p className="font-medium mb-1">
-            {isCorrect ? "Correct!" : "Incorrect!"}
-          </p>
-          <p className="text-sm">
-            {isCorrect 
-              ? question.explanation 
-              : `The correct answer is: ${
-                  question.type === "multiple_choice" && question.options
-                    ? question.options[question.correctAnswer as number]
-                    : question.correctAnswer
-                }. ${question.explanation || ""}`
-            }
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-medium mb-1">
+                {isCorrect ? "Correct!" : "Incorrect!"}
+              </p>
+              <p className="text-sm">
+                {isCorrect 
+                  ? question.explanation 
+                  : `The correct answer is: ${
+                      question.type === "multiple_choice" && question.options
+                        ? question.options[question.correctAnswer as number]
+                        : question.correctAnswer
+                    }. ${question.explanation || ""}`
+                }
+              </p>
+            </div>
+            
+            {!isAlreadyDisputed && onDisputeQuestion && (
+              <button
+                onClick={handleOpenDispute}
+                className="text-xs bg-white/30 hover:bg-white/50 px-2 py-1 rounded text-current ml-2 transition-colors"
+              >
+                Dispute
+              </button>
+            )}
+            
+            {isAlreadyDisputed && (
+              <span className="text-xs bg-white/30 px-2 py-1 rounded ml-2">
+                Disputed
+              </span>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Dispute Form Dialog */}
+      {showResult && onDisputeQuestion && (
+        <DisputeForm
+          question={question}
+          userAnswer={userAnswer}
+          isOpen={isDisputeOpen}
+          onClose={handleCloseDispute}
+          onDisputed={handleDisputed}
+        />
       )}
     </div>
   );

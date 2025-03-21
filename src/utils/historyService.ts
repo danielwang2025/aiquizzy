@@ -1,5 +1,5 @@
 
-import { QuizAttempt, QuizQuestion, QuizHistory } from "@/types/quiz";
+import { QuizAttempt, QuizQuestion, QuizHistory, DisputedQuestion } from "@/types/quiz";
 import { getCurrentUser } from "./authService";
 
 const HISTORY_KEY = "quiz_history";
@@ -10,7 +10,7 @@ export const loadQuizHistory = (): QuizHistory => {
   const userId = currentUser?.id;
   
   const savedHistory = localStorage.getItem(HISTORY_KEY);
-  let history: QuizHistory = { attempts: [], reviewList: [] };
+  let history: QuizHistory = { attempts: [], reviewList: [], disputedQuestions: [] };
   
   if (savedHistory) {
     try {
@@ -21,12 +21,20 @@ export const loadQuizHistory = (): QuizHistory => {
         const userHistory = allHistories[userId];
         if (userHistory) {
           history = userHistory;
+          // Ensure disputedQuestions exists (for backwards compatibility)
+          if (!history.disputedQuestions) {
+            history.disputedQuestions = [];
+          }
         }
       } else {
         // For anonymous users, use the 'anonymous' key
         const anonymousHistory = allHistories.anonymous;
         if (anonymousHistory) {
           history = anonymousHistory;
+          // Ensure disputedQuestions exists (for backwards compatibility)
+          if (!history.disputedQuestions) {
+            history.disputedQuestions = [];
+          }
         }
       }
     } catch (error) {
@@ -123,3 +131,45 @@ export const clearAllHistory = (): void => {
     }
   }
 };
+
+// Add a disputed question
+export const addDisputedQuestion = (
+  question: QuizQuestion, 
+  userAnswer: string | number | null, 
+  disputeReason: string
+): void => {
+  const history = loadQuizHistory();
+  
+  const disputedQuestion: DisputedQuestion = {
+    questionId: question.id,
+    question,
+    userAnswer,
+    disputeReason,
+    dateDisputed: new Date().toISOString(),
+    status: 'pending'
+  };
+  
+  history.disputedQuestions = [disputedQuestion, ...history.disputedQuestions];
+  saveQuizHistory(history);
+};
+
+// Remove a disputed question
+export const removeDisputedQuestion = (questionId: string): void => {
+  const history = loadQuizHistory();
+  history.disputedQuestions = history.disputedQuestions.filter(dq => dq.questionId !== questionId);
+  saveQuizHistory(history);
+};
+
+// Clear all disputed questions
+export const clearDisputedQuestions = (): void => {
+  const history = loadQuizHistory();
+  history.disputedQuestions = [];
+  saveQuizHistory(history);
+};
+
+// Check if a question is disputed
+export const isQuestionDisputed = (questionId: string): boolean => {
+  const history = loadQuizHistory();
+  return history.disputedQuestions.some(dq => dq.questionId === questionId);
+};
+

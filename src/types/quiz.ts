@@ -21,7 +21,7 @@ export interface QuizResult {
 
 export interface QuizAttempt {
   id: string;
-  userId?: string; // Add userId field
+  userId?: string;
   date: string;
   objectives: string;
   questions: QuizQuestion[];
@@ -39,9 +39,20 @@ export interface QuizState {
 }
 
 export interface QuizHistory {
-  userId?: string; // Add userId field
+  userId?: string;
   attempts: QuizAttempt[];
   reviewList: QuizQuestion[];
+  disputedQuestions: DisputedQuestion[]; // Add disputed questions list
+}
+
+// Add disputed question interface
+export interface DisputedQuestion {
+  questionId: string;
+  question: QuizQuestion;
+  userAnswer: string | number | null;
+  disputeReason: string;
+  dateDisputed: string;
+  status: 'pending' | 'reviewed';
 }
 
 // Add user authentication types
