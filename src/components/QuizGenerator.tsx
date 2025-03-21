@@ -1,6 +1,5 @@
-
 import React, { useState, useReducer, useEffect } from "react";
-import { QuizState, QuizQuestionType, QuizResult, QuizAttempt, QuizHistory } from "@/types/quiz";
+import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
 import LoadingSpinner from "./LoadingSpinner";
 import QuizQuestionComponent from "./QuizQuestion";
@@ -24,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Action types
 type QuizAction =
   | { type: "SET_LOADING" }
-  | { type: "SET_QUESTIONS"; payload: QuizQuestionType[] }
+  | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
   | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
   | { type: "COMPLETE_QUIZ"; payload: QuizResult }
   | { type: "RESET_QUIZ" }
@@ -82,12 +81,12 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 const QuizGenerator: React.FC = () => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState("");
-  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [] });
+  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   
   // Load quiz history from localStorage on component mount
   useEffect(() => {
-    setHistory(loadQuizHistory());
+    setQuizHistory(loadQuizHistory());
   }, []);
 
   // Generate quiz based on learning objectives
@@ -189,7 +188,7 @@ const QuizGenerator: React.FC = () => {
     saveQuizAttempt(attempt);
     
     // Update local history state
-    setHistory(loadQuizHistory());
+    setQuizHistory(loadQuizHistory());
   };
 
   // Add selected incorrect questions to review list
@@ -206,7 +205,7 @@ const QuizGenerator: React.FC = () => {
     });
     
     toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
-    setHistory(loadQuizHistory());
+    setQuizHistory(loadQuizHistory());
     setSelectedIncorrectQuestions([]);
   };
 
@@ -248,23 +247,23 @@ const QuizGenerator: React.FC = () => {
   // Handle removing a question from review list
   const handleRemoveFromReviewList = (id: string) => {
     removeFromReviewList(id);
-    setHistory(loadQuizHistory());
+    setQuizHistory(loadQuizHistory());
   };
 
   // Clear review list
   const handleClearReviewList = () => {
     clearReviewList();
-    setHistory(loadQuizHistory());
+    setQuizHistory(loadQuizHistory());
   };
 
   // Clear all history
   const handleClearHistory = () => {
     clearAllHistory();
-    setHistory({ attempts: [], reviewList: [] });
+    setQuizHistory({ attempts: [], reviewList: [] });
   };
 
   // Practice review list questions
-  const handlePracticeReviewQuestions = (questions: QuizQuestionType[]) => {
+  const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
     dispatch({ type: "SET_QUESTIONS", payload: questions });
     setObjectives("Review List Practice");
   };
@@ -299,14 +298,14 @@ const QuizGenerator: React.FC = () => {
               </TabsList>
               <TabsContent value="history" className="mt-4">
                 <QuizHistory 
-                  attempts={history.attempts}
+                  attempts={quizHistory.attempts}
                   onViewAttempt={handleViewAttempt}
                   onClearHistory={handleClearHistory}
                 />
               </TabsContent>
               <TabsContent value="review" className="mt-4">
                 <ReviewList 
-                  questions={history.reviewList}
+                  questions={quizHistory.reviewList}
                   onRemoveQuestion={handleRemoveFromReviewList}
                   onClearAll={handleClearReviewList}
                   onPracticeQuestions={handlePracticeReviewQuestions}
