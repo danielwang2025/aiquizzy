@@ -1,24 +1,78 @@
 
 import { QuizAttempt, QuizQuestion, QuizHistory } from "@/types/quiz";
+import { getCurrentUser } from "./authService";
 
 const HISTORY_KEY = "quiz_history";
 
-// Load quiz history from localStorage
+// Load quiz history from localStorage for current user
 export const loadQuizHistory = (): QuizHistory => {
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
+  
   const savedHistory = localStorage.getItem(HISTORY_KEY);
+  let history: QuizHistory = { attempts: [], reviewList: [] };
+  
   if (savedHistory) {
-    return JSON.parse(savedHistory);
+    try {
+      const allHistories = JSON.parse(savedHistory);
+      
+      // If user is logged in, find their history
+      if (userId) {
+        const userHistory = allHistories[userId];
+        if (userHistory) {
+          history = userHistory;
+        }
+      } else {
+        // For anonymous users, use the 'anonymous' key
+        const anonymousHistory = allHistories.anonymous;
+        if (anonymousHistory) {
+          history = anonymousHistory;
+        }
+      }
+    } catch (error) {
+      console.error("Error loading quiz history:", error);
+    }
   }
-  return { attempts: [], reviewList: [] };
+  
+  return history;
 };
 
 // Save quiz history to localStorage
 export const saveQuizHistory = (history: QuizHistory): void => {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
+  const key = userId || 'anonymous';
+  
+  let allHistories = {};
+  const savedHistory = localStorage.getItem(HISTORY_KEY);
+  
+  if (savedHistory) {
+    try {
+      allHistories = JSON.parse(savedHistory);
+    } catch (error) {
+      console.error("Error parsing existing history:", error);
+    }
+  }
+  
+  // Add userId to history object
+  history.userId = userId;
+  
+  // Update user's history in the collection
+  allHistories = { ...allHistories, [key]: history };
+  
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(allHistories));
 };
 
 // Add a new quiz attempt to history
 export const saveQuizAttempt = (attempt: QuizAttempt): void => {
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
+  
+  // Add userId to attempt
+  if (userId) {
+    attempt.userId = userId;
+  }
+  
   const history = loadQuizHistory();
   history.attempts = [attempt, ...history.attempts];
   saveQuizHistory(history);
@@ -49,7 +103,23 @@ export const clearReviewList = (): void => {
   saveQuizHistory(history);
 };
 
-// Clear all history
+// Clear all history for current user
 export const clearAllHistory = (): void => {
-  localStorage.removeItem(HISTORY_KEY);
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id;
+  const key = userId || 'anonymous';
+  
+  let allHistories = {};
+  const savedHistory = localStorage.getItem(HISTORY_KEY);
+  
+  if (savedHistory) {
+    try {
+      allHistories = JSON.parse(savedHistory);
+      // Delete only current user's history
+      delete allHistories[key];
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(allHistories));
+    } catch (error) {
+      console.error("Error clearing history:", error);
+    }
+  }
 };

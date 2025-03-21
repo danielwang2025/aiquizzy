@@ -21,6 +21,7 @@ export interface QuizResult {
 
 export interface QuizAttempt {
   id: string;
+  userId?: string; // Add userId field
   date: string;
   objectives: string;
   questions: QuizQuestion[];
@@ -38,6 +39,22 @@ export interface QuizState {
 }
 
 export interface QuizHistory {
+  userId?: string; // Add userId field
   attempts: QuizAttempt[];
   reviewList: QuizQuestion[];
+}
+
+// Add user authentication types
+export interface User {
+  id: string;
+  email: string;
+  displayName?: string;
+  createdAt: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
