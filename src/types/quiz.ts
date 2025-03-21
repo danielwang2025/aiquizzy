@@ -8,6 +8,9 @@ export interface QuizQuestion {
   explanation?: string;
 }
 
+// Create a type alias for QuizQuestionType to avoid naming conflicts
+export type QuizQuestionType = QuizQuestion;
+
 export interface QuizResult {
   totalQuestions: number;
   correctAnswers: number;
