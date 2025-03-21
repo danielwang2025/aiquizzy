@@ -1,6 +1,6 @@
 
 import React, { useState, useReducer } from "react";
-import { QuizState, QuizQuestion as QuizQuestionType, QuizResult } from "@/types/quiz";
+import { QuizState, QuizQuestionType, QuizResult } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
 import LoadingSpinner from "./LoadingSpinner";
 import QuizQuestionComponent from "./QuizQuestion";
@@ -77,7 +77,7 @@ const QuizGenerator: React.FC = () => {
         type: "SET_ERROR",
         payload: "Failed to generate quiz. Please try again.",
       });
-      toast.error("Failed to generate quiz");
+      toast.error("Failed to generate quiz. Please check the console for details.");
     }
   };
 
@@ -170,7 +170,7 @@ const QuizGenerator: React.FC = () => {
             <textarea
               id="objectives"
               className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm"
-              placeholder="Enter your learning objectives here..."
+              placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')"
               value={objectives}
               onChange={(e) => setObjectives(e.target.value)}
             />
@@ -180,11 +180,11 @@ const QuizGenerator: React.FC = () => {
             className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
             onClick={handleGenerate}
           >
-            Generate Quiz
+            Generate Quiz with DeepSeek AI
           </button>
           
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Enter the learning objectives and click the button to generate a customized quiz.
+            Enter specific learning objectives to generate customized questions tailored to your learning needs.
           </p>
         </motion.div>
       )}
@@ -192,7 +192,8 @@ const QuizGenerator: React.FC = () => {
       {state.status === "loading" && (
         <div className="min-h-[300px] flex flex-col items-center justify-center">
           <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-muted-foreground animate-pulse-subtle">Generating quiz questions...</p>
+          <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
+          <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
         </div>
       )}
 
