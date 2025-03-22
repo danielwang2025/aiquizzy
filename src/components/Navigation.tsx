@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Home, Settings, Book, BarChart, User, PlusCircle } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navigation: React.FC = () => {
   const location = useLocation();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
