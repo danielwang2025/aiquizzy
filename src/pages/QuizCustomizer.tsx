@@ -18,6 +18,11 @@ const QuizCustomizer = () => {
     }
   }, [isAuth]);
 
+  const handleLoginClick = () => {
+    // This will open the auth sheet from the Navigation component
+    document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navigation />
@@ -40,7 +45,7 @@ const QuizCustomizer = () => {
               <p className="mb-6 text-muted-foreground">
                 You need to be logged in to create custom quizzes.
               </p>
-              <Button onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()}>
+              <Button onClick={handleLoginClick}>
                 Login or Register
               </Button>
             </div>

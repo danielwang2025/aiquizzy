@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, removeFromReviewList, clearReviewList, addToReviewList } from "@/utils/historyService";
@@ -125,10 +124,15 @@ const ReviewHub: React.FC = () => {
       selectedQuestions.includes(q.id)
     );
     
-    // In a real app, we would pass these questions to the practice page
-    // For now, we'll just navigate to the practice page
+    // Save selected questions as a quiz in the database
+    const quizId = saveQuizToDatabase(
+      questionsToReview,
+      "Review Practice - " + new Date().toLocaleString()
+    );
+    
+    // Navigate to practice with the saved quiz
     toast.success(`Starting practice with ${questionsToReview.length} questions`);
-    navigate("/practice");
+    navigate(`/practice/${quizId}`);
   };
   
   // Handle selecting a question

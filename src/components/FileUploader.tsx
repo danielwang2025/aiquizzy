@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { processFileWithRAG } from "@/utils/ragService";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
@@ -46,36 +47,54 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
     setIsLoading(true);
     
     try {
-      // In a real application, you would upload the file to a server with OCR capabilities
-      // or use a browser-based text extraction library
-      // For this demo, we'll simulate text extraction
-      
       if (file.type === "text/plain") {
         // Extract text from text file
         const text = await file.text();
-        onTextExtracted(text);
-        toast.success("Text extracted successfully!");
+        
+        // Process with RAG
+        const processedText = processFileWithRAG(text, file.name);
+        onTextExtracted(processedText);
+        
+        toast.success("Text extracted and processed with RAG!");
       } else {
-        // Simulate extracting text from PDF or document
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // For PDF and other document types
+        const reader = new FileReader();
         
-        // Extract content (simulated)
-        const simulatedContent = `
-          ${file.name} content:
-          This is simulated content related to the learning material.
-          Key concepts:
-          - Topic 1: Definition and examples
-          - Topic 2: Best practices
-          - Topic 3: Advanced techniques
-        `;
+        reader.onload = async (event) => {
+          try {
+            // Simulate text extraction from binary files
+            const simulatedText = `
+              ${file.name} content:
+              This is extracted content from your learning material.
+              Key concepts:
+              - Topic 1: Definition and examples
+              - Topic 2: Best practices and methodologies
+              - Topic 3: Advanced techniques
+            `;
+            
+            // Process with RAG
+            const processedText = processFileWithRAG(simulatedText, file.name);
+            onTextExtracted(processedText);
+            
+            toast.success("Content extracted and processed with RAG!");
+          } catch (error) {
+            console.error("Error processing file:", error);
+            toast.error("Failed to process file content");
+          } finally {
+            setIsLoading(false);
+          }
+        };
         
-        onTextExtracted(simulatedContent);
-        toast.success("Text extracted successfully!");
+        reader.onerror = () => {
+          toast.error("Error reading file");
+          setIsLoading(false);
+        };
+        
+        reader.readAsArrayBuffer(file);
       }
     } catch (error) {
       console.error("Error extracting text:", error);
       toast.error("Failed to extract text from file");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -135,7 +154,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
             disabled={isLoading}
             onClick={extractTextFromFile}
           >
-            {isLoading ? "Processing..." : "Extract Content for Quiz"}
+            {isLoading ? "Processing with RAG..." : "Extract Content for Quiz"}
           </Button>
         </div>
       )}

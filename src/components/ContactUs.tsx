@@ -32,12 +32,23 @@ const ContactUs: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Brevo API configuration
+    const BREVO_API_KEY = "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";
+    
     try {
-      // In a real application, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // In a production app, this would be done through a server-side API
+      // For demo purposes, we're simulating the email sending
+      console.log("Sending email via Brevo:");
+      console.log("SMTP Server: smtp-relay.brevo.com");
+      console.log("Port: 587");
+      console.log("Login: 88a748001@smtp-brevo.com");
+      console.log("To: dickbussiness@163.com");
+      console.log("From:", formData.email);
+      console.log("Subject:", formData.subject);
+      console.log("Message:", formData.message);
       
-      // Simulate sending an email
-      console.log("Contact form submitted:", formData);
+      // Simulate API call with a delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       
       toast.success("Message sent successfully!");
       
@@ -49,6 +60,7 @@ const ContactUs: React.FC = () => {
         message: "",
       });
     } catch (error) {
+      console.error("Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);

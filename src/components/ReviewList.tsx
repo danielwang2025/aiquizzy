@@ -4,6 +4,9 @@ import { QuizQuestion } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { saveQuizToDatabase } from "@/utils/databaseService";
+import { toast } from "sonner";
 
 interface ReviewListProps {
   questions: QuizQuestion[];
@@ -18,6 +21,24 @@ const ReviewList: React.FC<ReviewListProps> = ({
   onClearAll,
   onPracticeQuestions
 }) => {
+  const navigate = useNavigate();
+
+  const handlePracticeSelected = (selectedQuestions: QuizQuestion[]) => {
+    if (selectedQuestions.length === 0) {
+      toast.error("No questions selected for practice");
+      return;
+    }
+
+    // Save selected questions as a new quiz in the database
+    const quizId = saveQuizToDatabase(
+      selectedQuestions,
+      "Review Practice - " + new Date().toLocaleString()
+    );
+
+    // Navigate to practice page with the quiz ID
+    navigate(`/practice/${quizId}`);
+  };
+
   if (questions.length === 0) {
     return (
       <div className="text-center py-8">
@@ -34,7 +55,10 @@ const ReviewList: React.FC<ReviewListProps> = ({
           <Button 
             variant="default" 
             size="sm" 
-            onClick={() => onPracticeQuestions(questions)}
+            onClick={() => {
+              handlePracticeSelected(questions);
+              onPracticeQuestions(questions);
+            }}
             className="text-xs"
           >
             Practice All
