@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Play, Star, Medal, Clock, BookOpen } from "lucide-react";
+import { Play, Star, Medal, Clock, BookOpen, Users, Lightbulb, Target } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory } from "@/utils/historyService";
 import { motion } from "framer-motion";
@@ -27,7 +27,7 @@ const Index = () => {
               Personalized Learning Journey
             </h1>
             <p className="text-xl text-slate-700 mb-8">
-              Generate custom quizzes powered by DeepSeek AI tailored to your specific learning objectives.
+              Generate custom quizzes powered by AI tailored to your specific learning objectives.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
@@ -80,6 +80,98 @@ const Index = () => {
                 <p className="text-muted-foreground">{feature.description}</p>
               </motion.div>
             ))}
+          </div>
+        </section>
+        
+        {/* Team Section */}
+        <section className="mb-12 bg-white rounded-xl p-8 border border-border">
+          <h2 className="text-2xl font-bold text-center mb-2">Our Team</h2>
+          <p className="text-center text-muted-foreground mb-8">Meet the people behind AI Quizzy</p>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-center"
+            >
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Users className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Education Experts</h3>
+              <p className="text-muted-foreground">Our team of educators brings decades of experience in creating effective learning materials.</p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-center"
+            >
+              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Lightbulb className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">AI Researchers</h3>
+              <p className="text-muted-foreground">Our AI specialists work to create algorithms that adapt to your learning style and needs.</p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="text-center"
+            >
+              <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Target className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Product Designers</h3>
+              <p className="text-muted-foreground">Our UX team ensures that learning with AI Quizzy is intuitive, engaging, and effective.</p>
+            </motion.div>
+          </div>
+        </section>
+        
+        {/* Vision and Mission Section */}
+        <section className="mb-12">
+          <div className="grid md:grid-cols-2 gap-8">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white p-6 rounded-lg shadow-sm border border-border"
+            >
+              <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <Lightbulb className="mr-2 h-6 w-6 text-amber-500" />
+                Our Vision
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                We envision a world where personalized learning is accessible to everyone, empowering individuals to 
+                achieve their full potential through customized educational experiences.
+              </p>
+              <p className="text-muted-foreground">
+                At AI Quizzy, we believe that the future of education lies in the perfect balance of 
+                human expertise and artificial intelligence, creating learning experiences that adapt to each person's unique needs.
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white p-6 rounded-lg shadow-sm border border-border"
+            >
+              <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <Target className="mr-2 h-6 w-6 text-blue-500" />
+                Our Mission
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Our mission is to revolutionize learning by providing AI-powered tools that create personalized 
+                quizzes and practice materials tailored to individual learning objectives.
+              </p>
+              <p className="text-muted-foreground">
+                We are committed to developing technology that adapts to diverse learning styles, identifies knowledge 
+                gaps, and offers targeted practice to maximize learning efficiency and effectiveness.
+              </p>
+            </motion.div>
           </div>
         </section>
         

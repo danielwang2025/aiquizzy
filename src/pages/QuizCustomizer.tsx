@@ -11,10 +11,10 @@ const QuizCustomizer = () => {
       <main className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">
-            Customize Your Practice
+            Customize Your Quiz
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Input your learning objectives and generate personalized practice questions
+            Create personalized practice questions tailored to your learning objectives
           </p>
           
           <QuizGenerator />

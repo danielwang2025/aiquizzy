@@ -8,6 +8,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { 
   loadQuizHistory, 
   saveQuizAttempt, 
   addToReviewList, 
@@ -123,6 +131,11 @@ const QuizGenerator: React.FC = () => {
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   
+  // New state variables for customization options
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [questionCount, setQuestionCount] = useState<number>(5);
+  const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
+  
   // Load quiz history from localStorage on component mount
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
@@ -138,7 +151,12 @@ const QuizGenerator: React.FC = () => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      const questions = await generateQuestions(objectives);
+      const questions = await generateQuestions(objectives, {
+        difficulty,
+        count: questionCount,
+        questionTypes
+      });
+      
       dispatch({ type: "SET_QUESTIONS", payload: questions });
       toast.success("Quiz generated successfully!");
     } catch (error) {
@@ -148,6 +166,19 @@ const QuizGenerator: React.FC = () => {
       });
       toast.error("Failed to generate quiz. Please check the console for details.");
     }
+  };
+
+  // Handle question type selection
+  const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
+    setQuestionTypes(prev => {
+      if (prev.includes(type) && prev.length > 1) {
+        return prev.filter(t => t !== type);
+      } 
+      else if (!prev.includes(type)) {
+        return [...prev, type];
+      }
+      return prev;
+    });
   };
 
   // Handle answer selection
@@ -372,7 +403,7 @@ const QuizGenerator: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="glass-card rounded-2xl p-8"
+          className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border"
         >
           <div className="mb-6">
             <label htmlFor="objectives" className="block text-sm font-medium mb-2">
@@ -387,11 +418,78 @@ const QuizGenerator: React.FC = () => {
             />
           </div>
           
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Difficulty Level
+              </label>
+              <Select value={difficulty} onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Question Types
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <Checkbox 
+                    id="multiple-choice" 
+                    checked={questionTypes.includes("multiple_choice")}
+                    onCheckedChange={() => handleQuestionTypeChange("multiple_choice")}
+                  />
+                  <label htmlFor="multiple-choice" className="ml-2 text-sm">
+                    Multiple Choice
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <Checkbox 
+                    id="fill-in" 
+                    checked={questionTypes.includes("fill_in")}
+                    onCheckedChange={() => handleQuestionTypeChange("fill_in")}
+                  />
+                  <label htmlFor="fill-in" className="ml-2 text-sm">
+                    Fill in the Blank
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium">
+                Number of Questions: {questionCount}
+              </label>
+            </div>
+            <Slider 
+              min={3} 
+              max={20} 
+              step={1} 
+              value={[questionCount]} 
+              onValueChange={(value) => setQuestionCount(value[0])}
+              className="my-4"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>3</span>
+              <span>10</span>
+              <span>20</span>
+            </div>
+          </div>
+          
           <button
             className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
             onClick={handleGenerate}
           >
-            Generate Quiz with DeepSeek AI
+            Generate Quiz
           </button>
           
           <p className="text-center text-sm text-muted-foreground mt-4">

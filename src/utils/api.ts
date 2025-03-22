@@ -34,7 +34,7 @@ export async function generateQuestions(
     console.log("Generating quiz for learning objectives:", learningObjectives);
     console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
     
-    toast.loading("Generating questions with DeepSeek AI...");
+    toast.loading("Generating questions with AI...");
     
     // Customize the system prompt based on options
     const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;
@@ -134,4 +134,3 @@ export async function generateQuestions(
     throw new Error("Failed to generate quiz");
   }
 }
-
