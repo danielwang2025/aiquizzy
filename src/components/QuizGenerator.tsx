@@ -20,6 +20,16 @@ import ReviewList from "./ReviewList";
 import DisputedQuestions from "./DisputedQuestions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue, 
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Trophy, Award, Medal, Star } from "lucide-react";
 
 // Action types
 type QuizAction =
@@ -122,11 +132,44 @@ const QuizGenerator: React.FC = () => {
   const [objectives, setObjectives] = useState("");
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [questionCount, setQuestionCount] = useState<number>(10);
+  const [questionTypes, setQuestionTypes] = useState<string[]>(["multiple_choice", "fill_in"]);
+  const [points, setPoints] = useState<number>(0);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
   
   // Load quiz history from localStorage on component mount
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
+    const savedPoints = localStorage.getItem('userPoints');
+    if (savedPoints) {
+      setPoints(parseInt(savedPoints));
+    }
   }, []);
+
+  // Handle quiz difficulty change
+  const handleDifficultyChange = (value: string) => {
+    setDifficulty(value as "easy" | "medium" | "hard");
+  };
+
+  // Handle question count change
+  const handleQuestionCountChange = (value: number[]) => {
+    setQuestionCount(value[0]);
+  };
+
+  // Handle question type toggle
+  const handleQuestionTypeToggle = (type: string) => {
+    setQuestionTypes(prev => {
+      if (prev.includes(type)) {
+        if (prev.length === 1) {
+          return prev;
+        }
+        return prev.filter(t => t !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
 
   // Generate quiz based on learning objectives
   const handleGenerate = async () => {
@@ -138,8 +181,17 @@ const QuizGenerator: React.FC = () => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      const questions = await generateQuestions(objectives);
+      const questions = await generateQuestions(
+        objectives, 
+        difficulty, 
+        questionCount, 
+        questionTypes
+      );
       dispatch({ type: "SET_QUESTIONS", payload: questions });
+      if (!localStorage.getItem('tutorialShown')) {
+        setShowTutorial(true);
+        localStorage.setItem('tutorialShown', 'true');
+      }
       toast.success("Quiz generated successfully!");
     } catch (error) {
       dispatch({
@@ -150,15 +202,29 @@ const QuizGenerator: React.FC = () => {
     }
   };
 
-  // Handle answer selection
-  const handleAnswer = (index: number, answer: string | number) => {
-    dispatch({
-      type: "SET_ANSWER",
-      payload: { index, answer },
-    });
+  // Award points for completing a quiz
+  const awardPoints = (score: number) => {
+    let pointsToAward = 0;
+    
+    pointsToAward += 10;
+    
+    if (score >= 90) pointsToAward += 50;
+    else if (score >= 70) pointsToAward += 30;
+    else if (score >= 50) pointsToAward += 20;
+    
+    if (difficulty === "hard") pointsToAward *= 1.5;
+    else if (difficulty === "medium") pointsToAward *= 1.2;
+    
+    pointsToAward = Math.round(pointsToAward);
+    
+    const newPoints = points + pointsToAward;
+    setPoints(newPoints);
+    localStorage.setItem('userPoints', newPoints.toString());
+    
+    return pointsToAward;
   };
 
-  // Calculate and show results
+  // Calculate and show results with point rewards
   const handleComplete = () => {
     const { questions, answers } = state;
     
@@ -199,12 +265,15 @@ const QuizGenerator: React.FC = () => {
       feedback = "You might want to review the material again to strengthen your understanding.";
     }
 
+    const pointsAwarded = awardPoints(score);
+
     const result: QuizResult = {
       totalQuestions: questions.length,
       correctAnswers,
       incorrectAnswers,
       score,
       feedback,
+      pointsAwarded
     };
 
     dispatch({ type: "COMPLETE_QUIZ", payload: result });
@@ -223,6 +292,18 @@ const QuizGenerator: React.FC = () => {
     saveQuizAttempt(attempt);
     
     setQuizHistory(loadQuizHistory());
+    
+    toast.success(`Congratulations! You earned ${pointsAwarded} points!`, {
+      icon: <Trophy className="h-5 w-5 text-yellow-500" />
+    });
+  };
+
+  // Handle answer selection
+  const handleAnswer = (index: number, answer: string | number) => {
+    dispatch({
+      type: "SET_ANSWER",
+      payload: { index, answer },
+    });
   };
 
   // Handle question dispute
@@ -328,7 +409,15 @@ const QuizGenerator: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Quiz Generator</h2>
+        <div>
+          <h2 className="text-2xl font-semibold">Quiz Generator</h2>
+          {points > 0 && (
+            <div className="flex items-center mt-1 text-sm text-amber-600">
+              <Trophy className="h-4 w-4 mr-1" />
+              <span>{points} points</span>
+            </div>
+          )}
+        </div>
         
         <Sheet>
           <SheetTrigger asChild>
@@ -380,18 +469,89 @@ const QuizGenerator: React.FC = () => {
             </label>
             <textarea
               id="objectives"
-              className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm"
+              className="w-full p-3 h-24 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm"
               placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')"
               value={objectives}
               onChange={(e) => setObjectives(e.target.value)}
             />
           </div>
           
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <Label htmlFor="difficulty" className="block text-sm font-medium mb-2">
+                Difficulty Level
+              </Label>
+              <Select
+                value={difficulty}
+                onValueChange={handleDifficultyChange}
+              >
+                <SelectTrigger id="difficulty" className="w-full">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="question-count" className="block text-sm font-medium mb-2">
+                Number of Questions: {questionCount}
+              </Label>
+              <Slider
+                id="question-count"
+                defaultValue={[10]}
+                min={3}
+                max={20}
+                step={1}
+                onValueChange={handleQuestionCountChange}
+                className="my-4"
+              />
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <Label className="block text-sm font-medium mb-2">
+              Question Types
+            </Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="multiple_choice" 
+                  checked={questionTypes.includes("multiple_choice")}
+                  onCheckedChange={() => handleQuestionTypeToggle("multiple_choice")}
+                />
+                <label 
+                  htmlFor="multiple_choice"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Multiple Choice
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="fill_in" 
+                  checked={questionTypes.includes("fill_in")}
+                  onCheckedChange={() => handleQuestionTypeToggle("fill_in")}
+                />
+                <label 
+                  htmlFor="fill_in"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Fill in the Blank
+                </label>
+              </div>
+            </div>
+          </div>
+          
           <button
             className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
             onClick={handleGenerate}
           >
-            Generate Quiz with DeepSeek AI
+            Generate Quiz with AI
           </button>
           
           <p className="text-center text-sm text-muted-foreground mt-4">
@@ -548,6 +708,27 @@ const QuizGenerator: React.FC = () => {
               </Button>
             </motion.div>
           )}
+        </div>
+      )}
+      
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md">
+            <h3 className="text-xl font-bold mb-4">Welcome to AI Quizzy!</h3>
+            <p className="mb-4">Here's how to use the quiz:</p>
+            <ol className="list-decimal pl-5 mb-6 space-y-2">
+              <li>Answer each question by selecting an option or typing your answer</li>
+              <li>Navigate through questions using next/previous buttons</li>
+              <li>Submit your quiz to see your results</li>
+              <li>Review your performance and earn points!</li>
+            </ol>
+            <Button 
+              onClick={() => setShowTutorial(false)}
+              className="w-full"
+            >
+              Got it!
+            </Button>
+          </div>
         </div>
       )}
     </div>

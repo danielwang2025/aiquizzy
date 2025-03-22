@@ -1,137 +1,121 @@
 
-import { QuizQuestionType } from "@/types/quiz";
-import { toast } from "sonner";
+// Simulate API calls with mock data
 
-const DEEPSEEK_API_KEY = "sk-8e77c6120a864abf9a412304be119a2e";
+import { QuizQuestion } from "@/types/quiz";
+import { v4 as uuidv4 } from 'uuid';
 
-export async function generateQuestions(
-  learningObjectives: string,
-  options: {
-    count?: number;
-    difficulty?: 'easy' | 'medium' | 'hard';
-    questionTypes?: ('multiple_choice' | 'fill_in')[];
-  } = {}
-): Promise<QuizQuestionType[]> {
-  try {
-    const {
-      count = 5,
-      difficulty = 'medium',
-      questionTypes = ['multiple_choice', 'fill_in']
-    } = options;
-    
-    // Calculate ratio of multiple choice to fill-in questions
-    let multipleChoiceCount = count;
-    let fillInCount = 0;
-    
-    if (questionTypes.includes('multiple_choice') && questionTypes.includes('fill_in')) {
-      multipleChoiceCount = Math.ceil(count * 0.6); // 60% multiple choice
-      fillInCount = count - multipleChoiceCount;
-    } else if (questionTypes.includes('fill_in')) {
-      multipleChoiceCount = 0;
-      fillInCount = count;
-    }
-    
-    console.log("Generating quiz for learning objectives:", learningObjectives);
-    console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
-    
-    toast.loading("Generating questions with DeepSeek AI...");
-    
-    // Customize the system prompt based on options
-    const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;
-    
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `Create a quiz based on these learning objectives: ${learningObjectives}`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
-    });
-
-    toast.dismiss();
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("DeepSeek API error:", errorData);
-      throw new Error(`DeepSeek API error: ${errorData.error?.message || "Unknown error"}`);
-    }
-
-    const data = await response.json();
-    console.log("DeepSeek API response:", data);
-    
-    // Parse the content from the response
-    try {
-      const content = data.choices[0].message.content;
-      // Sometimes the API returns markdown with ```json blocks, so we need to extract the JSON
-      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```([\s\S]*?)```/);
-      const jsonString = jsonMatch ? jsonMatch[1] : content;
+// Mock function to generate questions based on learning objectives
+export const generateQuestions = async (
+  objectives: string, 
+  difficulty: string = "medium",
+  questionCount: number = 10,
+  questionTypes: string[] = ["multiple_choice", "fill_in"]
+): Promise<QuizQuestion[]> => {
+  // This would typically be an API call to a backend service
+  // For now, we'll simulate a delay and return mock data
+  
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const questions: QuizQuestion[] = [];
       
-      const parsedContent = JSON.parse(jsonString.trim());
-      
-      if (!parsedContent.questions || !Array.isArray(parsedContent.questions)) {
-        throw new Error("Invalid response format from DeepSeek API");
+      // Generate the requested number of questions
+      for (let i = 0; i < questionCount; i++) {
+        // Determine question type
+        const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+        
+        if (questionType === "multiple_choice") {
+          questions.push(generateMultipleChoiceQuestion(objectives, difficulty, i));
+        } else {
+          questions.push(generateFillInQuestion(objectives, difficulty, i));
+        }
       }
       
-      // Validate and transform the questions if needed
-      const questions = parsedContent.questions.map((q: any, index: number) => {
-        // Ensure each question has a valid ID
-        const id = q.id || `q${index + 1}`;
-        
-        // For multiple_choice questions, ensure correctAnswer is a number
-        let correctAnswer = q.correctAnswer;
-        if (q.type === "multiple_choice" && typeof correctAnswer === "string") {
-          // If correctAnswer is a string like "A", "B", convert to index
-          const optionIndex = q.options.findIndex((opt: string) => 
-            opt.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
-          );
-          
-          if (optionIndex >= 0) {
-            correctAnswer = optionIndex;
-          } else {
-            const letterToIndex = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4};
-            const letter = correctAnswer.trim().toLowerCase();
-            if (letter in letterToIndex) {
-              correctAnswer = letterToIndex[letter as keyof typeof letterToIndex];
-            }
-          }
-        }
-        
-        // Add topic information based on learning objectives
-        const topics = learningObjectives.split(',').map(t => t.trim());
-        const topic = topics.length > 0 ? topics[0] : undefined;
-        
-        return {
-          ...q,
-          id,
-          correctAnswer,
-          difficulty: q.difficulty || difficulty,
-          topic
-        };
-      });
-      
-      return questions;
-    } catch (error) {
-      console.error("Error parsing DeepSeek response:", error);
-      throw new Error("Failed to parse questions from DeepSeek API response");
-    }
-  } catch (error) {
-    console.error("Error generating quiz:", error);
-    toast.error("Failed to generate quiz. Please try again.");
-    throw new Error("Failed to generate quiz");
+      resolve(questions);
+    }, 1500); // Simulate API delay
+  });
+};
+
+// Helper to generate multiple choice questions
+function generateMultipleChoiceQuestion(objectives: string, difficulty: string, index: number): QuizQuestion {
+  const topics = objectives.split(',').map(t => t.trim());
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  
+  let questionText, options, correctAnswer, explanation;
+  
+  // Adjust question difficulty
+  if (difficulty === "easy") {
+    questionText = `What is the main purpose of ${topic}?`;
+    options = [
+      `To simplify development processes`,
+      `To organize code more efficiently`,
+      `To improve performance`,
+      `To provide better user experiences`
+    ];
+    correctAnswer = Math.floor(Math.random() * 4);
+    explanation = `${topic} is primarily designed to ${options[correctAnswer].toLowerCase()}.`;
+  } 
+  else if (difficulty === "medium") {
+    questionText = `Which of the following is a key characteristic of ${topic}?`;
+    options = [
+      `It supports asynchronous operations`,
+      `It follows object-oriented principles`,
+      `It has strong typing`,
+      `It provides built-in error handling`
+    ];
+    correctAnswer = Math.floor(Math.random() * 4);
+    explanation = `A key characteristic of ${topic} is that ${options[correctAnswer].toLowerCase()}.`;
   }
+  else { // hard
+    questionText = `What advanced concept is most closely associated with ${topic}?`;
+    options = [
+      `Polymorphism and inheritance`,
+      `Concurrency and parallelism`,
+      `Metaprogramming`,
+      `Memory management and optimization`
+    ];
+    correctAnswer = Math.floor(Math.random() * 4);
+    explanation = `${topic} is closely associated with ${options[correctAnswer].toLowerCase()} especially in advanced applications.`;
+  }
+  
+  return {
+    id: uuidv4(),
+    question: questionText,
+    type: "multiple_choice",
+    options: options,
+    correctAnswer: correctAnswer,
+    explanation: explanation
+  };
 }
 
+// Helper to generate fill-in questions
+function generateFillInQuestion(objectives: string, difficulty: string, index: number): QuizQuestion {
+  const topics = objectives.split(',').map(t => t.trim());
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  
+  let questionText, correctAnswer, explanation;
+  
+  // Adjust question difficulty
+  if (difficulty === "easy") {
+    questionText = `The full name of ${topic.substring(0, 3)}_____ is:`;
+    correctAnswer = topic;
+    explanation = `${topic} is a fundamental concept in this field.`;
+  } 
+  else if (difficulty === "medium") {
+    questionText = `Complete this definition: ${topic} is a technology used for ________.`;
+    correctAnswer = "data processing";
+    explanation = `${topic} is commonly used for data processing in various applications.`;
+  }
+  else { // hard
+    questionText = `In the context of ${topic}, what term describes the process of converting data between incompatible types?`;
+    correctAnswer = "type coercion";
+    explanation = `Type coercion is an important concept in ${topic} that handles automatic or implicit conversion of values from one data type to another.`;
+  }
+  
+  return {
+    id: uuidv4(),
+    question: questionText,
+    type: "fill_in",
+    correctAnswer: correctAnswer,
+    explanation: explanation
+  };
+}

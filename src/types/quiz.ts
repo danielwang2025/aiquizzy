@@ -1,4 +1,3 @@
-
 export interface QuizQuestion {
   id: string;
   type: 'multiple_choice' | 'fill_in';
@@ -19,8 +18,9 @@ export interface QuizResult {
   correctAnswers: number;
   incorrectAnswers: number;
   score: number;
-  feedback?: string;
-  completionTime?: number; // in seconds
+  feedback: string;
+  completionTime?: number;
+  pointsAwarded?: number;
 }
 
 export interface QuizAttempt {

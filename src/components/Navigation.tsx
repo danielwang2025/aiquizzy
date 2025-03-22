@@ -26,7 +26,7 @@ const Navigation: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                DeepSeek Quiz
+                AI Quizzy
               </span>
             </Link>
           </div>
