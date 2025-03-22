@@ -4,7 +4,6 @@ import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
 import DisputeForm from "./DisputeForm";
 import { isQuestionDisputed } from "@/utils/historyService";
-import { motion } from "framer-motion";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -13,7 +12,6 @@ interface QuizQuestionProps {
   showResult: boolean;
   index: number;
   onDisputeQuestion?: (questionId: string) => void;
-  nightMode?: boolean;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({
@@ -23,13 +21,10 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   showResult,
   index,
   onDisputeQuestion,
-  nightMode = false,
 }) => {
   const [animatedIn, setAnimatedIn] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [isAlreadyDisputed, setIsAlreadyDisputed] = useState(false);
-  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
-  const [showIncorrectAnimation, setShowIncorrectAnimation] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,19 +36,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
 
     return () => clearTimeout(timer);
   }, [index, question.id]);
-
-  useEffect(() => {
-    if (showResult) {
-      const isCorrect = userAnswer === question.correctAnswer;
-      if (isCorrect) {
-        setShowCorrectAnimation(true);
-        setTimeout(() => setShowCorrectAnimation(false), 1000);
-      } else if (userAnswer !== null) {
-        setShowIncorrectAnimation(true);
-        setTimeout(() => setShowIncorrectAnimation(false), 1000);
-      }
-    }
-  }, [showResult, userAnswer, question.correctAnswer]);
 
   const isCorrect = showResult && userAnswer === question.correctAnswer;
   const isIncorrect = showResult && userAnswer !== null && userAnswer !== question.correctAnswer;
@@ -76,24 +58,16 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   return (
     <div 
       className={cn(
-        "rounded-xl p-6 shadow-sm border transition-all duration-300 mb-6",
+        "bg-white rounded-xl p-6 shadow-sm border border-border transition-all duration-300 mb-6",
         "transform opacity-0 translate-y-4",
         animatedIn && "opacity-100 translate-y-0",
         showResult && isCorrect && "border-l-4 border-l-green-500",
         showResult && isIncorrect && "border-l-4 border-l-red-500",
-        isAlreadyDisputed && "opacity-50",
-        showCorrectAnimation && "animate-pulse border-green-500",
-        showIncorrectAnimation && "animate-pulse border-red-500",
-        nightMode 
-          ? "bg-gray-800 border-gray-700 text-white" 
-          : "bg-white border-border"
+        isAlreadyDisputed && "opacity-50"
       )}
     >
       <div className="flex items-center gap-3 mb-3">
-        <span className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm",
-          nightMode ? "bg-gray-700 text-white" : "bg-primary/10 text-primary"
-        )}>
+        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium text-sm">
           {index + 1}
         </span>
         <h3 className="text-lg font-medium">{question.question}</h3>
@@ -105,14 +79,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             <div key={i} className="flex items-start gap-2">
               <button
                 className={cn(
-                  "relative w-5 h-5 rounded-full border flex-shrink-0 mt-0.5",
-                  "transition-all duration-300",
+                  "relative w-5 h-5 rounded-full border border-primary/30 flex-shrink-0 mt-0.5",
+                  "transition-all duration-300 hover:border-primary/70",
                   userAnswer === i && "bg-primary border-primary",
                   showResult && question.correctAnswer === i && "border-green-500 bg-green-500/20",
-                  showResult && userAnswer === i && userAnswer !== question.correctAnswer && "border-red-500 bg-red-500/20",
-                  nightMode 
-                    ? "border-gray-500 hover:border-gray-400" 
-                    : "border-primary/30 hover:border-primary/70"
+                  showResult && userAnswer === i && userAnswer !== question.correctAnswer && "border-red-500 bg-red-500/20"
                 )}
                 onClick={() => !showResult && onAnswer(i)}
                 disabled={showResult || isAlreadyDisputed}
@@ -123,7 +94,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                   </span>
                 )}
               </button>
-              <span className={nightMode ? "text-gray-200" : "text-foreground"}>{option}</span>
+              <span className="text-foreground">{option}</span>
             </div>
           ))}
         </div>
@@ -134,12 +105,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           <input
             type="text"
             className={cn(
-              "w-full p-2 border rounded-md focus:outline-none focus:ring-2",
+              "w-full p-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30",
               showResult && isCorrect && "border-green-500 ring-green-500/30",
-              showResult && isIncorrect && "border-red-500 ring-red-500/30",
-              nightMode 
-                ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-500/30" 
-                : "border-border focus:ring-primary/30"
+              showResult && isIncorrect && "border-red-500 ring-red-500/30"
             )}
             placeholder="Type your answer here..."
             value={userAnswer !== null ? String(userAnswer) : ""}
@@ -150,17 +118,10 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
       )}
 
       {showResult && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className={cn(
-            "mt-4 p-3 rounded-md transition-all duration-300",
-            isCorrect 
-              ? nightMode ? "bg-green-900/30 text-green-300" : "bg-green-500/10 text-green-800"
-              : nightMode ? "bg-red-900/30 text-red-300" : "bg-red-500/10 text-red-800"
-          )}
-        >
+        <div className={cn(
+          "mt-4 p-3 rounded-md transition-all duration-300 animate-fade-in",
+          isCorrect ? "bg-green-500/10 text-green-800" : "bg-red-500/10 text-red-800"
+        )}>
           <div className="flex justify-between items-start">
             <div>
               <p className="font-medium mb-1">
@@ -181,25 +142,19 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             {!isAlreadyDisputed && onDisputeQuestion && (
               <button
                 onClick={handleOpenDispute}
-                className={cn(
-                  "text-xs px-2 py-1 rounded text-current ml-2 transition-colors",
-                  nightMode ? "bg-gray-700/50 hover:bg-gray-700" : "bg-white/30 hover:bg-white/50"
-                )}
+                className="text-xs bg-white/30 hover:bg-white/50 px-2 py-1 rounded text-current ml-2 transition-colors"
               >
                 Dispute
               </button>
             )}
             
             {isAlreadyDisputed && (
-              <span className={cn(
-                "text-xs px-2 py-1 rounded ml-2",
-                nightMode ? "bg-gray-700/50" : "bg-white/30"
-              )}>
+              <span className="text-xs bg-white/30 px-2 py-1 rounded ml-2">
                 Disputed
               </span>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Dispute Form Dialog */}

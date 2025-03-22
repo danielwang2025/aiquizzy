@@ -3,8 +3,7 @@ import React from "react";
 import { QuizQuestion } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Play } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 
 interface ReviewListProps {
   questions: QuizQuestion[];
@@ -19,18 +18,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
   onClearAll,
   onPracticeQuestions
 }) => {
-  const navigate = useNavigate();
-
-  const handlePracticeQuestions = () => {
-    onPracticeQuestions(questions);
-    navigate('/practice');
-  };
-
-  const handlePracticeSingleQuestion = (question: QuizQuestion) => {
-    onPracticeQuestions([question]);
-    navigate('/practice');
-  };
-
   if (questions.length === 0) {
     return (
       <div className="text-center py-8">
@@ -47,7 +34,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
           <Button 
             variant="default" 
             size="sm" 
-            onClick={handlePracticeQuestions}
+            onClick={() => onPracticeQuestions(questions)}
             className="text-xs"
           >
             Practice All
@@ -73,19 +60,10 @@ const ReviewList: React.FC<ReviewListProps> = ({
               <div className="flex justify-between items-start">
                 <div className="flex-1 mr-4">
                   <p className="text-sm font-medium mb-2">{question.question}</p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center">
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
                       {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePracticeSingleQuestion(question)}
-                      className="h-6 text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      <Play className="h-3 w-3 mr-1" />
-                      Practice
-                    </Button>
                   </div>
                 </div>
                 <Button
