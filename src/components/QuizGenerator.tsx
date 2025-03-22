@@ -23,11 +23,14 @@ import {
   clearReviewList,
   clearAllHistory 
 } from "@/utils/historyService";
+import { saveQuizToDatabase } from "@/utils/databaseService";
 import QuizHistory from "./QuizHistory";
 import ReviewList from "./ReviewList";
 import DisputedQuestions from "./DisputedQuestions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
+import FileUploader from "./FileUploader";
+import { useNavigate } from "react-router-dom";
 
 // Action types
 type QuizAction =
@@ -128,8 +131,10 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 const QuizGenerator: React.FC = () => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState("");
+  const [extractedText, setExtractedText] = useState("");
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
+  const navigate = useNavigate();
   
   // New state variables for customization options
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
@@ -143,7 +148,9 @@ const QuizGenerator: React.FC = () => {
 
   // Generate quiz based on learning objectives
   const handleGenerate = async () => {
-    if (!objectives.trim()) {
+    const combinedObjectives = objectives.trim();
+    
+    if (!combinedObjectives) {
       toast.error("Please enter learning objectives");
       return;
     }
@@ -151,13 +158,27 @@ const QuizGenerator: React.FC = () => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      const questions = await generateQuestions(objectives, {
+      // If we have extracted text, include it in the API call
+      const promptWithContext = extractedText 
+        ? `Learning objectives: ${objectives}\n\nContext from uploaded document: ${extractedText}`
+        : objectives;
+      
+      const questions = await generateQuestions(promptWithContext, {
         difficulty,
         count: questionCount,
         questionTypes
       });
       
       dispatch({ type: "SET_QUESTIONS", payload: questions });
+      
+      // Store the quiz in the database
+      const quizTitle = objectives.length > 50 
+        ? objectives.substring(0, 50) + "..." 
+        : objectives;
+      
+      const quizId = saveQuizToDatabase(questions, quizTitle);
+      console.log("Quiz saved to database with ID:", quizId);
+      
       toast.success("Quiz generated successfully!");
     } catch (error) {
       dispatch({
@@ -166,6 +187,11 @@ const QuizGenerator: React.FC = () => {
       });
       toast.error("Failed to generate quiz. Please check the console for details.");
     }
+  };
+
+  const handleFileTextExtracted = (text: string) => {
+    setExtractedText(text);
+    toast.success("Text extracted and will be used to enhance quiz questions");
   };
 
   // Handle question type selection
@@ -333,10 +359,18 @@ const QuizGenerator: React.FC = () => {
     setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
   };
 
-  // Practice review list questions
+  // Practice review list questions and navigate to practice page
   const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
-    dispatch({ type: "SET_QUESTIONS", payload: questions });
-    setObjectives("Review List Practice");
+    if (questions.length === 0) {
+      toast.error("No questions to practice");
+      return;
+    }
+    
+    // Save the review questions as a quiz in the database
+    const quizId = saveQuizToDatabase(questions, "Review List Practice");
+    
+    // Navigate to practice page with the quiz ID
+    navigate(`/practice/${quizId}`);
   };
 
   // Reset the quiz
@@ -365,7 +399,7 @@ const QuizGenerator: React.FC = () => {
           <SheetTrigger asChild>
             <Button variant="outline">History & Review</Button>
           </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-md">
+          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
             <Tabs defaultValue="history" className="mt-6">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="history">Quiz History</TabsTrigger>
@@ -417,6 +451,8 @@ const QuizGenerator: React.FC = () => {
               onChange={(e) => setObjectives(e.target.value)}
             />
           </div>
+          
+          <FileUploader onTextExtracted={handleFileTextExtracted} />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>

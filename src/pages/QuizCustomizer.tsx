@@ -1,9 +1,23 @@
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import QuizGenerator from "@/components/QuizGenerator";
+import { isAuthenticated } from "@/utils/authService";
+import { Button } from "@/components/ui/button";
+import { LockKeyhole } from "lucide-react";
+import { toast } from "sonner";
 
 const QuizCustomizer = () => {
+  const navigate = useNavigate();
+  const isAuth = isAuthenticated();
+
+  useEffect(() => {
+    if (!isAuth) {
+      toast.info("Please log in to create quizzes");
+    }
+  }, [isAuth]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navigation />
@@ -17,7 +31,20 @@ const QuizCustomizer = () => {
             Create personalized practice questions tailored to your learning objectives
           </p>
           
-          <QuizGenerator />
+          {isAuth ? (
+            <QuizGenerator />
+          ) : (
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-border text-center">
+              <LockKeyhole className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-xl font-semibold mb-2">Login Required</h2>
+              <p className="mb-6 text-muted-foreground">
+                You need to be logged in to create custom quizzes.
+              </p>
+              <Button onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()}>
+                Login or Register
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>
