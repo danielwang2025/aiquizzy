@@ -6,6 +6,9 @@ export interface QuizQuestion {
   options?: string[];
   correctAnswer: string | number;
   explanation?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  topic?: string;
+  subtopic?: string;
 }
 
 // Create a type alias for QuizQuestionType to avoid naming conflicts
@@ -17,6 +20,7 @@ export interface QuizResult {
   incorrectAnswers: number;
   score: number;
   feedback?: string;
+  completionTime?: number; // in seconds
 }
 
 export interface QuizAttempt {
@@ -27,6 +31,8 @@ export interface QuizAttempt {
   questions: QuizQuestion[];
   userAnswers: (string | number | null)[];
   result: QuizResult;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  topics?: string[];
 }
 
 export interface QuizState {
@@ -36,13 +42,24 @@ export interface QuizState {
   result: QuizResult | null;
   status: 'idle' | 'loading' | 'active' | 'completed';
   error: string | null;
+  startTime?: number;
+  endTime?: number;
 }
 
 export interface QuizHistory {
   userId?: string;
   attempts: QuizAttempt[];
   reviewList: QuizQuestion[];
-  disputedQuestions: DisputedQuestion[]; // Add disputed questions list
+  disputedQuestions: DisputedQuestion[];
+  learningPreferences?: LearningPreferences;
+}
+
+export interface LearningPreferences {
+  preferredDifficulty?: 'easy' | 'medium' | 'hard';
+  preferredQuestionTypes?: ('multiple_choice' | 'fill_in')[];
+  topicsOfInterest?: string[];
+  dailyGoal?: number; // Number of questions to practice per day
+  reminderEnabled?: boolean;
 }
 
 // Add disputed question interface
@@ -61,6 +78,7 @@ export interface User {
   email: string;
   displayName?: string;
   createdAt: string;
+  learningPreferences?: LearningPreferences;
 }
 
 export interface AuthState {
@@ -68,4 +86,24 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+// Dashboard statistics
+export interface DashboardStats {
+  totalAttempts: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  averageScore: number;
+  topicPerformance: {
+    topic: string;
+    correctRate: number;
+    questionsCount: number;
+  }[];
+  recentScores: {
+    date: string;
+    score: number;
+  }[];
+  dailyStreak: number;
+  lastPracticeDate?: string;
+  mostChallengedTopics: string[];
 }

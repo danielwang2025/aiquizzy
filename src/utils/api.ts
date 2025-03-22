@@ -4,11 +4,40 @@ import { toast } from "sonner";
 
 const DEEPSEEK_API_KEY = "sk-8e77c6120a864abf9a412304be119a2e";
 
-export async function generateQuestions(learningObjectives: string): Promise<QuizQuestionType[]> {
+export async function generateQuestions(
+  learningObjectives: string,
+  options: {
+    count?: number;
+    difficulty?: 'easy' | 'medium' | 'hard';
+    questionTypes?: ('multiple_choice' | 'fill_in')[];
+  } = {}
+): Promise<QuizQuestionType[]> {
   try {
+    const {
+      count = 5,
+      difficulty = 'medium',
+      questionTypes = ['multiple_choice', 'fill_in']
+    } = options;
+    
+    // Calculate ratio of multiple choice to fill-in questions
+    let multipleChoiceCount = count;
+    let fillInCount = 0;
+    
+    if (questionTypes.includes('multiple_choice') && questionTypes.includes('fill_in')) {
+      multipleChoiceCount = Math.ceil(count * 0.6); // 60% multiple choice
+      fillInCount = count - multipleChoiceCount;
+    } else if (questionTypes.includes('fill_in')) {
+      multipleChoiceCount = 0;
+      fillInCount = count;
+    }
+    
     console.log("Generating quiz for learning objectives:", learningObjectives);
+    console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
     
     toast.loading("Generating questions with DeepSeek AI...");
+    
+    // Customize the system prompt based on options
+    const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;
     
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -21,7 +50,7 @@ export async function generateQuestions(learningObjectives: string): Promise<Qui
         messages: [
           {
             role: "system",
-            content: "You are a quiz generator. Create 5 practice questions (3 multiple choice and 2 fill-in-the-blank) based on the learning objectives provided. Return the response in JSON format with the following structure: {\"questions\": [{\"id\": \"q1\", \"type\": \"multiple_choice\", \"question\": \"Question text\", \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"], \"correctAnswer\": 0, \"explanation\": \"Explanation\"}, {\"id\": \"q2\", \"type\": \"fill_in\", \"question\": \"Question with ________.\", \"correctAnswer\": \"answer\", \"explanation\": \"Explanation\"}]}"
+            content: systemPrompt
           },
           {
             role: "user",
@@ -81,10 +110,16 @@ export async function generateQuestions(learningObjectives: string): Promise<Qui
           }
         }
         
+        // Add topic information based on learning objectives
+        const topics = learningObjectives.split(',').map(t => t.trim());
+        const topic = topics.length > 0 ? topics[0] : undefined;
+        
         return {
           ...q,
           id,
-          correctAnswer
+          correctAnswer,
+          difficulty: q.difficulty || difficulty,
+          topic
         };
       });
       
@@ -99,3 +134,4 @@ export async function generateQuestions(learningObjectives: string): Promise<Qui
     throw new Error("Failed to generate quiz");
   }
 }
+
