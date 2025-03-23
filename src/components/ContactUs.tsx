@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send, Mail } from "lucide-react";
+import { escapeHtml } from "@/utils/securityUtils";
 
 interface ContactFormData {
   name: string;
@@ -22,133 +23,64 @@ const ContactUs: React.FC = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [SibSdk, setSibSdk] = useState<any>(null);
-  
-  useEffect(() => {
-    // Dynamically import the Brevo SDK
-    const loadBrevoSdk = async () => {
-      try {
-        // We're using a facade instead of the actual SDK since we're in the browser
-        const mockSdk = {
-          ApiClient: {
-            instance: {
-              authentications: {
-                'api-key': { apiKey: '' }
-              }
-            }
-          },
-          EmailCampaignsApi: function() {
-            return {
-              createEmailCampaign: async (campaign: any) => {
-                // This is where we'll actually make our fetch request
-                const BREVO_API_KEY = "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";
-                
-                try {
-                  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-                    method: "POST",
-                    headers: {
-                      "Accept": "application/json",
-                      "Content-Type": "application/json",
-                      "api-key": BREVO_API_KEY
-                    },
-                    body: JSON.stringify({
-                      sender: {
-                        name: campaign.sender.name,
-                        email: campaign.sender.email
-                      },
-                      to: [{
-                        email: "dickbussiness@163.com",
-                        name: "Website Contact"
-                      }],
-                      subject: campaign.subject,
-                      htmlContent: campaign.htmlContent
-                    })
-                  });
-                  
-                  if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to send email");
-                  }
-                  
-                  return await response.json();
-                } catch (error) {
-                  console.error("API call failed:", error);
-                  throw error;
-                }
-              }
-            };
-          },
-          CreateEmailCampaign: function() {
-            return {};
-          }
-        };
-        
-        setSibSdk(mockSdk);
-      } catch (error) {
-        console.error("Failed to load Brevo SDK:", error);
-      }
-    };
-    
-    loadBrevoSdk();
-  }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     // HTML escape for XSS protection
-    const escapedValue = value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-    
-    setFormData((prev) => ({ ...prev, [name]: escapedValue }));
+    const sanitizedValue = escapeHtml(value);
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!SibSdk) {
-      toast.error("Email service is not available. Please try again later.");
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
-      // Configure the Brevo SDK client
-      const defaultClient = SibSdk.ApiClient.instance;
-      const apiKey = defaultClient.authentications['api-key'];
-      apiKey.apiKey = "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";
+      // Brevo API key
+      const BREVO_API_KEY = "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";
       
-      // Create the campaign instance
-      const apiInstance = new SibSdk.EmailCampaignsApi();
-      const emailCampaign = new SibSdk.CreateEmailCampaign();
-      
-      // Set campaign properties
-      emailCampaign.name = "Contact Form Submission";
-      emailCampaign.subject = formData.subject;
-      emailCampaign.sender = {
-        name: formData.name,
-        email: formData.email
+      // Create the email content
+      const emailContent = {
+        sender: {
+          name: formData.name,
+          email: formData.email
+        },
+        to: [{
+          email: "dickbussiness@163.com",
+          name: "Website Contact"
+        }],
+        subject: formData.subject,
+        htmlContent: `
+          <html>
+            <body>
+              <h2>New Contact Form Submission</h2>
+              <p><strong>From:</strong> ${formData.name} (${formData.email})</p>
+              <p><strong>Subject:</strong> ${formData.subject}</p>
+              <div>
+                <p><strong>Message:</strong></p>
+                <p>${formData.message.replace(/\n/g, '<br/>')}</p>
+              </div>
+            </body>
+          </html>
+        `
       };
-      emailCampaign.type = "classic";
-      emailCampaign.htmlContent = `
-        <html>
-          <body>
-            <h2>New Contact Form Submission</h2>
-            <p><strong>From:</strong> ${formData.name} (${formData.email})</p>
-            <p><strong>Subject:</strong> ${formData.subject}</p>
-            <div>
-              <p><strong>Message:</strong></p>
-              <p>${formData.message.replace(/\n/g, '<br/>')}</p>
-            </div>
-          </body>
-        </html>
-      `;
       
-      // Send the campaign
-      await apiInstance.createEmailCampaign(emailCampaign);
+      // Direct API call to Brevo
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY
+        },
+        body: JSON.stringify(emailContent)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to send email");
+      }
       
       toast.success("Message sent successfully!");
       

@@ -1,6 +1,7 @@
 
-import { QuizQuestionType } from "@/types/quiz";
+import { QuizQuestion } from "@/types/quiz";
 import { toast } from "sonner";
+import { addCsrfToHeaders } from "@/utils/securityUtils";
 
 const DEEPSEEK_API_KEY = "sk-8e77c6120a864abf9a412304be119a2e";
 
@@ -11,7 +12,7 @@ export async function generateQuestions(
     difficulty?: 'easy' | 'medium' | 'hard';
     questionTypes?: ('multiple_choice' | 'fill_in')[];
   } = {}
-): Promise<QuizQuestionType[]> {
+): Promise<QuizQuestion[]> {
   try {
     const {
       count = 5,
@@ -39,12 +40,15 @@ export async function generateQuestions(
     // Customize the system prompt based on options
     const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;
     
+    // Add CSRF token to headers
+    const headers = addCsrfToHeaders({
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+    });
+    
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-      },
+      headers,
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [
