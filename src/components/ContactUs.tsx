@@ -36,29 +36,55 @@ const ContactUs: React.FC = () => {
     const BREVO_API_KEY = "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";
     
     try {
-      // In a production app, this would be done through a server-side API
-      // For demo purposes, we're simulating the email sending
-      console.log("Sending email via Brevo:");
-      console.log("SMTP Server: smtp-relay.brevo.com");
-      console.log("Port: 587");
-      console.log("Login: 88a748001@smtp-brevo.com");
-      console.log("To: dickbussiness@163.com");
-      console.log("From:", formData.email);
-      console.log("Subject:", formData.subject);
-      console.log("Message:", formData.message);
-      
-      // Simulate API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      toast.success("Message sent successfully!");
-      
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
+      // Prepare request to Brevo API
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "api-key": BREVO_API_KEY
+        },
+        body: JSON.stringify({
+          sender: {
+            name: formData.name,
+            email: formData.email
+          },
+          to: [{
+            email: "dickbussiness@163.com",
+            name: "Website Contact"
+          }],
+          subject: formData.subject,
+          htmlContent: `
+            <html>
+              <body>
+                <h2>New Contact Form Submission</h2>
+                <p><strong>From:</strong> ${formData.name} (${formData.email})</p>
+                <p><strong>Subject:</strong> ${formData.subject}</p>
+                <div>
+                  <p><strong>Message:</strong></p>
+                  <p>${formData.message.replace(/\n/g, '<br/>')}</p>
+                </div>
+              </body>
+            </html>
+          `
+        })
       });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast.success("Message sent successfully!");
+        
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        throw new Error(result.message || "Failed to send message");
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
