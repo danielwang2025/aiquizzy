@@ -1,7 +1,10 @@
-
 // This is a simulated implementation of RAG using LangChain and FAISS
 // In a real application, you would need to add LangChain and FAISS dependencies
 // and implement the actual vector database functionality
+// To implement this fully you would need:
+// - LangChain: npm install langchain
+// - FAISS: npm install @langchain/community or @langchain/faiss
+// - A text embedding model like OpenAI's text-embedding-ada-002 or a local alternative
 
 export interface Document {
   id: string;
