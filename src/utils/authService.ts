@@ -1,13 +1,28 @@
 
 import { User } from "@/types/quiz";
+import { addCsrfToHeaders, validateStrongPassword } from "./securityUtils";
 
 // LocalStorage keys
 const USER_KEY = "quiz_user";
 const AUTH_TOKEN_KEY = "quiz_auth_token";
 
-// Simple user registration
+// Simulated API delay for authentication operations
+const SIMULATED_DELAY = 800;
+
+/**
+ * Simple user registration with security enhancements
+ */
 export const registerUser = async (email: string, password: string, displayName?: string): Promise<User> => {
   try {
+    // Validate password strength
+    const passwordValidation = validateStrongPassword(password);
+    if (!passwordValidation.isValid) {
+      throw new Error(passwordValidation.message);
+    }
+    
+    // Add simulated API delay
+    await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
+    
     // Check if email is already registered
     const existingUsers = localStorage.getItem("quiz_users");
     const users = existingUsers ? JSON.parse(existingUsers) : [];
@@ -25,9 +40,12 @@ export const registerUser = async (email: string, password: string, displayName?
       createdAt: new Date().toISOString()
     };
     
-    // Store password securely (in real app, this would be hashed and stored in a secure database)
-    // For demo purposes, we're using localStorage
-    users.push({ ...newUser, password });
+    // In a real application, we would hash the password using bcrypt or Argon2
+    // For this demo, we'll simulate password hashing with a simple prefix
+    const hashedPassword = `hashed_${password}`;
+    
+    // Store user with hashed password
+    users.push({ ...newUser, password: hashedPassword });
     localStorage.setItem("quiz_users", JSON.stringify(users));
     
     // Save user in localStorage and return
@@ -41,21 +59,56 @@ export const registerUser = async (email: string, password: string, displayName?
   }
 };
 
-// User login
+/**
+ * User login with security enhancements
+ */
 export const loginUser = async (email: string, password: string): Promise<User> => {
   try {
+    // Add simulated API delay and rate limiting
+    await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
+    
+    // Implement basic rate limiting
+    const attempts = localStorage.getItem(`login_attempts_${email}`) || "0";
+    const attemptCount = parseInt(attempts, 10);
+    const lastAttemptTime = parseInt(localStorage.getItem(`last_attempt_${email}`) || "0", 10);
+    const now = Date.now();
+    
+    // If more than 5 failed attempts within 15 minutes, block login
+    if (attemptCount >= 5 && now - lastAttemptTime < 15 * 60 * 1000) {
+      const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - lastAttemptTime)) / 60000);
+      throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minutes.`);
+    }
+    
     // Get users from localStorage
     const existingUsers = localStorage.getItem("quiz_users");
     if (!existingUsers) {
+      // Increment failed attempts
+      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
+      localStorage.setItem(`last_attempt_${email}`, now.toString());
       throw new Error("Invalid credentials");
     }
     
     const users = JSON.parse(existingUsers);
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    
+    // In a real app, we would hash the password and compare hashes
+    // For this demo, we'll use our simulated hashing
+    const hashedPassword = `hashed_${password}`;
+    
+    // Find user with matching email and hashed password
+    const user = users.find((u: any) => 
+      u.email === email && (u.password === hashedPassword || u.password === password)
+    );
     
     if (!user) {
+      // Increment failed attempts
+      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
+      localStorage.setItem(`last_attempt_${email}`, now.toString());
       throw new Error("Invalid credentials");
     }
+    
+    // Reset login attempts on successful login
+    localStorage.removeItem(`login_attempts_${email}`);
+    localStorage.removeItem(`last_attempt_${email}`);
     
     // Save user in localStorage
     const userData: User = {
@@ -75,7 +128,9 @@ export const loginUser = async (email: string, password: string): Promise<User> 
   }
 };
 
-// Get current user
+/**
+ * Get current user
+ */
 export const getCurrentUser = (): User | null => {
   const userJson = localStorage.getItem(USER_KEY);
   if (!userJson) return null;
@@ -88,13 +143,54 @@ export const getCurrentUser = (): User | null => {
   }
 };
 
-// Check if user is authenticated
+/**
+ * Check if user is authenticated
+ */
 export const isAuthenticated = (): boolean => {
   return localStorage.getItem(AUTH_TOKEN_KEY) !== null;
 };
 
-// Logout
+/**
+ * Logout user
+ */
 export const logoutUser = (): void => {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
+/**
+ * Makes authenticated API requests with CSRF protection
+ * @param url API endpoint
+ * @param options Fetch options
+ * @returns Response from the API
+ */
+export const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  if (!isAuthenticated()) {
+    throw new Error("User not authenticated");
+  }
+  
+  const authToken = localStorage.getItem(AUTH_TOKEN_KEY);
+  const headers = new Headers(options.headers);
+  
+  // Add authentication token
+  headers.set("Authorization", `Bearer ${authToken}`);
+  
+  // Add CSRF token
+  const csrfHeaders = addCsrfToHeaders(headers);
+  
+  // Set content-type if not already set
+  if (!headers.has("Content-Type") && options.method !== "GET") {
+    headers.set("Content-Type", "application/json");
+  }
+  
+  // Add additional security headers
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Frame-Options", "DENY");
+  
+  const updatedOptions = {
+    ...options,
+    headers: csrfHeaders,
+  };
+  
+  return fetch(url, updatedOptions);
 };
