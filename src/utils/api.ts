@@ -2,8 +2,8 @@
 import { QuizQuestion } from "@/types/quiz";
 import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/securityUtils";
-
-const DEEPSEEK_API_KEY = "sk-8e77c6120a864abf9a412304be119a2e";
+import { getApiKey } from "@/utils/envVars";
+import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
 
 export async function generateQuestions(
   learningObjectives: string,
@@ -14,6 +14,18 @@ export async function generateQuestions(
   } = {}
 ): Promise<QuizQuestion[]> {
   try {
+    // Check for prompt injection or harmful content
+    if (detectPromptInjection(learningObjectives)) {
+      toast.error("Potential prompt injection detected. Please reformulate your request.");
+      throw new Error("Prompt injection attempt detected");
+    }
+
+    const moderationResult = moderateContent(learningObjectives);
+    if (moderationResult.flagged) {
+      toast.error("Your input contains potentially harmful content and cannot be processed.");
+      throw new Error("Content moderation failed");
+    }
+    
     const {
       count = 5,
       difficulty = 'medium',
@@ -36,6 +48,9 @@ export async function generateQuestions(
     console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
     
     toast.loading("Generating questions with AI...");
+
+    // Get the DeepSeek API key from our environment variables
+    const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
     // Customize the system prompt based on options
     const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;

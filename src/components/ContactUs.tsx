@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send, Mail } from "lucide-react";
 import { escapeHtml } from "@/utils/securityUtils";
+import { getApiKey } from "@/utils/envVars";
+import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
 
 interface ContactFormData {
   name: string;
@@ -37,8 +39,22 @@ const ContactUs: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Brevo API key
-      const BREVO_API_KEY = "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";
+      // Check for prompt injection or harmful content in the message
+      if (detectPromptInjection(formData.message)) {
+        toast.error("Your message contains potentially harmful content. Please reformulate it.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const moderationResult = moderateContent(formData.message);
+      if (moderationResult.flagged) {
+        toast.error("Your message contains potentially harmful content and cannot be sent.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Get the Brevo API key from our environment variables
+      const BREVO_API_KEY = getApiKey("BREVO_API_KEY");
       
       // Create the email content
       const emailContent = {

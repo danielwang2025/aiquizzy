@@ -1,6 +1,6 @@
 
-// This is a simplified content moderation service
-// In a real app, you would use OpenAI's Moderation API or similar services
+import { getApiKey } from "@/utils/envVars";
+import OpenAI from "openai";
 
 /**
  * Content categories that can be flagged
@@ -15,6 +15,19 @@ export interface ModerationCategories {
 }
 
 /**
+ * Extended categories from OpenAI moderation API
+ */
+export interface ExtendedModerationCategories extends ModerationCategories {
+  "sexual/minors": boolean;
+  "harassment/threatening": boolean;
+  "hate/threatening": boolean;
+  "illicit/violent": boolean;
+  "self-harm/intent": boolean;
+  "self-harm/instructions": boolean;
+  "violence/graphic": boolean;
+}
+
+/**
  * Result of content moderation
  */
 export interface ModerationResult {
@@ -24,20 +37,84 @@ export interface ModerationResult {
 }
 
 /**
- * Basic local content moderation (demo version)
- * In a real app, you would use the OpenAI Moderation API:
- * 
- * ```javascript
- * import OpenAI from "openai";
- * const openai = new OpenAI();
- * 
- * const moderation = await openai.moderations.create({
- *   model: "text-moderation-latest",
- *   input: textToModerate
- * });
- * ```
+ * OpenAI Moderation API result
  */
-export const moderateContent = (content: string): ModerationResult => {
+interface OpenAIModerationResult {
+  id: string;
+  model: string;
+  results: {
+    flagged: boolean;
+    categories: Record<string, boolean>;
+    category_scores: Record<string, number>;
+    category_applied_input_types?: Record<string, string[]>;
+  }[];
+}
+
+/**
+ * Content moderation using OpenAI's Moderation API
+ * Falls back to local moderation if OpenAI key is not available
+ */
+export const moderateContent = async (content: string): Promise<ModerationResult> => {
+  try {
+    const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
+
+    // If we have an OpenAI API key, use their moderation API
+    if (OPENAI_API_KEY) {
+      const openai = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+      });
+
+      const moderation = await openai.moderations.create({
+        input: content,
+      });
+
+      const result = moderation.results[0];
+
+      // Map OpenAI categories to our simplified categories
+      const categories: ModerationCategories = {
+        sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
+        hate: result.categories.hate || result.categories["hate/threatening"] || false,
+        harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
+        selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
+                  result.categories["self-harm/instructions"] || false,
+        violence: result.categories.violence || result.categories["violence/graphic"] || false,
+        illicit: result.categories.illicit || result.categories["illicit/violent"] || false
+      };
+
+      // Map scores
+      const categoryScores: Record<keyof ModerationCategories, number> = {
+        sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
+        hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
+        harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
+        selfHarm: Math.max(
+          result.category_scores["self-harm"] || 0, 
+          result.category_scores["self-harm/intent"] || 0,
+          result.category_scores["self-harm/instructions"] || 0
+        ),
+        violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
+        illicit: Math.max(result.category_scores.illicit || 0, result.category_scores["illicit/violent"] || 0)
+      };
+
+      return {
+        flagged: result.flagged,
+        categories,
+        categoryScores
+      };
+    }
+
+    // Fallback to simple local moderation
+    return localModerateContent(content);
+  } catch (error) {
+    console.error("Error using OpenAI moderation, falling back to local moderation:", error);
+    // Fallback to local moderation in case of API errors
+    return localModerateContent(content);
+  }
+};
+
+/**
+ * Basic local content moderation (fallback when OpenAI API is not available)
+ */
+export const localModerateContent = (content: string): ModerationResult => {
   // Simple word-based detection for demo purposes
   const sensitiveTerms = {
     sexual: ["porn", "xxx", "sex", "nude"],
@@ -96,8 +173,8 @@ export const moderateContent = (content: string): ModerationResult => {
  * @param input User input text
  * @returns Filtered text or null if completely blocked
  */
-export const filterUserInput = (input: string): { text: string | null; blocked: boolean } => {
-  const result = moderateContent(input);
+export const filterUserInput = async (input: string): Promise<{ text: string | null; blocked: boolean }> => {
+  const result = await moderateContent(input);
   
   // Block completely if high severity issues detected
   if (result.flagged && (result.categories.violence || result.categories.hate)) {
@@ -108,27 +185,26 @@ export const filterUserInput = (input: string): { text: string | null; blocked: 
   let filteredText = input;
   
   // Simple asterisk filtering for demo (in real app use more sophisticated methods)
-  const termsToFilter = [].concat(...Object.values(sensitiveTerms));
+  const sensitiveTerms = {
+    sexual: ["porn", "xxx", "sex", "nude"],
+    hate: ["hate", "racist", "nazi", "bigot"],
+    harassment: ["harass", "bully", "stalk"],
+    selfHarm: ["suicide", "kill myself", "self harm"],
+    violence: ["kill", "murder", "bomb", "shoot", "terrorist"],
+    illicit: ["drug", "cocaine", "heroin", "illegal"]
+  };
   
-  for (const term of termsToFilter) {
-    const regex = new RegExp(term, 'gi');
-    filteredText = filteredText.replace(regex, '*'.repeat(term.length));
+  for (const terms of Object.values(sensitiveTerms)) {
+    for (const term of terms) {
+      const regex = new RegExp(term, 'gi');
+      filteredText = filteredText.replace(regex, '*'.repeat(term.length));
+    }
   }
   
   return { 
     text: filteredText, 
     blocked: filteredText !== input 
   };
-};
-
-// Example sensitive terms for filtering
-const sensitiveTerms = {
-  sexual: ["porn", "xxx", "sex", "nude"],
-  hate: ["hate", "racist", "nazi", "bigot"],
-  harassment: ["harass", "bully", "stalk"],
-  selfHarm: ["suicide", "kill myself", "self harm"],
-  violence: ["kill", "murder", "bomb", "shoot", "terrorist"],
-  illicit: ["drug", "cocaine", "heroin", "illegal"]
 };
 
 /**

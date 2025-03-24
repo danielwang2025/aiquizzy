@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ReviewHub from "./pages/ReviewHub";
 import Contact from "./pages/Contact";
+import ApiKeysManager from "./components/ApiKeysManager";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <div className="fixed top-4 right-4 z-50">
+        <ApiKeysManager />
+      </div>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
