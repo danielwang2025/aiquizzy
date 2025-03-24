@@ -104,6 +104,19 @@ export default {
 				},
 				'spinner': {
 					to: { transform: 'rotate(360deg)' }
+				},
+				'scale-in': {
+					'0%': { transform: 'scale(0.95)', opacity: '0' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'scale-out': {
+					'0%': { transform: 'scale(1)', opacity: '1' },
+					'100%': { transform: 'scale(0.95)', opacity: '0' }
+				},
+				'shake': {
+					'0%, 100%': { transform: 'translateX(0)' },
+					'20%, 60%': { transform: 'translateX(-5px)' },
+					'40%, 80%': { transform: 'translateX(5px)' }
 				}
 			},
 			animation: {
@@ -115,7 +128,19 @@ export default {
 				'slide-down': 'slide-down 0.4s ease-out',
 				'bounce-limited': 'bounce-limited 2s ease-in-out infinite',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'spinner': 'spinner 1s linear infinite'
+				'spinner': 'spinner 1s linear infinite',
+				'scale-in': 'scale-in 0.2s ease-out',
+				'scale-out': 'scale-out 0.2s ease-out',
+				'shake': 'shake 0.6s ease-in-out'
+			},
+			fontFamily: {
+				sans: ['Inter', 'Roboto', 'system-ui', 'sans-serif'],
+			},
+			boxShadow: {
+				'button': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+				'button-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+				'card': '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
+				'card-hover': '0 10px 20px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05)',
 			}
 		}
 	},

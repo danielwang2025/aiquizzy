@@ -4,6 +4,9 @@ import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
 import DisputeForm from "./DisputeForm";
 import { isQuestionDisputed } from "@/utils/historyService";
+import { CheckCircle, HelpCircle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -25,6 +28,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [animatedIn, setAnimatedIn] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [isAlreadyDisputed, setIsAlreadyDisputed] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -55,31 +59,86 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     }
   };
 
+  const toggleHint = () => {
+    setShowHint(!showHint);
+  };
+
+  const getHint = () => {
+    if (question.type === "multiple_choice") {
+      return "Try to eliminate obviously incorrect options first. Focus on the key terms in the question.";
+    } else {
+      const answer = String(question.correctAnswer);
+      return `The answer starts with "${answer.charAt(0)}" and has ${answer.length} characters.`;
+    }
+  };
+
   return (
-    <div 
+    <motion.div 
       className={cn(
         "bg-white rounded-xl p-6 shadow-sm border border-border transition-all duration-300 mb-6",
-        "transform opacity-0 translate-y-4",
+        "transform",
         animatedIn && "opacity-100 translate-y-0",
         showResult && isCorrect && "border-l-4 border-l-green-500",
         showResult && isIncorrect && "border-l-4 border-l-red-500",
         isAlreadyDisputed && "opacity-50"
       )}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: animatedIn ? 1 : 0, y: animatedIn ? 0 : 20 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium text-sm">
-          {index + 1}
-        </span>
-        <h3 className="text-lg font-medium">{question.question}</h3>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium">
+            {index + 1}
+          </span>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+            {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
+          </span>
+        </div>
+        
+        {!isAlreadyDisputed && !showResult && !showHint && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleHint}
+            className="text-muted-foreground hover:bg-blue-50"
+          >
+            <HelpCircle className="mr-1 h-3.5 w-3.5" />
+            Not Sure
+          </Button>
+        )}
       </div>
+
+      <h3 className="text-xl font-medium mb-5 leading-relaxed tracking-wide pl-11">
+        {question.question}
+      </h3>
+
+      {showHint && !showResult && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-5 ml-11 p-3 border border-amber-200 bg-amber-50 rounded-lg"
+        >
+          <p className="text-amber-800">
+            <strong>Hint:</strong> {getHint()}
+          </p>
+        </motion.div>
+      )}
 
       {question.type === "multiple_choice" && question.options && (
         <div className="space-y-3 mt-4 pl-11">
           {question.options.map((option, i) => (
-            <div key={i} className="flex items-start gap-2">
+            <motion.div 
+              key={i} 
+              className="flex items-start gap-2"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
               <button
                 className={cn(
-                  "relative w-5 h-5 rounded-full border border-primary/30 flex-shrink-0 mt-0.5",
+                  "relative w-6 h-6 rounded-full border-2 border-primary/30 flex-shrink-0 mt-0.5",
                   "transition-all duration-300 hover:border-primary/70",
                   userAnswer === i && "bg-primary border-primary",
                   showResult && question.correctAnswer === i && "border-green-500 bg-green-500/20",
@@ -90,12 +149,30 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
               >
                 {userAnswer === i && (
                   <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="w-2 h-2 rounded-full bg-white" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                  </span>
+                )}
+                {showResult && question.correctAnswer === i && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
                   </span>
                 )}
               </button>
-              <span className="text-foreground">{option}</span>
-            </div>
+              <motion.button
+                className={cn(
+                  "text-foreground p-2 rounded-md w-full text-left transition-colors",
+                  "hover:bg-blue-50/50",
+                  showResult && question.correctAnswer === i && "font-medium text-green-700",
+                  showResult && userAnswer === i && userAnswer !== question.correctAnswer && "text-red-700"
+                )}
+                onClick={() => !showResult && !isAlreadyDisputed && onAnswer(i)}
+                disabled={showResult || isAlreadyDisputed}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <span className="leading-relaxed">{option}</span>
+              </motion.button>
+            </motion.div>
           ))}
         </div>
       )}
@@ -105,7 +182,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           <input
             type="text"
             className={cn(
-              "w-full p-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30",
+              "w-full p-3 border-2 border-border rounded-md",
+              "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
+              "text-lg font-medium transition-all",
               showResult && isCorrect && "border-green-500 ring-green-500/30",
               showResult && isIncorrect && "border-red-500 ring-red-500/30"
             )}
@@ -117,45 +196,57 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         </div>
       )}
 
-      {showResult && (
-        <div className={cn(
-          "mt-4 p-3 rounded-md transition-all duration-300 animate-fade-in",
-          isCorrect ? "bg-green-500/10 text-green-800" : "bg-red-500/10 text-red-800"
-        )}>
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="font-medium mb-1">
-                {isCorrect ? "Correct!" : "Incorrect!"}
-              </p>
-              <p className="text-sm">
-                {isCorrect 
-                  ? question.explanation 
-                  : `The correct answer is: ${
-                      question.type === "multiple_choice" && question.options
-                        ? question.options[question.correctAnswer as number]
-                        : question.correctAnswer
-                    }. ${question.explanation || ""}`
-                }
-              </p>
+      <AnimatePresence>
+        {showResult && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className={cn(
+              "mt-5 p-4 rounded-md ml-11",
+              isCorrect ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"
+            )}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-medium mb-2 text-lg">
+                  {isCorrect ? "Correct!" : "Incorrect!"}
+                </p>
+                <p className="text-base leading-relaxed">
+                  {isCorrect 
+                    ? question.explanation 
+                    : `The correct answer is: ${
+                        question.type === "multiple_choice" && question.options
+                          ? question.options[question.correctAnswer as number]
+                          : question.correctAnswer
+                      }. ${question.explanation || ""}`
+                  }
+                </p>
+              </div>
+              
+              {!isAlreadyDisputed && onDisputeQuestion && (
+                <Button
+                  onClick={handleOpenDispute}
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "text-xs ml-2 transition-colors",
+                    isCorrect ? "bg-white/30 hover:bg-white/50 text-green-800" : "bg-white/30 hover:bg-white/50 text-red-800"
+                  )}
+                >
+                  Dispute
+                </Button>
+              )}
+              
+              {isAlreadyDisputed && (
+                <span className="text-xs bg-white/30 px-2 py-1 rounded ml-2">
+                  Disputed
+                </span>
+              )}
             </div>
-            
-            {!isAlreadyDisputed && onDisputeQuestion && (
-              <button
-                onClick={handleOpenDispute}
-                className="text-xs bg-white/30 hover:bg-white/50 px-2 py-1 rounded text-current ml-2 transition-colors"
-              >
-                Dispute
-              </button>
-            )}
-            
-            {isAlreadyDisputed && (
-              <span className="text-xs bg-white/30 px-2 py-1 rounded ml-2">
-                Disputed
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dispute Form Dialog */}
       {showResult && onDisputeQuestion && (
@@ -167,7 +258,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           onDisputed={handleDisputed}
         />
       )}
-    </div>
+    </motion.div>
   );
 };
 

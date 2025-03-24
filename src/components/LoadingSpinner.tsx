@@ -1,14 +1,17 @@
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
+  color?: "primary" | "white" | "dark";
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   size = "md", 
-  className = "" 
+  className = "",
+  color = "primary"
 }) => {
   const sizeClasses = {
     sm: "w-5 h-5 border-2",
@@ -16,10 +19,20 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     lg: "w-12 h-12 border-4",
   };
 
+  const colorClasses = {
+    primary: "border-primary/20 border-t-primary",
+    white: "border-white/20 border-t-white",
+    dark: "border-gray-700/20 border-t-gray-700",
+  };
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={cn("relative", className)}>
       <div
-        className={`${sizeClasses[size]} rounded-full border-primary/20 border-t-primary animate-spinner`}
+        className={cn(
+          sizeClasses[size], 
+          colorClasses[color], 
+          "rounded-full animate-spinner"
+        )}
       />
     </div>
   );
