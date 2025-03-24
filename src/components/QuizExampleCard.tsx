@@ -42,18 +42,22 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
     return props.type === "选择题" && selectedOption === option && !isCorrectOption(option);
   };
 
+  const getTypeLabel = () => {
+    return props.type === "选择题" ? "Multiple Choice" : "Fill in the Blank";
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-md border border-border h-full">
       <div className="mb-4 flex justify-between items-center">
         <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
-          {props.type}
+          {getTypeLabel()}
         </span>
         {!showAnswer && (
           <button 
             onClick={toggleAnswer} 
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            查看答案
+            Show Answer
           </button>
         )}
       </div>
@@ -106,7 +110,7 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
                 showAnswer && userAnswer.toLowerCase() === props.answer.toLowerCase() ? "border-green-500 ring-green-500/50" : "",
                 showAnswer && userAnswer.toLowerCase() !== props.answer.toLowerCase() ? "border-red-500 ring-red-500/50" : ""
               )}
-              placeholder="输入你的答案..."
+              placeholder="Type your answer..."
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
               disabled={showAnswer}
@@ -119,7 +123,7 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
               )}
               disabled={!userAnswer || showAnswer}
             >
-              提交
+              Submit
             </button>
           </div>
         </div>
@@ -130,11 +134,11 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
           "mt-4 p-4 rounded-lg animate-fade-in",
           "bg-blue-50 border border-blue-100"
         )}>
-          <p className="font-medium text-blue-800 mb-1">答案解析：</p>
+          <p className="font-medium text-blue-800 mb-1">Answer Explanation:</p>
           <p className="text-blue-700">
             {props.type === "选择题" ? 
-              `正确答案是：${props.correctAnswer}。这是因为...` : 
-              `正确答案是：${props.answer}。填空题需要精确...`}
+              `The correct answer is: ${props.correctAnswer}. This is because...` : 
+              `The correct answer is: ${props.answer}. For fill-in questions, precision is important...`}
           </p>
         </div>
       )}

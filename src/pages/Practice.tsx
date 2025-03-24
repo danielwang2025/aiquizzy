@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { QuizQuestion } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Medal, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Medal, HelpCircle, Lightbulb } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -24,7 +24,7 @@ const Practice = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(string | number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [needsHint, setNeedsHint] = useState(false);
+  const [showCurrentHint, setShowCurrentHint] = useState(false);
   
   useEffect(() => {
     if (quizId) {
@@ -37,24 +37,26 @@ const Practice = () => {
         navigate("/customize");
       }
     } else {
-      // If no quizId is provided, show available quizzes
-      // In this simple version, just redirect to customize page
+      // If no quizId is provided, redirect to customize page
       navigate("/customize");
     }
     setLoading(false);
   }, [quizId, navigate]);
   
+  // Reset hint state when changing questions
+  useEffect(() => {
+    setShowCurrentHint(false);
+  }, [currentQuestionIndex]);
+  
   const handleAnswer = (answer: string | number) => {
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = answer;
     setUserAnswers(newAnswers);
-    setNeedsHint(false);
   };
   
   const goToNextQuestion = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setNeedsHint(false);
     } else {
       setShowResults(true);
     }
@@ -63,12 +65,11 @@ const Practice = () => {
   const goToPreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setNeedsHint(false);
     }
   };
   
-  const requestHint = () => {
-    setNeedsHint(true);
+  const toggleHint = () => {
+    setShowCurrentHint(!showCurrentHint);
   };
   
   const calculateResults = () => {
@@ -98,9 +99,18 @@ const Practice = () => {
   
   const getGeneralHint = (question: QuizQuestion) => {
     if (question.type === "multiple_choice") {
-      return "考虑每个选项的含义，排除明显不合理的选项，然后再从剩余选项中做出选择。";
+      return "Consider the meaning of each option, eliminate clearly incorrect choices, and then select from the remaining options.";
     } else {
-      return "回想与问题相关的关键概念和术语，尝试用专业术语表达你的答案。";
+      return "Recall key concepts and terminology related to the question. Try to express your answer using appropriate terminology.";
+    }
+  };
+  
+  const getSpecificHint = (question: QuizQuestion) => {
+    // This would ideally come from the API, but for now we'll generate a generic hint
+    if (question.type === "multiple_choice") {
+      return "Look for keywords in the question that match with specific options. Think about related concepts that might help narrow down your choices.";
+    } else {
+      return "The answer is likely related to the main concept being tested. Consider synonyms or alternative phrasings if you're stuck.";
     }
   };
   
@@ -145,48 +155,64 @@ const Practice = () => {
             <div>
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">进度</span>
+                  <span className="text-sm font-medium">Progress</span>
                   <span className="text-sm font-medium">{currentQuestionIndex + 1} / {quiz.questions.length}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-sm border border-border">
-                <div className="mb-4 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-medium text-sm mr-2">
+                <div className="mb-6 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-medium text-sm">
                       {currentQuestionIndex + 1}
                     </span>
-                    <span className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-md capitalize">
+                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md capitalize text-sm font-medium">
                       {currentQuestion.difficulty}
+                    </span>
+                    <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-sm font-medium">
+                      {currentQuestion.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
                     </span>
                   </div>
                   
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8">
-                        <HelpCircle className="h-4 w-4 mr-1" />
-                        不确定
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium">提示</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {getGeneralHint(currentQuestion)}
-                        </p>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8"
+                    onClick={toggleHint}
+                  >
+                    <HelpCircle className="h-4 w-4 mr-1" />
+                    Not Sure
+                  </Button>
                 </div>
                 
-                <QuizQuestionComponent 
-                  question={currentQuestion}
-                  userAnswer={userAnswers[currentQuestionIndex]}
-                  onAnswer={handleAnswer}
-                  showResult={false}
-                  index={currentQuestionIndex}
-                />
+                <div className="mb-8">
+                  <h2 className="text-xl font-medium mb-6">
+                    {currentQuestion.question}
+                  </h2>
+                  
+                  {showCurrentHint && (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg animate-fade-in">
+                      <div className="flex items-start">
+                        <Lightbulb className="h-5 w-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium text-amber-800 mb-1">Hint</h4>
+                          <p className="text-sm text-amber-700">
+                            {getSpecificHint(currentQuestion)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <QuizQuestionComponent 
+                    question={currentQuestion}
+                    userAnswer={userAnswers[currentQuestionIndex]}
+                    onAnswer={handleAnswer}
+                    showResult={false}
+                    index={currentQuestionIndex}
+                  />
+                </div>
                 
                 <div className="flex justify-between mt-6">
                   <Button
@@ -196,7 +222,7 @@ const Practice = () => {
                     className="flex items-center"
                   >
                     <ArrowLeft className="h-4 w-4 mr-1" />
-                    上一题
+                    Previous
                   </Button>
                   
                   <Button
@@ -205,9 +231,9 @@ const Practice = () => {
                     className="flex items-center bg-blue-600 hover:bg-blue-700"
                   >
                     {currentQuestionIndex === quiz.questions.length - 1 ? (
-                      <>完成测试<Medal className="h-4 w-4 ml-1" /></>
+                      <>Complete Quiz<Medal className="h-4 w-4 ml-1" /></>
                     ) : (
-                      <>下一题<ArrowRight className="h-4 w-4 ml-1" /></>
+                      <>Next<ArrowRight className="h-4 w-4 ml-1" /></>
                     )}
                   </Button>
                 </div>
@@ -215,7 +241,7 @@ const Practice = () => {
             </div>
           ) : (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-border">
-              <h2 className="text-2xl font-bold mb-4 text-center">测试结果</h2>
+              <h2 className="text-2xl font-bold mb-4 text-center">Quiz Results</h2>
               
               {(() => {
                 const results = calculateResults();
@@ -224,22 +250,22 @@ const Practice = () => {
                   <div>
                     <div className="grid grid-cols-3 gap-4 mb-6">
                       <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                        <p className="text-sm text-muted-foreground">题目总数</p>
+                        <p className="text-sm text-muted-foreground">Total Questions</p>
                         <p className="text-2xl font-semibold">{results.totalQuestions}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-green-500/10 text-center">
-                        <p className="text-sm text-green-800">正确</p>
+                        <p className="text-sm text-green-800">Correct</p>
                         <p className="text-2xl font-semibold text-green-700">{results.correctCount}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-red-500/10 text-center">
-                        <p className="text-sm text-red-800">错误</p>
+                        <p className="text-sm text-red-800">Incorrect</p>
                         <p className="text-2xl font-semibold text-red-700">{results.incorrectCount}</p>
                       </div>
                     </div>
                     
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">得分</span>
+                        <span className="font-medium">Score</span>
                         <span className="font-semibold">{results.score}%</span>
                       </div>
                       <div className="w-full bg-secondary rounded-full h-2.5">
@@ -253,19 +279,19 @@ const Practice = () => {
                       </div>
                       
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <h4 className="font-semibold text-blue-800 mb-2">AI 学习建议</h4>
+                        <h4 className="font-semibold text-blue-800 mb-2">AI Learning Recommendations</h4>
                         <p className="text-blue-700 text-sm">
                           {results.score >= 80 
-                            ? "优秀的表现！考虑尝试更高难度的题目来挑战自己。" 
+                            ? "Excellent performance! Consider trying more challenging questions to push yourself further." 
                             : results.score >= 60 
-                            ? "不错的尝试！重点复习你错误的题目，加深理解。" 
-                            : "继续努力！建议重新学习相关概念，然后再次尝试测试。"}
+                            ? "Good attempt! Focus on reviewing the questions you got wrong to deepen your understanding." 
+                            : "Keep practicing! We recommend revisiting the concepts and trying the quiz again."}
                         </p>
                       </div>
                     </div>
                     
                     <div className="space-y-3">
-                      <h3 className="font-semibold">题目总结</h3>
+                      <h3 className="font-semibold">Question Summary</h3>
                       
                       {quiz.questions.map((question: QuizQuestion, index: number) => {
                         const userAnswer = userAnswers[index];
@@ -287,9 +313,9 @@ const Practice = () => {
                                 <p className="font-medium">{index + 1}. {question.question}</p>
                                 <p className="text-sm mt-1">
                                   {isCorrect 
-                                    ? <span className="text-green-700">正确</span> 
+                                    ? <span className="text-green-700">Correct</span> 
                                     : <span className="text-red-700">
-                                        错误。正确答案: {
+                                        Incorrect. Correct answer: {
                                           question.type === "multiple_choice" 
                                             ? question.options[question.correctAnswer as number] 
                                             : question.correctAnswer
@@ -307,7 +333,7 @@ const Practice = () => {
                                   setCurrentQuestionIndex(index);
                                 }}
                               >
-                                查看
+                                Review
                               </Button>
                             </div>
                           </div>
@@ -317,7 +343,7 @@ const Practice = () => {
                     
                     <div className="flex justify-between mt-8">
                       <Button variant="outline" onClick={() => navigate("/customize")}>
-                        创建新的测试
+                        Create New Quiz
                       </Button>
                       <Button 
                         onClick={() => {
@@ -327,7 +353,7 @@ const Practice = () => {
                         }}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        重新测试
+                        Retry Quiz
                       </Button>
                     </div>
                   </div>

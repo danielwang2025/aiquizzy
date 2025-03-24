@@ -16,9 +16,9 @@ const QuizCustomizer = () => {
 
   useEffect(() => {
     if (!isAuth) {
-      toast.info("请登录以创建测试题", {
+      toast.info("Please sign in to create personalized quizzes", {
         action: {
-          label: "登录",
+          label: "Sign In",
           onClick: handleLoginClick,
         },
       });
@@ -37,10 +37,10 @@ const QuizCustomizer = () => {
       <main className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-3 text-center">
-            自定义测试题
+            Customize Your Quiz
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            输入你的学习目标，获取个性化练习题
+            Enter your learning objectives to get personalized practice questions
           </p>
           
           {isAuth ? (
@@ -54,14 +54,14 @@ const QuizCustomizer = () => {
                   </div>
                 </div>
                 
-                <h2 className="text-xl font-semibold mb-4 text-center">需要登录</h2>
+                <h2 className="text-xl font-semibold mb-4 text-center">Sign In Required</h2>
                 <p className="mb-6 text-muted-foreground text-center">
-                  登录后即可创建自定义测试题，并保存你的学习进度
+                  Sign in to create custom quizzes and save your learning progress
                 </p>
                 
                 <div className="grid gap-6">
                   <Button onClick={handleLoginClick} size="lg" className="w-full">
-                    登录或注册
+                    Sign In or Register
                   </Button>
                   
                   <div className="relative">
@@ -69,7 +69,7 @@ const QuizCustomizer = () => {
                       <span className="w-full border-t"></span>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-muted-foreground">或者</span>
+                      <span className="bg-white px-2 text-muted-foreground">OR</span>
                     </div>
                   </div>
                   
@@ -77,16 +77,16 @@ const QuizCustomizer = () => {
                     <div className="flex items-start">
                       <Lightbulb className="w-5 h-5 text-amber-600 mr-2 mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-amber-800 mb-1">免注册体验</h4>
+                        <h4 className="font-medium text-amber-800 mb-1">Try Without Signing Up</h4>
                         <p className="text-sm text-amber-700">
-                          您可以试用我们的基础版，无需注册即可生成 5 道测试题
+                          You can try our basic version and generate up to 5 questions without registration
                         </p>
                         <Button 
                           variant="outline" 
                           className="mt-3 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 hover:text-amber-900"
                           onClick={() => navigate("/practice/demo")}
                         >
-                          免费体验
+                          Try Demo Version
                         </Button>
                       </div>
                     </div>

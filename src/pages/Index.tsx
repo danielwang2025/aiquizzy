@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -49,16 +50,16 @@ const Index = () => {
             className="relative z-10 max-w-4xl mx-auto text-center px-4"
           >
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-              AI 生成个性化练习题，助你高效学习！
+              AI-Powered Practice Questions for Effective Learning
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8">
-              输入你的学习科目，立即获得量身定制的练习题
+              Enter your study subject and instantly get customized practice questions
             </p>
             
             <div className="max-w-xl mx-auto flex flex-col sm:flex-row gap-3">
               <Input 
                 type="text" 
-                placeholder="例如：React基础知识，JavaScript ES6语法..." 
+                placeholder="E.g., React basics, JavaScript ES6 syntax..." 
                 className="bg-white/20 border-white/30 text-white placeholder:text-white/70 h-12"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -68,7 +69,7 @@ const Index = () => {
                 className="bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800 h-12"
                 onClick={() => topic && window.location.assign(`/customize?topic=${encodeURIComponent(topic)}`)}
               >
-                开始练习
+                Start Practice
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -76,15 +77,15 @@ const Index = () => {
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <div className="flex items-center">
                 <CheckCircle className="text-green-300 mr-2 h-5 w-5" />
-                <span>立即生成题目</span>
+                <span>Instant Question Generation</span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="text-green-300 mr-2 h-5 w-5" />
-                <span>AI 智能解析</span>
+                <span>AI-Powered Explanations</span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="text-green-300 mr-2 h-5 w-5" />
-                <span>个性化学习路径</span>
+                <span>Personalized Learning Path</span>
               </div>
             </div>
           </motion.div>
@@ -93,10 +94,10 @@ const Index = () => {
         {/* AI Question Examples Carousel */}
         <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-6">
-            AI 智能出题示例
+            AI Question Examples
           </h2>
           <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto">
-            查看我们的 AI 如何根据学习目标生成量身定制的练习题，帮助你高效掌握知识
+            See how our AI creates tailored practice questions based on your learning objectives
           </p>
           
           <div className="max-w-4xl mx-auto px-4">
@@ -105,7 +106,7 @@ const Index = () => {
                 <CarouselItem>
                   <QuizExampleCard 
                     type="选择题" 
-                    question="React 中，以下哪个钩子用于在组件挂载后执行副作用？" 
+                    question="In React, which hook is used for side effects after component mounting?" 
                     options={["useState", "useEffect", "useContext", "useReducer"]} 
                     correctAnswer="useEffect"
                   />
@@ -113,14 +114,14 @@ const Index = () => {
                 <CarouselItem>
                   <QuizExampleCard 
                     type="填空题" 
-                    question="在 JavaScript 中，用于创建包含唯一值的数组或对象的数据结构是 ________。" 
+                    question="In JavaScript, the data structure used to create a collection of unique values is called a ________." 
                     answer="Set"
                   />
                 </CarouselItem>
                 <CarouselItem>
                   <QuizExampleCard 
                     type="选择题" 
-                    question="以下哪种方法可以防止 React 中的事件冒泡？" 
+                    question="Which method prevents event bubbling in React?" 
                     options={["event.stopPropagation()", "event.preventDefault()", "event.stop()", "event.halt()"]} 
                     correctAnswer="event.stopPropagation()"
                   />
@@ -136,7 +137,7 @@ const Index = () => {
           <div className="text-center mt-8">
             <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
               <Link to="/customize">
-                创建你的练习题
+                Create Your Practice Quiz
                 <ChevronRight className="ml-1 h-5 w-5" />
               </Link>
             </Button>
@@ -145,16 +146,16 @@ const Index = () => {
         
         {/* Trust Indicators */}
         <section className="mb-16 bg-white rounded-xl p-8 border border-border">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">为什么选择我们？</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Why Choose Us?</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">10,000+ 学生使用</h3>
+              <h3 className="text-xl font-semibold mb-2">10,000+ Students</h3>
               <p className="text-muted-foreground">
-                来自全球各地的学生信赖我们的 AI 学习平台，提升学习效率
+                Students from around the world trust our AI learning platform to improve their study efficiency
               </p>
             </div>
             
@@ -162,9 +163,9 @@ const Index = () => {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">98% 用户好评</h3>
+              <h3 className="text-xl font-semibold mb-2">98% Positive Feedback</h3>
               <p className="text-muted-foreground">
-                绝大多数用户反馈他们的学习效率和理解能力得到显著提升
+                The vast majority of users report significant improvements in learning efficiency and comprehension
               </p>
             </div>
             
@@ -172,39 +173,39 @@ const Index = () => {
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Medal className="h-8 w-8 text-amber-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">AI 精准推荐</h3>
+              <h3 className="text-xl font-semibold mb-2">AI-Powered Recommendations</h3>
               <p className="text-muted-foreground">
-                我们的 AI 引擎能根据你的学习情况智能推荐个性化的学习内容
+                Our AI engine intelligently recommends personalized content based on your learning progress
               </p>
             </div>
           </div>
           
           <div className="mt-10 text-center">
             <div className="inline-block bg-blue-50 rounded-full px-6 py-3 text-blue-800 font-medium">
-              不注册也能免费体验 5 道练习题！
+              Try up to 5 practice questions for free, no registration required!
             </div>
           </div>
         </section>
         
-        {/* How It Works Section - Keeping the existing section with minor updates */}
+        {/* How It Works Section */}
         <section className="mb-16">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">如何使用</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 icon: <Star className="h-12 w-12 text-amber-500" />,
-                title: "输入学习目标",
-                description: "告诉我们你想学习的内容，AI 将根据你的需求生成个性化练习题"
+                title: "Enter Learning Goals",
+                description: "Tell us what you want to learn, and our AI will generate personalized practice questions"
               },
               {
                 icon: <Medal className="h-12 w-12 text-emerald-500" />,
-                title: "解答练习题",
-                description: "完成 AI 生成的练习题，获得即时反馈和详细解析"
+                title: "Answer Questions",
+                description: "Complete the AI-generated questions and get instant feedback and detailed explanations"
               },
               {
                 icon: <Clock className="h-12 w-12 text-blue-500" />,
-                title: "追踪学习进度",
-                description: "查看你的学习数据和进步，发现需要改进的领域"
+                title: "Track Your Progress",
+                description: "View your learning data and improvement over time to identify areas for growth"
               }
             ].map((feature, index) => (
               <motion.div
@@ -222,7 +223,7 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Team Section - Keeping the existing section */}
+        {/* Team Section */}
         <section className="mb-12 bg-white rounded-xl p-8 border border-border">
           <h2 className="text-2xl font-bold text-center mb-2">Our Team</h2>
           <p className="text-center text-muted-foreground mb-8">Meet the people behind AI Quizzy</p>
@@ -269,7 +270,7 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Vision and Mission Section - Keeping the existing section */}
+        {/* Vision and Mission Section */}
         <section className="mb-12">
           <div className="grid md:grid-cols-2 gap-8">
             <motion.div 

@@ -1,3 +1,4 @@
+
 import React, { useState, useReducer, useEffect } from "react";
 import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
@@ -31,6 +32,12 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUploader from "./FileUploader";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "@/utils/authService";
+
+// Interface for QuizGenerator props
+interface QuizGeneratorProps {
+  initialTopic?: string;
+}
 
 // Action types
 type QuizAction =
@@ -128,23 +135,41 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
   }
 }
 
-const QuizGenerator: React.FC = () => {
+const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
-  const [objectives, setObjectives] = useState("");
+  const [objectives, setObjectives] = useState(initialTopic);
   const [extractedText, setExtractedText] = useState("");
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   const navigate = useNavigate();
+  const isAuth = isAuthenticated();
   
   // New state variables for customization options
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
   
+  // Demo mode state
+  const [demoLimitReached, setDemoLimitReached] = useState(false);
+  
   // Load quiz history from localStorage on component mount
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
-  }, []);
+    
+    // Check if demo limit has been reached
+    if (!isAuth) {
+      const demoUsage = localStorage.getItem("demoQuizUsage");
+      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
+      
+      // Reset counter if it's been more than 24 hours
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      if (Date.now() - usage.timestamp > oneDayMs) {
+        localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
+      } else if (usage.count >= 5) {
+        setDemoLimitReached(true);
+      }
+    }
+  }, [isAuth]);
 
   // Generate quiz based on learning objectives
   const handleGenerate = async () => {
@@ -153,6 +178,32 @@ const QuizGenerator: React.FC = () => {
     if (!combinedObjectives) {
       toast.error("Please enter learning objectives");
       return;
+    }
+    
+    // Check if demo limit has been reached for non-authenticated users
+    if (!isAuth) {
+      const demoUsage = localStorage.getItem("demoQuizUsage");
+      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
+      
+      if (usage.count >= 5) {
+        setDemoLimitReached(true);
+        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
+        return;
+      }
+      
+      // Update usage count
+      const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
+      localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
+      
+      // Show remaining attempts
+      const remaining = 5 - newUsage.count;
+      if (remaining <= 2) {
+        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
+      }
+      
+      if (newUsage.count >= 5) {
+        setDemoLimitReached(true);
+      }
     }
 
     dispatch({ type: "SET_LOADING" });
@@ -521,12 +572,25 @@ const QuizGenerator: React.FC = () => {
             </div>
           </div>
           
-          <button
-            className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-            onClick={handleGenerate}
-          >
-            Generate Quiz
-          </button>
+          {demoLimitReached && !isAuth ? (
+            <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-amber-800 font-medium">You've reached the demo limit (5 quizzes).</p>
+              <p className="text-sm text-amber-700 mb-4">Sign in to create unlimited quizzes and track your progress.</p>
+              <Button 
+                onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()}
+                className="w-full"
+              >
+                Sign In to Continue
+              </Button>
+            </div>
+          ) : (
+            <button
+              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
+              onClick={handleGenerate}
+            >
+              Generate Quiz
+            </button>
+          )}
           
           <p className="text-center text-sm text-muted-foreground mt-4">
             Enter specific learning objectives to generate customized questions tailored to your learning needs.
