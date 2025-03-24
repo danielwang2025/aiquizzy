@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -105,7 +104,7 @@ const Index = () => {
               <CarouselContent>
                 <CarouselItem>
                   <QuizExampleCard 
-                    type="选择题" 
+                    type="Multiple Choice" 
                     question="In React, which hook is used for side effects after component mounting?" 
                     options={["useState", "useEffect", "useContext", "useReducer"]} 
                     correctAnswer="useEffect"
@@ -113,14 +112,14 @@ const Index = () => {
                 </CarouselItem>
                 <CarouselItem>
                   <QuizExampleCard 
-                    type="填空题" 
+                    type="Fill in the Blank" 
                     question="In JavaScript, the data structure used to create a collection of unique values is called a ________." 
                     answer="Set"
                   />
                 </CarouselItem>
                 <CarouselItem>
                   <QuizExampleCard 
-                    type="选择题" 
+                    type="Multiple Choice" 
                     question="Which method prevents event bubbling in React?" 
                     options={["event.stopPropagation()", "event.preventDefault()", "event.stop()", "event.halt()"]} 
                     correctAnswer="event.stopPropagation()"
