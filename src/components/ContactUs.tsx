@@ -46,7 +46,8 @@ const ContactUs: React.FC = () => {
         return;
       }
 
-      const moderationResult = moderateContent(formData.message);
+      // Wait for the moderation result
+      const moderationResult = await moderateContent(formData.message);
       if (moderationResult.flagged) {
         toast.error("Your message contains potentially harmful content and cannot be sent.");
         setIsSubmitting(false);

@@ -20,7 +20,8 @@ export async function generateQuestions(
       throw new Error("Prompt injection attempt detected");
     }
 
-    const moderationResult = moderateContent(learningObjectives);
+    // Wait for the moderation result
+    const moderationResult = await moderateContent(learningObjectives);
     if (moderationResult.flagged) {
       toast.error("Your input contains potentially harmful content and cannot be processed.");
       throw new Error("Content moderation failed");
