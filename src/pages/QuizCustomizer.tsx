@@ -1,20 +1,27 @@
 
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import QuizGenerator from "@/components/QuizGenerator";
 import { isAuthenticated } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole } from "lucide-react";
+import { LockKeyhole, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
+  const [searchParams] = useSearchParams();
+  const topicFromUrl = searchParams.get("topic") || "";
 
   useEffect(() => {
     if (!isAuth) {
-      toast.info("Please log in to create quizzes");
+      toast.info("请登录以创建测试题", {
+        action: {
+          label: "登录",
+          onClick: handleLoginClick,
+        },
+      });
     }
   }, [isAuth]);
 
@@ -29,25 +36,63 @@ const QuizCustomizer = () => {
       
       <main className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6 text-center">
-            Customize Your Quiz
+          <h1 className="text-3xl font-bold mb-3 text-center">
+            自定义测试题
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Create personalized practice questions tailored to your learning objectives
+            输入你的学习目标，获取个性化练习题
           </p>
           
           {isAuth ? (
-            <QuizGenerator />
+            <QuizGenerator initialTopic={topicFromUrl} />
           ) : (
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-border text-center">
-              <LockKeyhole className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-              <p className="mb-6 text-muted-foreground">
-                You need to be logged in to create custom quizzes.
-              </p>
-              <Button onClick={handleLoginClick}>
-                Login or Register
-              </Button>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-border">
+              <div className="max-w-md mx-auto">
+                <div className="flex justify-center mb-6">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                    <LockKeyhole className="w-10 h-10 text-blue-600" />
+                  </div>
+                </div>
+                
+                <h2 className="text-xl font-semibold mb-4 text-center">需要登录</h2>
+                <p className="mb-6 text-muted-foreground text-center">
+                  登录后即可创建自定义测试题，并保存你的学习进度
+                </p>
+                
+                <div className="grid gap-6">
+                  <Button onClick={handleLoginClick} size="lg" className="w-full">
+                    登录或注册
+                  </Button>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t"></span>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">或者</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <div className="flex items-start">
+                      <Lightbulb className="w-5 h-5 text-amber-600 mr-2 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-amber-800 mb-1">免注册体验</h4>
+                        <p className="text-sm text-amber-700">
+                          您可以试用我们的基础版，无需注册即可生成 5 道测试题
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-3 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 hover:text-amber-900"
+                          onClick={() => navigate("/practice/demo")}
+                        >
+                          免费体验
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

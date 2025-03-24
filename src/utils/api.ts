@@ -16,14 +16,14 @@ export async function generateQuestions(
   try {
     // Check for prompt injection or harmful content
     if (detectPromptInjection(learningObjectives)) {
-      toast.error("Potential prompt injection detected. Please reformulate your request.");
+      toast.error("检测到潜在的提示注入。请重新表述您的请求。");
       throw new Error("Prompt injection attempt detected");
     }
 
     // Wait for the moderation result
     const moderationResult = await moderateContent(learningObjectives);
     if (moderationResult.flagged) {
-      toast.error("Your input contains potentially harmful content and cannot be processed.");
+      toast.error("您的输入包含潜在有害内容，无法处理。");
       throw new Error("Content moderation failed");
     }
     
@@ -48,13 +48,13 @@ export async function generateQuestions(
     console.log("Generating quiz for learning objectives:", learningObjectives);
     console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
     
-    toast.loading("Generating questions with AI...");
+    toast.loading("AI 正在生成练习题...");
 
     // Get the DeepSeek API key from our environment variables
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
     // Customize the system prompt based on options
-    const systemPrompt = `You are a quiz generator. Create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided. The difficulty level should be ${difficulty}. Return the response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "Question with ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}]}`;
+    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
     
     // Add CSRF token to headers
     const headers = addCsrfToHeaders({
@@ -74,7 +74,7 @@ export async function generateQuestions(
           },
           {
             role: "user",
-            content: `Create a quiz based on these learning objectives: ${learningObjectives}`
+            content: `根据这些学习目标创建测试：${learningObjectives}`
           }
         ],
         temperature: 0.7,
@@ -146,11 +146,11 @@ export async function generateQuestions(
       return questions;
     } catch (error) {
       console.error("Error parsing DeepSeek response:", error);
-      throw new Error("Failed to parse questions from DeepSeek API response");
+      throw new Error("解析 DeepSeek API 响应中的问题失败");
     }
   } catch (error) {
     console.error("Error generating quiz:", error);
-    toast.error("Failed to generate quiz. Please try again.");
+    toast.error("生成测试失败。请重试。");
     throw new Error("Failed to generate quiz");
   }
 }
