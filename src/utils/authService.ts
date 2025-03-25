@@ -112,10 +112,22 @@ export const getCurrentUser = async (): Promise<User | null> => {
   }
 };
 
-// Check if user is authenticated
-export const isAuthenticated = async (): Promise<boolean> => {
-  const user = await getCurrentUser();
-  return !!user;
+// Check if user is authenticated - synchronous version that just checks local storage
+export const isAuthenticated = (): boolean => {
+  const session = localStorage.getItem('supabase.auth.token');
+  return !!session;
+};
+
+// Get current user synchronously (for non-async contexts)
+export const getCurrentUserSync = (): User | null => {
+  try {
+    // Parse from local storage - this is NOT a complete solution but works for simple cases
+    const session = JSON.parse(localStorage.getItem('sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token') || '{}');
+    return session?.user || null;
+  } catch (error) {
+    console.error("Error parsing user data:", error);
+    return null;
+  }
 };
 
 // Logout user
