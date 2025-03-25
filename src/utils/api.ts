@@ -2,7 +2,7 @@
 import { QuizQuestion } from "@/types/quiz";
 import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/securityUtils";
-import { getApiKey } from "@/utils/envVars";
+import { getEnvVar } from "@/utils/envConfig";
 import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
 
 export async function generateQuestions(
@@ -50,11 +50,11 @@ export async function generateQuestions(
     
     toast.loading("AI 正在生成练习题...");
 
-    // Get the DeepSeek API key from our environment variables
-    const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
+    // Get the DeepSeek API key from environment variables
+    const DEEPSEEK_API_KEY = getEnvVar("DEEPSEEK_API_KEY");
     
-    // Customize the system prompt based on options
-    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
+    // Customize the system prompt based on options, now including hints
+    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。每个问题都应包含一个有用的提示(hint)，以帮助学生解决问题。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}", "hint": "这个问题的提示"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}", "hint": "填空题的提示"}]}`;
     
     // Add CSRF token to headers
     const headers = addCsrfToHeaders({
@@ -134,12 +134,18 @@ export async function generateQuestions(
         const topics = learningObjectives.split(',').map(t => t.trim());
         const topic = topics.length > 0 ? topics[0] : undefined;
         
+        // Ensure we have a hint, or generate a default one
+        const hint = q.hint || (q.type === "multiple_choice" 
+          ? "试着排除明显不正确的选项，并专注于问题中的关键术语。" 
+          : `答案以"${String(q.correctAnswer).charAt(0)}"开头，并且有${String(q.correctAnswer).length}个字符。`);
+        
         return {
           ...q,
           id,
           correctAnswer,
           difficulty: q.difficulty || difficulty,
-          topic
+          topic,
+          hint
         };
       });
       

@@ -8,18 +8,34 @@ import { Button } from "@/components/ui/button";
 import { LockKeyhole, Lightbulb, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import EnvConfig from "@/components/EnvConfig";
+import { hasAllRequiredEnvVars } from "@/utils/envConfig";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
   const [searchParams] = useSearchParams();
   const topicFromUrl = searchParams.get("topic") || "";
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    if (!isAuth) {
-      toast.info("Please sign in to create personalized quizzes", {
+    // Check if all required environment variables are set
+    if (!hasAllRequiredEnvVars()) {
+      toast.warning("请配置必要的API密钥以使用完整功能", {
         action: {
-          label: "Sign In",
+          label: "立即配置",
+          onClick: () => {
+            document.querySelector<HTMLButtonElement>('[title="配置环境变量"]')?.click();
+          }
+        },
+        duration: 5000,
+      });
+    }
+
+    if (!isAuth) {
+      toast.info("请登录以创建个性化的测验", {
+        action: {
+          label: "登录",
           onClick: handleLoginClick,
         },
       });
@@ -32,7 +48,7 @@ const QuizCustomizer = () => {
   };
 
   const handleDemoClick = () => {
-    navigate("/practice/demo");
+    setIsDemo(true);
   };
 
   const containerVariants = {
@@ -51,6 +67,17 @@ const QuizCustomizer = () => {
       
       <main className="py-8 px-4 md:py-12">
         <div className="max-w-3xl mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-2xl font-bold"
+            >
+              学习助手
+            </motion.h1>
+            <EnvConfig />
+          </div>
+          
           <motion.div
             initial="hidden"
             animate="visible"
@@ -61,18 +88,18 @@ const QuizCustomizer = () => {
               variants={itemVariants} 
               className="text-3xl md:text-4xl font-bold mb-3 text-gradient-primary"
             >
-              Customize Your Quiz
+              定制你的测验
             </motion.h1>
             <motion.p 
               variants={itemVariants} 
               className="text-center text-muted-foreground mb-8 text-lg max-w-xl mx-auto"
             >
-              Enter your learning objectives to get personalized practice questions
+              输入你的学习目标，获取个性化的练习题
             </motion.p>
           </motion.div>
           
-          {isAuth ? (
-            <QuizGenerator initialTopic={topicFromUrl} />
+          {isAuth || isDemo ? (
+            <QuizGenerator initialTopic={topicFromUrl} isDemoMode={isDemo} />
           ) : (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -91,9 +118,9 @@ const QuizCustomizer = () => {
                   </motion.div>
                 </div>
                 
-                <h2 className="text-2xl font-semibold mb-4 text-center">Sign In Required</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-center">需要登录</h2>
                 <p className="mb-8 text-muted-foreground text-center text-lg leading-relaxed">
-                  Sign in to create custom quizzes and save your learning progress
+                  登录以创建自定义测验并保存你的学习进度
                 </p>
                 
                 <div className="grid gap-6">
@@ -102,7 +129,7 @@ const QuizCustomizer = () => {
                     size="lg" 
                     className="w-full py-6 text-lg btn-scale font-medium shadow-button hover:shadow-button-hover"
                   >
-                    Sign In or Register
+                    登录或注册
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                   
@@ -111,7 +138,7 @@ const QuizCustomizer = () => {
                       <span className="w-full border-t"></span>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-4 py-1 text-muted-foreground font-medium">OR</span>
+                      <span className="bg-white px-4 py-1 text-muted-foreground font-medium">或者</span>
                     </div>
                   </div>
                   
@@ -123,16 +150,16 @@ const QuizCustomizer = () => {
                     <div className="flex items-start">
                       <Lightbulb className="w-6 h-6 text-amber-600 mr-3 mt-0.5" />
                       <div>
-                        <h4 className="font-semibold text-amber-800 mb-2 text-lg">Try Without Signing Up</h4>
+                        <h4 className="font-semibold text-amber-800 mb-2 text-lg">无需登录也能尝试</h4>
                         <p className="text-amber-700 mb-4 leading-relaxed">
-                          You can try our basic version and generate up to 5 questions without registration
+                          你可以尝试我们的基础版本，无需注册即可生成多达 5 个问题
                         </p>
                         <Button 
                           variant="outline" 
                           className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 hover:text-amber-900 btn-scale shadow-sm"
                           onClick={handleDemoClick}
                         >
-                          Try Demo Version
+                          尝试演示版本
                         </Button>
                       </div>
                     </div>
