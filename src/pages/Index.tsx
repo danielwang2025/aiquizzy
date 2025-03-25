@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,17 +27,23 @@ import {
 } from "@/components/ui/carousel";
 import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
+import SupabaseAnnouncement from "@/components/SupabaseAnnouncement";
 
 const Index = () => {
   const history = loadQuizHistory();
   const hasHistory = history.attempts.length > 0;
   const [topic, setTopic] = useState("");
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navigation />
       
       <main className="py-8 px-4 max-w-screen-xl mx-auto">
+        {showAnnouncement && (
+          <SupabaseAnnouncement onClose={() => setShowAnnouncement(false)} />
+        )}
+        
         {/* Hero Section */}
         <section className="relative py-16 mb-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">

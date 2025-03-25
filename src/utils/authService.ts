@@ -1,146 +1,196 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { UserWithProfile, Profile } from "@/types/supabase";
-import { toast } from "sonner";
+import { User } from "@/types/quiz";
+import { addCsrfToHeaders, validateStrongPassword } from "./securityUtils";
 
-// Auth state type
-export interface AuthState {
-  user: UserWithProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
+// LocalStorage keys
+const USER_KEY = "quiz_user";
+const AUTH_TOKEN_KEY = "quiz_auth_token";
 
-// Initialize auth state
-export const initialAuthState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-};
+// Simulated API delay for authentication operations
+const SIMULATED_DELAY = 800;
 
-// Sign up with email and password
-export const signUp = async (email: string, password: string, displayName?: string) => {
+/**
+ * Simple user registration with security enhancements
+ */
+export const registerUser = async (email: string, password: string, displayName?: string): Promise<User> => {
   try {
-    const { data, error } = await supabase.auth.signUp({
+    // Validate password strength
+    const passwordValidation = validateStrongPassword(password);
+    if (!passwordValidation.isValid) {
+      throw new Error(passwordValidation.message);
+    }
+    
+    // Add simulated API delay
+    await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
+    
+    // Check if email is already registered
+    const existingUsers = localStorage.getItem("quiz_users");
+    const users = existingUsers ? JSON.parse(existingUsers) : [];
+    
+    const existingUser = users.find((u: any) => u.email === email);
+    if (existingUser) {
+      throw new Error("Email already registered");
+    }
+    
+    // Create new user
+    const newUser: User = {
+      id: crypto.randomUUID(),
       email,
-      password,
-      options: {
-        data: {
-          name: displayName || email.split('@')[0],
-        },
-      },
-    });
-
-    if (error) throw error;
+      displayName: displayName || email.split('@')[0],
+      createdAt: new Date().toISOString()
+    };
     
-    toast.success("Registration successful! Please check your email for verification.");
-    return { success: true, data };
-  } catch (error: any) {
-    console.error("Error during sign up:", error);
-    toast.error(error.message || "Failed to sign up");
-    return { success: false, error };
-  }
-};
-
-// Sign in with email and password
-export const signIn = async (email: string, password: string) => {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
+    // In a real application, we would hash the password using bcrypt or Argon2
+    // For this demo, we'll simulate password hashing with a simple prefix
+    const hashedPassword = `hashed_${password}`;
     
-    toast.success("Login successful!");
-    return { success: true, data };
-  } catch (error: any) {
-    console.error("Error during sign in:", error);
-    toast.error(error.message || "Failed to sign in");
-    return { success: false, error };
-  }
-};
-
-// Sign out
-export const signOut = async () => {
-  try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    // Store user with hashed password
+    users.push({ ...newUser, password: hashedPassword });
+    localStorage.setItem("quiz_users", JSON.stringify(users));
     
-    toast.success("You have been logged out");
-    return { success: true };
-  } catch (error: any) {
-    console.error("Error during sign out:", error);
-    toast.error(error.message || "Failed to sign out");
-    return { success: false, error };
-  }
-};
-
-// Get current session
-export const getCurrentSession = async () => {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return { session, error: null };
-  } catch (error: any) {
-    console.error("Error getting session:", error);
-    return { session: null, error };
-  }
-};
-
-// Get user profile data
-export const getUserProfile = async (userId: string): Promise<Profile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+    // Save user in localStorage and return
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    localStorage.setItem(AUTH_TOKEN_KEY, newUser.id); // Simple token
     
-    if (error) throw error;
-    return data;
+    return newUser;
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    return null;
+    console.error("Registration error:", error);
+    throw error;
   }
 };
 
-// Update user profile
-export const updateProfile = async (userId: string, updates: Partial<Profile>) => {
+/**
+ * User login with security enhancements
+ */
+export const loginUser = async (email: string, password: string): Promise<User> => {
   try {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
+    // Add simulated API delay and rate limiting
+    await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
     
-    if (error) throw error;
+    // Implement basic rate limiting
+    const attempts = localStorage.getItem(`login_attempts_${email}`) || "0";
+    const attemptCount = parseInt(attempts, 10);
+    const lastAttemptTime = parseInt(localStorage.getItem(`last_attempt_${email}`) || "0", 10);
+    const now = Date.now();
     
-    toast.success("Profile updated successfully");
-    return { success: true };
-  } catch (error: any) {
-    console.error("Error updating profile:", error);
-    toast.error(error.message || "Failed to update profile");
-    return { success: false, error };
-  }
-};
-
-// Get current user with profile
-export const getCurrentUser = async (): Promise<UserWithProfile | null> => {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    // If more than 5 failed attempts within 15 minutes, block login
+    if (attemptCount >= 5 && now - lastAttemptTime < 15 * 60 * 1000) {
+      const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - lastAttemptTime)) / 60000);
+      throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minutes.`);
+    }
     
-    if (error || !user) return null;
+    // Get users from localStorage
+    const existingUsers = localStorage.getItem("quiz_users");
+    if (!existingUsers) {
+      // Increment failed attempts
+      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
+      localStorage.setItem(`last_attempt_${email}`, now.toString());
+      throw new Error("Invalid credentials");
+    }
     
-    const profile = await getUserProfile(user.id);
+    const users = JSON.parse(existingUsers);
     
-    return {
+    // In a real app, we would hash the password and compare hashes
+    // For this demo, we'll use our simulated hashing
+    const hashedPassword = `hashed_${password}`;
+    
+    // Find user with matching email and hashed password
+    const user = users.find((u: any) => 
+      u.email === email && (u.password === hashedPassword || u.password === password)
+    );
+    
+    if (!user) {
+      // Increment failed attempts
+      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
+      localStorage.setItem(`last_attempt_${email}`, now.toString());
+      throw new Error("Invalid credentials");
+    }
+    
+    // Reset login attempts on successful login
+    localStorage.removeItem(`login_attempts_${email}`);
+    localStorage.removeItem(`last_attempt_${email}`);
+    
+    // Save user in localStorage
+    const userData: User = {
       id: user.id,
       email: user.email,
-      profile
+      displayName: user.displayName,
+      createdAt: user.createdAt
     };
+    
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    localStorage.setItem(AUTH_TOKEN_KEY, userData.id); // Simple token
+    
+    return userData;
   } catch (error) {
-    console.error("Error getting current user:", error);
+    console.error("Login error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get current user
+ */
+export const getCurrentUser = (): User | null => {
+  const userJson = localStorage.getItem(USER_KEY);
+  if (!userJson) return null;
+  
+  try {
+    return JSON.parse(userJson) as User;
+  } catch (error) {
+    console.error("Error parsing user data:", error);
     return null;
   }
+};
+
+/**
+ * Check if user is authenticated
+ */
+export const isAuthenticated = (): boolean => {
+  return localStorage.getItem(AUTH_TOKEN_KEY) !== null;
+};
+
+/**
+ * Logout user
+ */
+export const logoutUser = (): void => {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
+/**
+ * Makes authenticated API requests with CSRF protection
+ * @param url API endpoint
+ * @param options Fetch options
+ * @returns Response from the API
+ */
+export const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  if (!isAuthenticated()) {
+    throw new Error("User not authenticated");
+  }
+  
+  const authToken = localStorage.getItem(AUTH_TOKEN_KEY);
+  const headers = new Headers(options.headers);
+  
+  // Add authentication token
+  headers.set("Authorization", `Bearer ${authToken}`);
+  
+  // Add CSRF token
+  const csrfHeaders = addCsrfToHeaders(headers);
+  
+  // Set content-type if not already set
+  if (!headers.has("Content-Type") && options.method !== "GET") {
+    headers.set("Content-Type", "application/json");
+  }
+  
+  // Add additional security headers
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Frame-Options", "DENY");
+  
+  const updatedOptions = {
+    ...options,
+    headers: csrfHeaders,
+  };
+  
+  return fetch(url, updatedOptions);
 };
