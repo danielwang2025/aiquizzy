@@ -1,37 +1,71 @@
 
 import React, { useState, useEffect } from "react";
-import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
+import { getCurrentUser, logoutUser, getProfile } from "@/utils/authService";
+import { User, Profile } from "@/types/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { User, LogOut } from "lucide-react";
+import { User as UserIcon, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 const AuthManager: React.FC = () => {
-  const [isAuth, setIsAuth] = useState(false);
-  const [currentUser, setCurrentUser] = useState(getCurrentUser());
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   
   useEffect(() => {
-    // Check authentication status
-    setIsAuth(isAuthenticated());
-    setCurrentUser(getCurrentUser());
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user as User || null);
+        
+        if (session?.user) {
+          const userProfile = await getProfile(session.user.id);
+          setProfile(userProfile);
+        } else {
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+    
+    // Check for existing session
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      
+      if (currentUser) {
+        const userProfile = await getProfile(currentUser.id);
+        setProfile(userProfile);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    initializeAuth();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
   const handleAuthSuccess = () => {
-    setIsAuth(true);
-    setCurrentUser(getCurrentUser());
     setShowAuthSheet(false);
     // Reset auth sheet to login view for next time
     setShowRegister(false);
+    toast.success("Authentication successful");
   };
   
-  const handleLogout = () => {
-    logoutUser();
-    setIsAuth(false);
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await logoutUser();
+    setUser(null);
+    setProfile(null);
     toast.success("You have been logged out");
   };
   
@@ -39,12 +73,16 @@ const AuthManager: React.FC = () => {
     setShowRegister(!showRegister);
   };
   
+  if (isLoading) {
+    return <div className="h-5"></div>; // Small placeholder while loading
+  }
+  
   return (
     <div>
-      {isAuth ? (
+      {user ? (
         <div className="flex items-center gap-2">
           <div className="text-sm">
-            <span className="font-medium">{currentUser?.displayName || currentUser?.email}</span>
+            <span className="font-medium">{profile?.display_name || user.email}</span>
           </div>
           <Button
             variant="outline"
@@ -59,7 +97,7 @@ const AuthManager: React.FC = () => {
         <Sheet open={showAuthSheet} onOpenChange={setShowAuthSheet}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
+              <UserIcon className="h-4 w-4 mr-2" />
               Login / Register
             </Button>
           </SheetTrigger>
