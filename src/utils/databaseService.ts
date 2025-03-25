@@ -1,3 +1,4 @@
+
 import { QuizQuestion, QuizResult, QuizAttempt } from "@/types/quiz";
 
 // LocalStorage keys
@@ -5,48 +6,21 @@ const DB_QUIZZES_KEY = "quiz_db_quizzes";
 const DB_ATTEMPTS_KEY = "quiz_db_attempts";
 
 // Save a quiz to the database
-export const saveQuizToDatabase = (
-  quizIdOrQuestions: string | QuizQuestion[],
-  quizTitleOrData: string | {
-    id: string;
-    title: string;
-    objectives: string;
-    createdAt: string;
-    questions: QuizQuestion[];
-    difficulty?: 'easy' | 'medium' | 'hard';
-    isComplete?: boolean;
-  }
-) => {
+export const saveQuizToDatabase = (questions: QuizQuestion[], title: string): string => {
+  const quizId = crypto.randomUUID();
   const quizzes = getQuizzesFromDatabase();
   
-  // Handle both usage patterns:
-  // 1. (quizId: string, quizData: object)
-  // 2. (questions: QuizQuestion[], title: string)
+  const newQuiz = {
+    id: quizId,
+    title,
+    questions,
+    createdAt: new Date().toISOString()
+  };
   
-  let quizData;
-  
-  if (Array.isArray(quizIdOrQuestions)) {
-    // Handle the case where the first argument is an array of questions
-    const questions = quizIdOrQuestions;
-    const title = typeof quizTitleOrData === 'string' ? quizTitleOrData : 'Untitled Quiz';
-    
-    quizData = {
-      id: crypto.randomUUID(),
-      title: title,
-      objectives: title,
-      createdAt: new Date().toISOString(),
-      questions: questions,
-      isComplete: true
-    };
-  } else {
-    // Handle the case where the first argument is a quiz ID
-    quizData = quizTitleOrData;
-  }
-  
-  quizzes.push(quizData);
+  quizzes.push(newQuiz);
   localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(quizzes));
   
-  return typeof quizData === 'object' ? quizData.id : quizIdOrQuestions;
+  return quizId;
 };
 
 // Get all quizzes from the database

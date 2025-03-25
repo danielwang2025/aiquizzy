@@ -31,6 +31,10 @@ const QuizCustomizer = () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
   };
 
+  const handleDemoClick = () => {
+    navigate("/practice/demo");
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -126,7 +130,7 @@ const QuizCustomizer = () => {
                         <Button 
                           variant="outline" 
                           className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 hover:text-amber-900 btn-scale shadow-sm"
-                          onClick={() => navigate("/practice/demo")}
+                          onClick={handleDemoClick}
                         >
                           Try Demo Version
                         </Button>

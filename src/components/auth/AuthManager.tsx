@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { isAuthenticated, getCurrentUser, logout } from "@/utils/authService";
+import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,7 +29,7 @@ const AuthManager: React.FC = () => {
   };
   
   const handleLogout = () => {
-    logout();
+    logoutUser();
     setIsAuth(false);
     setCurrentUser(null);
     toast.success("You have been logged out");

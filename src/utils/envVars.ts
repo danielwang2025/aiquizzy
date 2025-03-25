@@ -1,61 +1,94 @@
 
-// Environment variables management using Vite's import.meta.env
-// This is a more secure approach than using localStorage
+// Environment variables management
+// Since Lovable doesn't support .env files, we're using localStorage as a fallback
 
-// API Keys object type definition
+// API Keys object
 export interface ApiKeys {
   DEEPSEEK_API_KEY: string;
   BREVO_API_KEY: string;
   OPENAI_API_KEY: string;
 }
 
+// Default API keys from the codebase (for development only)
+const defaultApiKeys: ApiKeys = {
+  DEEPSEEK_API_KEY: "sk-8e77c6120a864abf9a412304be119a2e",
+  BREVO_API_KEY: "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",
+  OPENAI_API_KEY: "", // This needs to be set by the user
+};
+
+// LocalStorage key for API keys
+const API_KEYS_STORAGE_KEY = "app_api_keys";
+
 /**
- * Get an API key from environment variables
+ * Get an API key from localStorage or fallback to the default
  * @param key The API key name
  * @returns The API key value
  */
 export function getApiKey(key: keyof ApiKeys): string {
-  // Check if we're in a development environment
-  const isDev = import.meta.env.DEV;
-  
-  // Use the environment variables based on the key
-  switch (key) {
-    case 'DEEPSEEK_API_KEY':
-      return import.meta.env.VITE_DEEPSEEK_API_KEY || '';
-    case 'BREVO_API_KEY':
-      return import.meta.env.VITE_BREVO_API_KEY || '';
-    case 'OPENAI_API_KEY':
-      return import.meta.env.VITE_OPENAI_API_KEY || '';
-    default:
-      console.error(`Unknown API key requested: ${key}`);
-      return '';
+  try {
+    const storedKeys = localStorage.getItem(API_KEYS_STORAGE_KEY);
+    if (storedKeys) {
+      const parsedKeys = JSON.parse(storedKeys) as Partial<ApiKeys>;
+      if (parsedKeys[key]) {
+        return parsedKeys[key] as string;
+      }
+    }
+    return defaultApiKeys[key];
+  } catch (error) {
+    console.error(`Error retrieving API key ${key}:`, error);
+    return defaultApiKeys[key];
   }
 }
 
 /**
- * This function exists for backward compatibility
- * but no longer allows setting keys at runtime as they should be
- * environment variables only.
+ * Set an API key in localStorage
+ * @param key The API key name
+ * @param value The API key value
  */
 export function setApiKey(key: keyof ApiKeys, value: string): void {
-  console.warn('Setting API keys at runtime is no longer supported for security reasons. Please use environment variables.');
+  try {
+    const storedKeys = localStorage.getItem(API_KEYS_STORAGE_KEY);
+    let parsedKeys: Partial<ApiKeys> = {};
+    
+    if (storedKeys) {
+      parsedKeys = JSON.parse(storedKeys) as Partial<ApiKeys>;
+    }
+    
+    parsedKeys[key] = value;
+    localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(parsedKeys));
+  } catch (error) {
+    console.error(`Error setting API key ${key}:`, error);
+  }
 }
 
 /**
- * Get all API keys from environment variables
+ * Get all API keys
+ * @returns All API keys
  */
 export function getAllApiKeys(): ApiKeys {
-  return {
-    DEEPSEEK_API_KEY: getApiKey('DEEPSEEK_API_KEY'),
-    BREVO_API_KEY: getApiKey('BREVO_API_KEY'),
-    OPENAI_API_KEY: getApiKey('OPENAI_API_KEY')
-  };
+  try {
+    const storedKeys = localStorage.getItem(API_KEYS_STORAGE_KEY);
+    if (storedKeys) {
+      const parsedKeys = JSON.parse(storedKeys) as Partial<ApiKeys>;
+      return { ...defaultApiKeys, ...parsedKeys };
+    }
+    return defaultApiKeys;
+  } catch (error) {
+    console.error("Error retrieving all API keys:", error);
+    return defaultApiKeys;
+  }
 }
 
 /**
- * This function exists for backward compatibility
- * but no longer allows setting keys at runtime.
+ * Set all API keys
+ * @param keys API keys object
  */
 export function setAllApiKeys(keys: Partial<ApiKeys>): void {
-  console.warn('Setting API keys at runtime is no longer supported for security reasons. Please use environment variables.');
+  try {
+    const currentKeys = getAllApiKeys();
+    const updatedKeys = { ...currentKeys, ...keys };
+    localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(updatedKeys));
+  } catch (error) {
+    console.error("Error setting all API keys:", error);
+  }
 }

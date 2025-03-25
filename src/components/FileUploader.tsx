@@ -1,9 +1,9 @@
+
 import React, { useState } from "react";
 import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { processFileWithRAG } from "@/utils/ragService";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;

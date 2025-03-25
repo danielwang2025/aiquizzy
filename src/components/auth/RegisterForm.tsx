@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { register } from "@/utils/authService";
+import { registerUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -73,13 +74,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     setIsLoading(true);
     
     try {
-      const result = register(email, password, displayName);
-      if (result.success) {
-        toast.success("Registration successful");
-        onSuccess();
-      } else {
-        toast.error(result.error || "Registration failed");
-      }
+      await registerUser(email, password, displayName);
+      toast.success("Registration successful");
+      onSuccess();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {
