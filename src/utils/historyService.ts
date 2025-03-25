@@ -142,7 +142,7 @@ export const addDisputedQuestion = (
   
   const disputedQuestion: DisputedQuestion = {
     questionId: question.id,
-    question: question,
+    question,
     userAnswer,
     disputeReason,
     dateDisputed: new Date().toISOString(),
@@ -172,3 +172,4 @@ export const isQuestionDisputed = (questionId: string): boolean => {
   const history = loadQuizHistory();
   return history.disputedQuestions.some(dq => dq.questionId === questionId);
 };
+

@@ -64,11 +64,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   };
 
   const getHint = () => {
-    if (question.hint) {
-      return question.hint;
-    }
-    
-    // Fallback hints if no specific hint is provided
     if (question.type === "multiple_choice") {
       return "Try to eliminate obviously incorrect options first. Focus on the key terms in the question.";
     } else {

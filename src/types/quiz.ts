@@ -8,44 +8,45 @@ export interface QuizQuestion {
   explanation?: string;
   difficulty?: 'easy' | 'medium' | 'hard';
   topic?: string;
-  hint?: string;  // Added hint field for providing hints to users
+  subtopic?: string;
 }
 
-export interface Quiz {
-  id: string;
-  title: string;
-  description?: string;
-  questions: QuizQuestion[];
-  difficulty?: 'easy' | 'medium' | 'hard';
-  createdAt: number;
-  topics?: string[];
-}
+// Create a type alias for QuizQuestionType to avoid naming conflicts
+export type QuizQuestionType = QuizQuestion;
 
-export interface QuizStats {
+export interface QuizResult {
   totalQuestions: number;
   correctAnswers: number;
   incorrectAnswers: number;
   score: number;
+  feedback?: string;
+  completionTime?: number; // in seconds
 }
 
-// Added to match the implementations in other files
 export interface QuizAttempt {
   id: string;
-  quizId: string;
+  userId?: string;
+  date: string;
   objectives: string;
-  date: string | number;
   questions: QuizQuestion[];
   userAnswers: (string | number | null)[];
-  result: {
-    correctAnswers: number;
-    incorrectAnswers: number;
-    score: number;
-  };
-  userId?: string;
+  result: QuizResult;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  topics?: string[];
+}
+
+export interface QuizState {
+  questions: QuizQuestion[];
+  currentQuestion: number;
+  answers: (string | number | null)[];
+  result: QuizResult | null;
+  status: 'idle' | 'loading' | 'active' | 'completed';
+  error: string | null;
+  startTime?: number;
+  endTime?: number;
 }
 
 export interface QuizHistory {
-  id?: string;
   userId?: string;
   attempts: QuizAttempt[];
   reviewList: QuizQuestion[];
@@ -53,11 +54,15 @@ export interface QuizHistory {
   learningPreferences?: LearningPreferences;
 }
 
-export interface QuizProgressData {
-  labels: string[];
-  scores: number[];
+export interface LearningPreferences {
+  preferredDifficulty?: 'easy' | 'medium' | 'hard';
+  preferredQuestionTypes?: ('multiple_choice' | 'fill_in')[];
+  topicsOfInterest?: string[];
+  dailyGoal?: number; // Number of questions to practice per day
+  reminderEnabled?: boolean;
 }
 
+// Add disputed question interface
 export interface DisputedQuestion {
   questionId: string;
   question: QuizQuestion;
@@ -67,37 +72,38 @@ export interface DisputedQuestion {
   status: 'pending' | 'reviewed';
 }
 
+// Add user authentication types
 export interface User {
   id: string;
   email: string;
   displayName?: string;
-  createdAt: number;
-  lastLoginAt?: number;
-  photoURL?: string;
+  createdAt: string;
+  learningPreferences?: LearningPreferences;
 }
 
-export interface LearningPreferences {
-  preferredDifficulty: 'easy' | 'medium' | 'hard';
-  preferredQuestionTypes: ('multiple_choice' | 'fill_in')[];
-  topicsOfInterest: string[];
-  dailyGoal: number;
-  reminderEnabled: boolean;
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
-// For Dashboard
+// Dashboard statistics
 export interface DashboardStats {
-  totalQuizzes: number;
+  totalAttempts: number;
   totalQuestions: number;
-  avgScore: number;
-  topicsStudied: string[];
-  recentScores: number[];
-  learningStreak: number;
-}
-
-export interface QuizResult {
-  id: string;
-  score: number;
   correctAnswers: number;
-  totalQuestions: number;
-  date: number;
+  averageScore: number;
+  topicPerformance: {
+    topic: string;
+    correctRate: number;
+    questionsCount: number;
+  }[];
+  recentScores: {
+    date: string;
+    score: number;
+  }[];
+  dailyStreak: number;
+  lastPracticeDate?: string;
+  mostChallengedTopics: string[];
 }
