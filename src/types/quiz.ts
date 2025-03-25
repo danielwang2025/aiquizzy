@@ -1,4 +1,3 @@
-
 export interface QuizQuestion {
   id: string;
   type: 'multiple_choice' | 'fill_in';
@@ -9,6 +8,7 @@ export interface QuizQuestion {
   difficulty?: 'easy' | 'medium' | 'hard';
   topic?: string;
   subtopic?: string;
+  hint?: string; // Added hint field
 }
 
 // Create a type alias for QuizQuestionType to avoid naming conflicts

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -37,13 +36,11 @@ const Practice = () => {
         navigate("/customize");
       }
     } else {
-      // If no quizId is provided, redirect to customize page
       navigate("/customize");
     }
     setLoading(false);
   }, [quizId, navigate]);
   
-  // Reset hint state when changing questions
   useEffect(() => {
     setShowCurrentHint(false);
   }, [currentQuestionIndex]);
@@ -97,20 +94,15 @@ const Practice = () => {
     };
   };
   
+  const getSpecificHint = (question: QuizQuestion) => {
+    return question.hint || getGeneralHint(question);
+  };
+  
   const getGeneralHint = (question: QuizQuestion) => {
     if (question.type === "multiple_choice") {
       return "Consider the meaning of each option, eliminate clearly incorrect choices, and then select from the remaining options.";
     } else {
       return "Recall key concepts and terminology related to the question. Try to express your answer using appropriate terminology.";
-    }
-  };
-  
-  const getSpecificHint = (question: QuizQuestion) => {
-    // This would ideally come from the API, but for now we'll generate a generic hint
-    if (question.type === "multiple_choice") {
-      return "Look for keywords in the question that match with specific options. Think about related concepts that might help narrow down your choices.";
-    } else {
-      return "The answer is likely related to the main concept being tested. Consider synonyms or alternative phrasings if you're stuck.";
     }
   };
   

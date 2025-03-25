@@ -1,753 +1,293 @@
-
-import React, { useState, useReducer, useEffect } from "react";
-import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
-import { generateQuestions } from "@/utils/api";
-import LoadingSpinner from "./LoadingSpinner";
-import QuizQuestionComponent from "./QuizQuestion";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { 
-  loadQuizHistory, 
-  saveQuizAttempt, 
-  addToReviewList, 
-  removeFromReviewList,
-  clearReviewList,
-  clearAllHistory 
-} from "@/utils/historyService";
-import { saveQuizToDatabase } from "@/utils/databaseService";
-import QuizHistory from "./QuizHistory";
-import ReviewList from "./ReviewList";
-import DisputedQuestions from "./DisputedQuestions";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Checkbox } from "@/components/ui/checkbox";
-import FileUploader from "./FileUploader";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
+import { generateQuestions } from "@/utils/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Slider
+} from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { saveQuizToDatabase } from "@/utils/databaseService";
+import { toast } from "sonner";
+import FileUploader from "@/components/FileUploader";
+import { getRelevantContext } from "@/utils/ragService";
 import { isAuthenticated } from "@/utils/authService";
+import { QuizState, QuizQuestion } from "@/types/quiz";
 
-// Interface for QuizGenerator props
-interface QuizGeneratorProps {
-  initialTopic?: string;
-}
-
-// Action types
-type QuizAction =
-  | { type: "SET_LOADING" }
-  | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
-  | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
-  | { type: "COMPLETE_QUIZ"; payload: QuizResult }
-  | { type: "RESET_QUIZ" }
-  | { type: "LOAD_ATTEMPT"; payload: QuizAttempt }
-  | { type: "SET_ERROR"; payload: string }
-  | { type: "REMOVE_QUESTION"; payload: string };
-
-// Initial state for the quiz
-const initialState: QuizState = {
-  questions: [],
-  currentQuestion: 0,
-  answers: [],
-  result: null,
-  status: "idle",
-  error: null,
-};
-
-// Reducer function to manage quiz state
-function quizReducer(state: QuizState, action: QuizAction): QuizState {
-  switch (action.type) {
-    case "SET_LOADING":
-      return { ...state, status: "loading", error: null };
-    case "SET_QUESTIONS":
-      return {
-        ...state,
-        questions: action.payload,
-        answers: Array(action.payload.length).fill(null),
-        status: "active",
-        result: null,
-        error: null,
-      };
-    case "SET_ANSWER":
-      const newAnswers = [...state.answers];
-      newAnswers[action.payload.index] = action.payload.answer;
-      return { ...state, answers: newAnswers };
-    case "COMPLETE_QUIZ":
-      return { ...state, result: action.payload, status: "completed" };
-    case "RESET_QUIZ":
-      return { ...initialState };
-    case "LOAD_ATTEMPT":
-      return {
-        questions: action.payload.questions,
-        answers: action.payload.userAnswers,
-        result: action.payload.result,
-        currentQuestion: 0,
-        status: "completed",
-        error: null,
-      };
-    case "SET_ERROR":
-      return { ...state, error: action.payload, status: "idle" };
-    case "REMOVE_QUESTION":
-      const filteredQuestions = state.questions.filter(q => q.id !== action.payload);
-      const filteredAnswers = state.answers.filter((_, idx) => 
-        state.questions[idx].id !== action.payload
-      );
-      
-      let updatedResult = state.result;
-      if (state.status === "completed" && state.result) {
-        const totalQuestions = filteredQuestions.length;
-        let correctAnswers = 0;
-        let incorrectAnswers = 0;
-        
-        filteredQuestions.forEach((question, index) => {
-          const isCorrect = filteredAnswers[index] === question.correctAnswer;
-          if (isCorrect) correctAnswers++;
-          else incorrectAnswers++;
-        });
-        
-        const score = totalQuestions > 0 
-          ? Math.round((correctAnswers / totalQuestions) * 100) 
-          : 0;
-          
-        updatedResult = {
-          totalQuestions,
-          correctAnswers,
-          incorrectAnswers,
-          score,
-          feedback: state.result.feedback
-        };
-      }
-      
-      return { 
-        ...state, 
-        questions: filteredQuestions, 
-        answers: filteredAnswers,
-        result: updatedResult
-      };
-    default:
-      return state;
-  }
-}
-
-const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
-  const [state, dispatch] = useReducer(quizReducer, initialState);
-  const [objectives, setObjectives] = useState(initialTopic);
-  const [extractedText, setExtractedText] = useState("");
-  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
-  const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
+// Component to generate quizzes
+const QuizGenerator = () => {
   const navigate = useNavigate();
-  const isAuth = isAuthenticated();
-  
-  // New state variables for customization options
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [questionCount, setQuestionCount] = useState<number>(5);
+  const [isLoading, setIsLoading] = useState(false);
+  const [learningObjectives, setLearningObjectives] = useState("");
+  const [difficultyLevel, setDifficultyLevel] = useState<"easy" | "medium" | "hard">("medium");
+  const [questionCount, setQuestionCount] = useState(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
-  
-  // Demo mode state
-  const [demoLimitReached, setDemoLimitReached] = useState(false);
-  
-  // Load quiz history from localStorage on component mount
-  useEffect(() => {
-    setQuizHistory(loadQuizHistory());
-    
-    // Check if demo limit has been reached
-    if (!isAuth) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      // Reset counter if it's been more than 24 hours
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
-        localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
-      } else if (usage.count >= 5) {
-        setDemoLimitReached(true);
+  const [uploadedContent, setUploadedContent] = useState<string | null>(null);
+  const [useUploadedContent, setUseUploadedContent] = useState(false);
+  const [isDemo, setIsDemo] = useState(!isAuthenticated());
+  const uploadRef = useRef<HTMLInputElement>(null);
+
+  // Maximum number of questions allowed in demo mode
+  const MAX_DEMO_QUESTIONS = 5;
+
+  // Toggle for question types
+  const toggleQuestionType = (type: "multiple_choice" | "fill_in") => {
+    if (questionTypes.includes(type)) {
+      // Don't allow removing the last question type
+      if (questionTypes.length > 1) {
+        setQuestionTypes(questionTypes.filter(t => t !== type));
       }
-    }
-  }, [isAuth]);
-
-  // Generate quiz based on learning objectives
-  const handleGenerate = async () => {
-    const combinedObjectives = objectives.trim();
-    
-    if (!combinedObjectives) {
-      toast.error("Please enter learning objectives");
-      return;
-    }
-    
-    // Check if demo limit has been reached for non-authenticated users
-    if (!isAuth) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      if (usage.count >= 5) {
-        setDemoLimitReached(true);
-        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
-        return;
-      }
-      
-      // Update usage count
-      const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
-      localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
-      
-      // Show remaining attempts
-      const remaining = 5 - newUsage.count;
-      if (remaining <= 2) {
-        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
-      }
-      
-      if (newUsage.count >= 5) {
-        setDemoLimitReached(true);
-      }
-    }
-
-    dispatch({ type: "SET_LOADING" });
-
-    try {
-      // If we have extracted text, include it in the API call
-      const promptWithContext = extractedText 
-        ? `Learning objectives: ${objectives}\n\nContext from uploaded document: ${extractedText}`
-        : objectives;
-      
-      const questions = await generateQuestions(promptWithContext, {
-        difficulty,
-        count: questionCount,
-        questionTypes
-      });
-      
-      dispatch({ type: "SET_QUESTIONS", payload: questions });
-      
-      // Store the quiz in the database
-      const quizTitle = objectives.length > 50 
-        ? objectives.substring(0, 50) + "..." 
-        : objectives;
-      
-      const quizId = saveQuizToDatabase(questions, quizTitle);
-      console.log("Quiz saved to database with ID:", quizId);
-      
-      toast.success("Quiz generated successfully!");
-    } catch (error) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: "Failed to generate quiz. Please try again.",
-      });
-      toast.error("Failed to generate quiz. Please check the console for details.");
-    }
-  };
-
-  const handleFileTextExtracted = (text: string) => {
-    setExtractedText(text);
-    toast.success("Text extracted and will be used to enhance quiz questions");
-  };
-
-  // Handle question type selection
-  const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
-    setQuestionTypes(prev => {
-      if (prev.includes(type) && prev.length > 1) {
-        return prev.filter(t => t !== type);
-      } 
-      else if (!prev.includes(type)) {
-        return [...prev, type];
-      }
-      return prev;
-    });
-  };
-
-  // Handle answer selection
-  const handleAnswer = (index: number, answer: string | number) => {
-    dispatch({
-      type: "SET_ANSWER",
-      payload: { index, answer },
-    });
-  };
-
-  // Calculate and show results
-  const handleComplete = () => {
-    const { questions, answers } = state;
-    
-    if (answers.some(answer => answer === null)) {
-      toast.error("Please answer all questions before submitting");
-      return;
-    }
-
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let incorrectQuestionIds: string[] = [];
-
-    questions.forEach((question, index) => {
-      const userAnswer = answers[index];
-      const isCorrect = 
-        question.type === "fill_in" 
-          ? String(userAnswer).toLowerCase().trim() === String(question.correctAnswer).toLowerCase().trim()
-          : userAnswer === question.correctAnswer;
-
-      if (isCorrect) {
-        correctAnswers++;
-      } else {
-        incorrectAnswers++;
-        incorrectQuestionIds.push(question.id);
-      }
-    });
-
-    const score = Math.round((correctAnswers / questions.length) * 100);
-    
-    let feedback = "";
-    if (score >= 90) {
-      feedback = "Excellent! You've mastered these learning objectives.";
-    } else if (score >= 70) {
-      feedback = "Good job! You have a solid understanding of the material.";
-    } else if (score >= 50) {
-      feedback = "You're on the right track, but there's room for improvement.";
     } else {
-      feedback = "You might want to review the material again to strengthen your understanding.";
+      setQuestionTypes([...questionTypes, type]);
     }
-
-    const result: QuizResult = {
-      totalQuestions: questions.length,
-      correctAnswers,
-      incorrectAnswers,
-      score,
-      feedback,
-    };
-
-    dispatch({ type: "COMPLETE_QUIZ", payload: result });
-    
-    setSelectedIncorrectQuestions(incorrectQuestionIds);
-
-    const attempt: QuizAttempt = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      objectives,
-      questions,
-      userAnswers: answers,
-      result,
-    };
-    
-    saveQuizAttempt(attempt);
-    
-    setQuizHistory(loadQuizHistory());
   };
 
-  // Handle question dispute
-  const handleDisputeQuestion = (questionId: string) => {
-    dispatch({ type: "REMOVE_QUESTION", payload: questionId });
-    setQuizHistory(loadQuizHistory());
+  // Process uploaded content for quiz context
+  const handleFileProcessed = async (extractedText: string, fileName: string) => {
+    setUploadedContent(extractedText);
+    toast.success(`${fileName} processed successfully!`);
+    setUseUploadedContent(true);
   };
 
-  // Add selected incorrect questions to review list
-  const handleAddToReviewList = () => {
-    if (selectedIncorrectQuestions.length === 0) {
-      toast.error("No questions selected to add to review list");
+  // Generate the quiz questions
+  const generateQuiz = async () => {
+    if (!learningObjectives.trim()) {
+      toast.error("请输入学习目标");
       return;
     }
+
+    // Apply demo mode restriction
+    if (isDemo && questionCount > MAX_DEMO_QUESTIONS) {
+      toast.info(`Demo version is limited to ${MAX_DEMO_QUESTIONS} questions. Adjusting count automatically.`);
+      setQuestionCount(MAX_DEMO_QUESTIONS);
+    }
+
+    setIsLoading(true);
     
-    state.questions.forEach(question => {
-      if (selectedIncorrectQuestions.includes(question.id)) {
-        addToReviewList(question);
+    try {
+      // Get any relevant context from uploaded content if enabled
+      let fullPrompt = learningObjectives;
+      if (useUploadedContent && uploadedContent) {
+        const relevantContext = getRelevantContext(learningObjectives);
+        if (relevantContext && !relevantContext.includes("No relevant information found")) {
+          fullPrompt = `${learningObjectives}\n\nAdditional context:\n${relevantContext}`;
+        }
       }
-    });
-    
-    toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
-    setQuizHistory(loadQuizHistory());
-    setSelectedIncorrectQuestions([]);
-  };
 
-  // Toggle selection of incorrect question
-  const toggleSelectQuestion = (id: string) => {
-    setSelectedIncorrectQuestions(prev => 
-      prev.includes(id) 
-        ? prev.filter(qId => qId !== id) 
-        : [...prev, id]
-    );
-  };
+      // Generate questions based on learning objectives
+      const finalQuestionCount = isDemo ? Math.min(questionCount, MAX_DEMO_QUESTIONS) : questionCount;
+      
+      const generatedQuestions = await generateQuestions(
+        fullPrompt, 
+        {
+          count: finalQuestionCount,
+          difficulty: difficultyLevel,
+          questionTypes: questionTypes
+        }
+      );
 
-  // Select all incorrect questions
-  const selectAllIncorrectQuestions = () => {
-    const incorrectIds = state.questions
-      .filter((_, index) => {
-        const userAnswer = state.answers[index];
-        const correctAnswer = state.questions[index].correctAnswer;
-        
-        return state.questions[index].type === "fill_in" 
-          ? String(userAnswer).toLowerCase().trim() !== String(correctAnswer).toLowerCase().trim()
-          : userAnswer !== correctAnswer;
-      })
-      .map(q => q.id);
-    
-    setSelectedIncorrectQuestions(incorrectIds);
-  };
+      // Create quiz for local storage
+      const quizId = uuidv4();
+      const quiz: QuizState = {
+        questions: generatedQuestions.map(q => ({
+          ...q,
+          // Generate a hint for each question based on its content and type
+          hint: generateHintForQuestion(q)
+        })),
+        currentQuestion: 0,
+        answers: Array(generatedQuestions.length).fill(null),
+        result: null,
+        status: 'active',
+        error: null,
+        startTime: Date.now()
+      };
 
-  // Deselect all incorrect questions
-  const deselectAllIncorrectQuestions = () => {
-    setSelectedIncorrectQuestions([]);
-  };
+      // Save quiz to local storage
+      saveQuizToDatabase(quizId, {
+        id: quizId,
+        title: learningObjectives.substring(0, 50) + (learningObjectives.length > 50 ? "..." : ""),
+        objectives: learningObjectives,
+        createdAt: new Date().toISOString(),
+        questions: quiz.questions,
+        difficulty: difficultyLevel,
+        isComplete: false
+      });
 
-  // View a specific quiz attempt
-  const handleViewAttempt = (attempt: QuizAttempt) => {
-    dispatch({ type: "LOAD_ATTEMPT", payload: attempt });
-  };
-
-  // Handle removing a question from review list
-  const handleRemoveFromReviewList = (id: string) => {
-    removeFromReviewList(id);
-    setQuizHistory(loadQuizHistory());
-  };
-
-  // Clear review list
-  const handleClearReviewList = () => {
-    clearReviewList();
-    setQuizHistory(loadQuizHistory());
-  };
-
-  // Clear all history
-  const handleClearHistory = () => {
-    clearAllHistory();
-    setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
-  };
-
-  // Practice review list questions and navigate to practice page
-  const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
-    if (questions.length === 0) {
-      toast.error("No questions to practice");
-      return;
+      // Navigate to the quiz practice page
+      navigate(`/practice/${quizId}`);
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast.error("生成测试失败。请重试。");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Generate a hint for each question based on its content and type
+  const generateHintForQuestion = (question: QuizQuestion): string => {
+    // If the question already has a hint, use it
+    if (question.hint) return question.hint;
     
-    // Save the review questions as a quiz in the database
-    const quizId = saveQuizToDatabase(questions, "Review List Practice");
-    
-    // Navigate to practice page with the quiz ID
-    navigate(`/practice/${quizId}`);
-  };
-
-  // Reset the quiz
-  const handleReset = () => {
-    dispatch({ type: "RESET_QUIZ" });
-    setObjectives("");
-    setSelectedIncorrectQuestions([]);
-  };
-
-  // Try again with the same objectives
-  const handleTryAgain = () => {
-    handleGenerate();
-  };
-
-  // Update quiz history (used by DisputedQuestions component)
-  const handleUpdateHistory = () => {
-    setQuizHistory(loadQuizHistory());
+    // Otherwise, generate a hint based on the question type
+    if (question.type === 'multiple_choice') {
+      return "Try to eliminate obviously incorrect options first. Focus on the key terms in the question.";
+    } else {
+      const answer = String(question.correctAnswer);
+      return `The answer starts with "${answer.charAt(0)}" and has ${answer.length} characters.`;
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Quiz Generator</h2>
+    <div className="container mx-auto py-8 px-4">
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle>创建自定义测试</CardTitle>
+          <CardDescription>
+            输入您的学习目标，我们将为您生成相关的测试问题
+            {isDemo && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-sm">
+                您正在使用演示版本，最多可生成 {MAX_DEMO_QUESTIONS} 个问题。
+                <Button variant="link" className="p-0 h-auto text-blue-600" onClick={() => navigate("/login")}>
+                  登录或注册
+                </Button> 
+                以解锁完整功能。
+              </div>
+            )}
+          </CardDescription>
+        </CardHeader>
         
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">History & Review</Button>
-          </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-            <Tabs defaultValue="history" className="mt-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="history">Quiz History</TabsTrigger>
-                <TabsTrigger value="review">Review List</TabsTrigger>
-                <TabsTrigger value="disputed">Disputed</TabsTrigger>
-              </TabsList>
-              <TabsContent value="history" className="mt-4">
-                <QuizHistory 
-                  attempts={quizHistory.attempts}
-                  onViewAttempt={handleViewAttempt}
-                  onClearHistory={handleClearHistory}
-                />
-              </TabsContent>
-              <TabsContent value="review" className="mt-4">
-                <ReviewList 
-                  questions={quizHistory.reviewList}
-                  onRemoveQuestion={handleRemoveFromReviewList}
-                  onClearAll={handleClearReviewList}
-                  onPracticeQuestions={handlePracticeReviewQuestions}
-                />
-              </TabsContent>
-              <TabsContent value="disputed" className="mt-4">
-                <DisputedQuestions 
-                  questions={quizHistory.disputedQuestions}
-                  onUpdate={handleUpdateHistory}
-                />
-              </TabsContent>
-            </Tabs>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {state.status === "idle" && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border"
-        >
-          <div className="mb-6">
-            <label htmlFor="objectives" className="block text-sm font-medium mb-2">
-              Learning Objectives
-            </label>
-            <textarea
-              id="objectives"
-              className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm"
-              placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')"
-              value={objectives}
-              onChange={(e) => setObjectives(e.target.value)}
+        <CardContent className="space-y-6">
+          <div>
+            <Label htmlFor="learning-objectives" className="text-base">
+              学习目标
+            </Label>
+            <Textarea
+              id="learning-objectives"
+              placeholder="例如：了解光合作用的过程和重要性"
+              value={learningObjectives}
+              onChange={(e) => setLearningObjectives(e.target.value)}
+              className="mt-1.5 min-h-[100px]"
             />
           </div>
           
-          <FileUploader onTextExtracted={handleFileTextExtracted} />
+          <FileUploader 
+            onTextExtracted={handleFileProcessed} 
+          />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Difficulty Level
-              </label>
-              <Select value={difficulty} onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard")}>
+          {uploadedContent && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="use-uploaded"
+                checked={useUploadedContent}
+                onCheckedChange={setUseUploadedContent}
+              />
+              <Label htmlFor="use-uploaded" className="font-medium">
+                将上传的内容用于生成更精确的问题
+              </Label>
+            </div>
+          )}
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <Label className="text-base">测试难度</Label>
+              <Select
+                value={difficultyLevel}
+                onValueChange={(value) => setDifficultyLevel(value as "easy" | "medium" | "hard")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select difficulty" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="easy">简单</SelectItem>
+                  <SelectItem value="medium">中等</SelectItem>
+                  <SelectItem value="hard">困难</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Question Types
-              </label>
-              <div className="flex space-x-4">
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="multiple-choice" 
-                    checked={questionTypes.includes("multiple_choice")}
-                    onCheckedChange={() => handleQuestionTypeChange("multiple_choice")}
-                  />
-                  <label htmlFor="multiple-choice" className="ml-2 text-sm">
-                    Multiple Choice
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="fill-in" 
-                    checked={questionTypes.includes("fill_in")}
-                    onCheckedChange={() => handleQuestionTypeChange("fill_in")}
-                  />
-                  <label htmlFor="fill-in" className="ml-2 text-sm">
-                    Fill in the Blank
-                  </label>
-                </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label className="text-base">问题数量</Label>
+                <span className="text-sm font-medium">{isDemo ? Math.min(questionCount, MAX_DEMO_QUESTIONS) : questionCount}</span>
               </div>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">
-                Number of Questions: {questionCount}
-              </label>
-            </div>
-            <Slider 
-              min={3} 
-              max={20} 
-              step={1} 
-              value={[questionCount]} 
-              onValueChange={(value) => setQuestionCount(value[0])}
-              className="my-4"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>3</span>
-              <span>10</span>
-              <span>20</span>
-            </div>
-          </div>
-          
-          {demoLimitReached && !isAuth ? (
-            <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-amber-800 font-medium">You've reached the demo limit (5 quizzes).</p>
-              <p className="text-sm text-amber-700 mb-4">Sign in to create unlimited quizzes and track your progress.</p>
-              <Button 
-                onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()}
-                className="w-full"
-              >
-                Sign In to Continue
-              </Button>
-            </div>
-          ) : (
-            <button
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-              onClick={handleGenerate}
-            >
-              Generate Quiz
-            </button>
-          )}
-          
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Enter specific learning objectives to generate customized questions tailored to your learning needs.
-          </p>
-        </motion.div>
-      )}
-
-      {state.status === "loading" && (
-        <div className="min-h-[300px] flex flex-col items-center justify-center">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
-          <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
-        </div>
-      )}
-
-      {(state.status === "active" || state.status === "completed") && (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">{objectives}</h2>
-            <button
-              className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors"
-              onClick={handleReset}
-            >
-              New Quiz
-            </button>
-          </div>
-
-          <div className="mb-8">
-            {state.questions.map((question, index) => {
-              const isIncorrect = state.status === "completed" && 
-                state.answers[index] !== question.correctAnswer;
-              
-              return (
-                <div key={question.id} className="mb-6">
-                  <QuizQuestionComponent
-                    question={question}
-                    userAnswer={state.answers[index]}
-                    onAnswer={(answer) => handleAnswer(index, answer)}
-                    showResult={state.status === "completed"}
-                    index={index}
-                    onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined}
-                  />
-                  
-                  {state.status === "completed" && isIncorrect && (
-                    <div className="mt-2 ml-11 flex items-center space-x-2">
-                      <Checkbox 
-                        id={`add-to-review-${question.id}`}
-                        checked={selectedIncorrectQuestions.includes(question.id)}
-                        onCheckedChange={() => toggleSelectQuestion(question.id)}
-                      />
-                      <label 
-                        htmlFor={`add-to-review-${question.id}`}
-                        className="text-sm text-muted-foreground cursor-pointer"
-                      >
-                        Add to review list
-                      </label>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {state.status === "active" && (
-            <button
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-              onClick={handleComplete}
-            >
-              Check Answers
-            </button>
-          )}
-
-          {state.status === "completed" && state.result && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl p-6 border border-border bg-white shadow-sm"
-            >
-              <h3 className="text-xl font-semibold mb-2">Quiz Results</h3>
-              
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground">Total Questions</p>
-                  <p className="text-2xl font-semibold">{state.result.totalQuestions}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-500/10 text-center">
-                  <p className="text-sm text-green-800">Correct</p>
-                  <p className="text-2xl font-semibold text-green-700">{state.result.correctAnswers}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-red-500/10 text-center">
-                  <p className="text-sm text-red-800">Incorrect</p>
-                  <p className="text-2xl font-semibold text-red-700">{state.result.incorrectAnswers}</p>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Score</span>
-                  <span className="font-semibold">{state.result.score}%</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2.5">
-                  <div 
-                    className="h-2.5 rounded-full bg-primary transition-all duration-1000" 
-                    style={{ width: `${state.result.score}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
-              
-              {state.result.incorrectAnswers > 0 && (
-                <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Add incorrect questions to review list</span>
-                    <div className="space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={selectAllIncorrectQuestions}
-                        className="text-xs h-7"
-                      >
-                        Select All
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={deselectAllIncorrectQuestions}
-                        className="text-xs h-7"
-                      >
-                        Deselect All
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleAddToReviewList}
-                    disabled={selectedIncorrectQuestions.length === 0}
-                    className="w-full mt-2"
-                  >
-                    Add {selectedIncorrectQuestions.length} Selected Question(s) to Review List
-                  </Button>
-                </div>
+              <Slider
+                min={1}
+                max={isDemo ? MAX_DEMO_QUESTIONS : 15}
+                step={1}
+                value={[isDemo ? Math.min(questionCount, MAX_DEMO_QUESTIONS) : questionCount]}
+                onValueChange={(value) => setQuestionCount(value[0])}
+              />
+              {isDemo && questionCount > MAX_DEMO_QUESTIONS && (
+                <p className="text-sm text-amber-600">
+                  演示版本最多允许 {MAX_DEMO_QUESTIONS} 个问题
+                </p>
               )}
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-base">问题类型</Label>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="multiple-choice"
+                  checked={questionTypes.includes("multiple_choice")}
+                  onCheckedChange={() => toggleQuestionType("multiple_choice")}
+                />
+                <label
+                  htmlFor="multiple-choice"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  选择题
+                </label>
+              </div>
               
-              <Button
-                className="w-full py-3 mt-2"
-                onClick={handleTryAgain}
-              >
-                Try Again
-              </Button>
-            </motion.div>
-          )}
-        </div>
-      )}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="fill-in"
+                  checked={questionTypes.includes("fill_in")}
+                  onCheckedChange={() => toggleQuestionType("fill_in")}
+                />
+                <label
+                  htmlFor="fill-in"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  填空题
+                </label>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter>
+          <Button
+            onClick={generateQuiz}
+            disabled={isLoading || !learningObjectives.trim()}
+            className="w-full"
+          >
+            {isLoading ? "生成中..." : "生成测试题"}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

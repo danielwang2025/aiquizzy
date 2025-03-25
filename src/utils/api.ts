@@ -50,11 +50,16 @@ export async function generateQuestions(
     
     toast.loading("AI 正在生成练习题...");
 
-    // Get the DeepSeek API key from our environment variables
+    // Get the DeepSeek API key from environment variables
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
+    if (!DEEPSEEK_API_KEY) {
+      toast.error("API key not configured. Please set up your environment variables.");
+      throw new Error("DeepSeek API key not found");
+    }
+    
     // Customize the system prompt based on options
-    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
+    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。对每个问题生成一个有用的提示，不要直接给答案。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}", "hint": "给用户的提示，但不要泄露答案"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}", "hint": "给用户的提示，不要直接给答案"}]}`;
     
     // Add CSRF token to headers
     const headers = addCsrfToHeaders({
