@@ -9,6 +9,7 @@ export interface QuizQuestion {
   difficulty?: 'easy' | 'medium' | 'hard';
   topic?: string;
   subtopic?: string;
+  hint?: string; // Added hint property for questions
 }
 
 // Create a type alias for QuizQuestionType to avoid naming conflicts
@@ -93,17 +94,19 @@ export interface DashboardStats {
   totalAttempts: number;
   totalQuestions: number;
   correctAnswers: number;
-  averageScore: number;
+  avgScore: number; // Changed from averageScore to avgScore
   topicPerformance: {
     topic: string;
     correctRate: number;
     questionsCount: number;
   }[];
-  recentScores: {
-    date: string;
-    score: number;
-  }[];
+  recentScores: number[]; // Changed type to match what's expected
   dailyStreak: number;
   lastPracticeDate?: string;
   mostChallengedTopics: string[];
+}
+
+// Add FileUploader props interface
+export interface FileUploaderProps {
+  onTextExtracted: (text: string) => void;
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useReducer, useEffect } from "react";
 import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
@@ -34,12 +33,10 @@ import FileUploader from "./FileUploader";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/utils/authService";
 
-// Interface for QuizGenerator props
 interface QuizGeneratorProps {
   initialTopic?: string;
 }
 
-// Action types
 type QuizAction =
   | { type: "SET_LOADING" }
   | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
@@ -50,7 +47,6 @@ type QuizAction =
   | { type: "SET_ERROR"; payload: string }
   | { type: "REMOVE_QUESTION"; payload: string };
 
-// Initial state for the quiz
 const initialState: QuizState = {
   questions: [],
   currentQuestion: 0,
@@ -60,7 +56,6 @@ const initialState: QuizState = {
   error: null,
 };
 
-// Reducer function to manage quiz state
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case "SET_LOADING":
@@ -144,26 +139,20 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
   
-  // New state variables for customization options
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
   
-  // Demo mode state
   const [demoLimitReached, setDemoLimitReached] = useState(false);
   
-  // Load quiz history from localStorage on component mount
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
     
-    // Check if demo limit has been reached
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
       
-      // Reset counter if it's been more than 24 hours
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
+      if (Date.now() - usage.timestamp > 24 * 60 * 60 * 1000) {
         localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
       } else if (usage.count >= 5) {
         setDemoLimitReached(true);
@@ -171,7 +160,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     }
   }, [isAuth]);
 
-  // Generate quiz based on learning objectives
   const handleGenerate = async () => {
     const combinedObjectives = objectives.trim();
     
@@ -180,7 +168,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       return;
     }
     
-    // Check if demo limit has been reached for non-authenticated users
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
@@ -191,11 +178,9 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
         return;
       }
       
-      // Update usage count
       const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
       localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
       
-      // Show remaining attempts
       const remaining = 5 - newUsage.count;
       if (remaining <= 2) {
         toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
@@ -209,7 +194,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      // If we have extracted text, include it in the API call
       const promptWithContext = extractedText 
         ? `Learning objectives: ${objectives}\n\nContext from uploaded document: ${extractedText}`
         : objectives;
@@ -222,7 +206,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       
       dispatch({ type: "SET_QUESTIONS", payload: questions });
       
-      // Store the quiz in the database
       const quizTitle = objectives.length > 50 
         ? objectives.substring(0, 50) + "..." 
         : objectives;
@@ -245,7 +228,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     toast.success("Text extracted and will be used to enhance quiz questions");
   };
 
-  // Handle question type selection
   const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
     setQuestionTypes(prev => {
       if (prev.includes(type) && prev.length > 1) {
@@ -258,7 +240,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     });
   };
 
-  // Handle answer selection
   const handleAnswer = (index: number, answer: string | number) => {
     dispatch({
       type: "SET_ANSWER",
@@ -266,7 +247,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     });
   };
 
-  // Calculate and show results
   const handleComplete = () => {
     const { questions, answers } = state;
     
@@ -333,13 +313,11 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setQuizHistory(loadQuizHistory());
   };
 
-  // Handle question dispute
   const handleDisputeQuestion = (questionId: string) => {
     dispatch({ type: "REMOVE_QUESTION", payload: questionId });
     setQuizHistory(loadQuizHistory());
   };
 
-  // Add selected incorrect questions to review list
   const handleAddToReviewList = () => {
     if (selectedIncorrectQuestions.length === 0) {
       toast.error("No questions selected to add to review list");
@@ -357,7 +335,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setSelectedIncorrectQuestions([]);
   };
 
-  // Toggle selection of incorrect question
   const toggleSelectQuestion = (id: string) => {
     setSelectedIncorrectQuestions(prev => 
       prev.includes(id) 
@@ -366,7 +343,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     );
   };
 
-  // Select all incorrect questions
   const selectAllIncorrectQuestions = () => {
     const incorrectIds = state.questions
       .filter((_, index) => {
@@ -382,61 +358,50 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setSelectedIncorrectQuestions(incorrectIds);
   };
 
-  // Deselect all incorrect questions
   const deselectAllIncorrectQuestions = () => {
     setSelectedIncorrectQuestions([]);
   };
 
-  // View a specific quiz attempt
   const handleViewAttempt = (attempt: QuizAttempt) => {
     dispatch({ type: "LOAD_ATTEMPT", payload: attempt });
   };
 
-  // Handle removing a question from review list
   const handleRemoveFromReviewList = (id: string) => {
     removeFromReviewList(id);
     setQuizHistory(loadQuizHistory());
   };
 
-  // Clear review list
   const handleClearReviewList = () => {
     clearReviewList();
     setQuizHistory(loadQuizHistory());
   };
 
-  // Clear all history
   const handleClearHistory = () => {
     clearAllHistory();
     setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
   };
 
-  // Practice review list questions and navigate to practice page
   const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
     if (questions.length === 0) {
       toast.error("No questions to practice");
       return;
     }
     
-    // Save the review questions as a quiz in the database
     const quizId = saveQuizToDatabase(questions, "Review List Practice");
     
-    // Navigate to practice page with the quiz ID
     navigate(`/practice/${quizId}`);
   };
 
-  // Reset the quiz
   const handleReset = () => {
     dispatch({ type: "RESET_QUIZ" });
     setObjectives("");
     setSelectedIncorrectQuestions([]);
   };
 
-  // Try again with the same objectives
   const handleTryAgain = () => {
     handleGenerate();
   };
 
-  // Update quiz history (used by DisputedQuestions component)
   const handleUpdateHistory = () => {
     setQuizHistory(loadQuizHistory());
   };
