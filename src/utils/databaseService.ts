@@ -1,4 +1,3 @@
-
 import { QuizQuestion, QuizResult, QuizAttempt } from "@/types/quiz";
 
 // LocalStorage keys
@@ -7,8 +6,8 @@ const DB_ATTEMPTS_KEY = "quiz_db_attempts";
 
 // Save a quiz to the database
 export const saveQuizToDatabase = (
-  quizId: string,
-  quizData: {
+  quizIdOrQuestions: string | QuizQuestion[],
+  quizTitleOrData: string | {
     id: string;
     title: string;
     objectives: string;
@@ -20,10 +19,34 @@ export const saveQuizToDatabase = (
 ) => {
   const quizzes = getQuizzesFromDatabase();
   
+  // Handle both usage patterns:
+  // 1. (quizId: string, quizData: object)
+  // 2. (questions: QuizQuestion[], title: string)
+  
+  let quizData;
+  
+  if (Array.isArray(quizIdOrQuestions)) {
+    // Handle the case where the first argument is an array of questions
+    const questions = quizIdOrQuestions;
+    const title = typeof quizTitleOrData === 'string' ? quizTitleOrData : 'Untitled Quiz';
+    
+    quizData = {
+      id: crypto.randomUUID(),
+      title: title,
+      objectives: title,
+      createdAt: new Date().toISOString(),
+      questions: questions,
+      isComplete: true
+    };
+  } else {
+    // Handle the case where the first argument is a quiz ID
+    quizData = quizTitleOrData;
+  }
+  
   quizzes.push(quizData);
   localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(quizzes));
   
-  return quizId;
+  return typeof quizData === 'object' ? quizData.id : quizIdOrQuestions;
 };
 
 // Get all quizzes from the database
