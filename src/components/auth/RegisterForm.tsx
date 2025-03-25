@@ -74,14 +74,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     setIsLoading(true);
     
     try {
-      const { user, error } = await registerUser(email, password, displayName);
-      
-      if (error) {
-        toast.error(error);
-      } else if (user) {
-        toast.success("Registration successful");
-        onSuccess();
-      }
+      await registerUser(email, password, displayName);
+      toast.success("Registration successful");
+      onSuccess();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {

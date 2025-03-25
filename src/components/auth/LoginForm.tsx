@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { loginUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { escapeHtml } from "@/utils/securityUtils";
+import { escapeHtml, generateCsrfToken, storeCsrfToken } from "@/utils/securityUtils";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -15,6 +15,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Generate and store CSRF token on component mount
+  useEffect(() => {
+    const token = generateCsrfToken();
+    storeCsrfToken(token);
+  }, []);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,14 +40,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     setIsLoading(true);
     
     try {
-      const { user, error } = await loginUser(email, password);
-      
-      if (error) {
-        toast.error(error);
-      } else if (user) {
-        toast.success("Login successful");
-        onSuccess();
-      }
+      await loginUser(email, password);
+      toast.success("Login successful");
+      onSuccess();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {

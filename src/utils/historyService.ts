@@ -1,12 +1,12 @@
 
 import { QuizAttempt, QuizQuestion, QuizHistory, DisputedQuestion } from "@/types/quiz";
-import { getCurrentUserSync } from "./authService";
+import { getCurrentUser } from "./authService";
 
 const HISTORY_KEY = "quiz_history";
 
 // Load quiz history from localStorage for current user
 export const loadQuizHistory = (): QuizHistory => {
-  const currentUser = getCurrentUserSync();
+  const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   
   const savedHistory = localStorage.getItem(HISTORY_KEY);
@@ -47,7 +47,7 @@ export const loadQuizHistory = (): QuizHistory => {
 
 // Save quiz history to localStorage
 export const saveQuizHistory = (history: QuizHistory): void => {
-  const currentUser = getCurrentUserSync();
+  const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   const key = userId || 'anonymous';
   
@@ -73,7 +73,7 @@ export const saveQuizHistory = (history: QuizHistory): void => {
 
 // Add a new quiz attempt to history
 export const saveQuizAttempt = (attempt: QuizAttempt): void => {
-  const currentUser = getCurrentUserSync();
+  const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   
   // Add userId to attempt
@@ -113,7 +113,7 @@ export const clearReviewList = (): void => {
 
 // Clear all history for current user
 export const clearAllHistory = (): void => {
-  const currentUser = getCurrentUserSync();
+  const currentUser = getCurrentUser();
   const userId = currentUser?.id;
   const key = userId || 'anonymous';
   
@@ -172,3 +172,4 @@ export const isQuestionDisputed = (questionId: string): boolean => {
   const history = loadQuizHistory();
   return history.disputedQuestions.some(dq => dq.questionId === questionId);
 };
+

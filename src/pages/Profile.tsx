@@ -25,9 +25,8 @@ const Profile: React.FC = () => {
   const [newTopic, setNewTopic] = useState("");
   
   useEffect(() => {
-    // Use an async function inside useEffect
-    const fetchUser = async () => {
-      const currentUser = await getCurrentUser();
+    const currentUser = getCurrentUser();
+    if (currentUser) {
       setUser(currentUser);
       
       // Load learning preferences
@@ -35,9 +34,7 @@ const Profile: React.FC = () => {
       if (history.learningPreferences) {
         setPreferences(history.learningPreferences);
       }
-    };
-    
-    fetchUser();
+    }
   }, []);
   
   const handleSavePreferences = () => {
