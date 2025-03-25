@@ -28,12 +28,29 @@ export interface QuizStats {
   score: number;
 }
 
-export interface QuizHistory {
+// Added to match the implementations in other files
+export interface QuizAttempt {
   id: string;
   quizId: string;
-  score: number;
-  date: number;
-  stats: QuizStats;
+  objectives: string;
+  date: string | number;
+  questions: QuizQuestion[];
+  userAnswers: (string | number | null)[];
+  result: {
+    correctAnswers: number;
+    incorrectAnswers: number;
+    score: number;
+  };
+  userId?: string;
+}
+
+export interface QuizHistory {
+  id?: string;
+  userId?: string;
+  attempts: QuizAttempt[];
+  reviewList: QuizQuestion[];
+  disputedQuestions: DisputedQuestion[];
+  learningPreferences?: LearningPreferences;
 }
 
 export interface QuizProgressData {
@@ -43,7 +60,44 @@ export interface QuizProgressData {
 
 export interface DisputedQuestion {
   questionId: string;
-  reason: string;
+  question: QuizQuestion;
   userAnswer: string | number | null;
-  timestamp: number;
+  disputeReason: string;
+  dateDisputed: string;
+  status: 'pending' | 'reviewed';
+}
+
+export interface User {
+  id: string;
+  email: string;
+  displayName?: string;
+  createdAt: number;
+  lastLoginAt?: number;
+  photoURL?: string;
+}
+
+export interface LearningPreferences {
+  preferredDifficulty: 'easy' | 'medium' | 'hard';
+  preferredQuestionTypes: ('multiple_choice' | 'fill_in')[];
+  topicsOfInterest: string[];
+  dailyGoal: number;
+  reminderEnabled: boolean;
+}
+
+// For Dashboard
+export interface DashboardStats {
+  totalQuizzes: number;
+  totalQuestions: number;
+  avgScore: number;
+  topicsStudied: string[];
+  recentScores: number[];
+  learningStreak: number;
+}
+
+export interface QuizResult {
+  id: string;
+  score: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  date: number;
 }
