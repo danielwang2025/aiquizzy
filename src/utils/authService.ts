@@ -105,7 +105,15 @@ export const loginUser = async (
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const { data } = await supabase.auth.getUser();
-    return data?.user as User || null;
+    if (!data?.user) return null;
+    
+    // Create a User object that matches both our interfaces
+    const user: User = {
+      ...data.user,
+      createdAt: data.user.created_at || new Date().toISOString(),
+    };
+    
+    return user;
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
@@ -123,7 +131,15 @@ export const getCurrentUserSync = (): User | null => {
   try {
     // Parse from local storage - this is NOT a complete solution but works for simple cases
     const session = JSON.parse(localStorage.getItem('sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token') || '{}');
-    return session?.user || null;
+    if (!session?.user) return null;
+    
+    // Create a User object that matches our interface
+    const user: User = {
+      ...session.user,
+      createdAt: session.user.created_at || new Date().toISOString(),
+    };
+    
+    return user;
   } catch (error) {
     console.error("Error parsing user data:", error);
     return null;
