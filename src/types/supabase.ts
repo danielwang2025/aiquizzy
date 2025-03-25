@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -5,7 +6,6 @@ import { User as SupabaseUser } from "@supabase/supabase-js";
 export interface User extends SupabaseUser {
   displayName?: string;
   avatarUrl?: string;
-  createdAt: string; // Add this to match with quiz User type
 }
 
 // Profile type from the profiles table
