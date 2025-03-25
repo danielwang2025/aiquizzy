@@ -1,85 +1,91 @@
 
-import React, { useState, useEffect } from "react";
-import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
-import LoginForm from "./LoginForm";
-import RegisterForm from "./RegisterForm";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { User, LogOut } from "lucide-react";
-import { toast } from "sonner";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthState, initialAuthState, getCurrentUser } from "@/utils/authService";
 
-const AuthManager: React.FC = () => {
-  const [isAuth, setIsAuth] = useState(false);
-  const [currentUser, setCurrentUser] = useState(getCurrentUser());
-  const [showRegister, setShowRegister] = useState(false);
-  const [showAuthSheet, setShowAuthSheet] = useState(false);
-  
+// Create Auth Context
+const AuthContext = createContext<{
+  authState: AuthState;
+  refreshUser: () => Promise<void>;
+}>({
+  authState: initialAuthState,
+  refreshUser: async () => {},
+});
+
+// Export hook for using auth context
+export const useAuth = () => useContext(AuthContext);
+
+// Auth Provider component
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+
+  const refreshUser = async () => {
+    try {
+      const user = await getCurrentUser();
+      
+      setAuthState({
+        user,
+        isAuthenticated: !!user,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+      setAuthState({
+        ...authState,
+        isLoading: false,
+        error: "Failed to load user data",
+      });
+    }
+  };
+
   useEffect(() => {
-    // Check authentication status
-    setIsAuth(isAuthenticated());
-    setCurrentUser(getCurrentUser());
+    // Initial auth state setup
+    const initializeAuth = async () => {
+      try {
+        // Get current user and profile
+        await refreshUser();
+        
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log("Auth state changed:", event);
+            
+            if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+              await refreshUser();
+            } else if (event === "SIGNED_OUT") {
+              setAuthState({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+              });
+            }
+          }
+        );
+
+        // Clean up subscription on unmount
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setAuthState({
+          ...authState,
+          isLoading: false,
+          error: "Failed to initialize authentication",
+        });
+      }
+    };
+
+    initializeAuth();
   }, []);
-  
-  const handleAuthSuccess = () => {
-    setIsAuth(true);
-    setCurrentUser(getCurrentUser());
-    setShowAuthSheet(false);
-    // Reset auth sheet to login view for next time
-    setShowRegister(false);
-  };
-  
-  const handleLogout = () => {
-    logoutUser();
-    setIsAuth(false);
-    setCurrentUser(null);
-    toast.success("You have been logged out");
-  };
-  
-  const toggleRegisterLogin = () => {
-    setShowRegister(!showRegister);
-  };
-  
+
   return (
-    <div>
-      {isAuth ? (
-        <div className="flex items-center gap-2">
-          <div className="text-sm">
-            <span className="font-medium">{currentUser?.displayName || currentUser?.email}</span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      ) : (
-        <Sheet open={showAuthSheet} onOpenChange={setShowAuthSheet}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Login / Register
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            {showRegister ? (
-              <RegisterForm
-                onSuccess={handleAuthSuccess}
-                onLoginClick={toggleRegisterLogin}
-              />
-            ) : (
-              <LoginForm
-                onSuccess={handleAuthSuccess}
-                onRegisterClick={toggleRegisterLogin}
-              />
-            )}
-          </SheetContent>
-        </Sheet>
-      )}
-    </div>
+    <AuthContext.Provider value={{ authState, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-export default AuthManager;
+export default AuthProvider;
