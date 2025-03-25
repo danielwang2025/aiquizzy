@@ -15,20 +15,6 @@ const mockUsers = [
 // Current user state (in-memory for demo purposes)
 let currentUser = null;
 
-// Export login, register and logout functions
-// We need to declare them first to avoid circular reference errors
-const login = (email, password) => {
-  // Implementation follows later
-};
-
-const register = (email, password, displayName) => {
-  // Implementation follows later
-};
-
-const logout = () => {
-  // Implementation follows later
-};
-
 // Check if user is authenticated
 export function isAuthenticated() {
   const userJson = localStorage.getItem("currentUser");
@@ -46,11 +32,8 @@ export function getCurrentUser() {
   }
 }
 
-// Export the functions (implementation follows)
-export { login, register, logout };
-
 // Login function implementation
-export function loginImpl(email, password) {
+export function login(email, password) {
   const user = mockUsers.find(
     (u) => u.email === email && u.password === password
   );
@@ -66,8 +49,11 @@ export function loginImpl(email, password) {
   return { success: false, error: "Invalid email or password" };
 }
 
+// For backward compatibility
+export const loginUser = login;
+
 // Register function implementation
-export function registerImpl(email, password, displayName) {
+export function register(email, password, displayName) {
   const userExists = mockUsers.find((u) => u.email === email);
 
   if (userExists) {
@@ -92,14 +78,15 @@ export function registerImpl(email, password, displayName) {
   return { success: true, user: userWithoutPassword };
 }
 
+// For backward compatibility
+export const registerUser = register;
+
 // Logout function implementation
-export function logoutImpl() {
+export function logout() {
   localStorage.removeItem("currentUser");
   currentUser = null;
   return { success: true };
 }
 
-// Now implement the actual exported functions
-login.implementation = loginImpl;
-register.implementation = registerImpl;
-logout.implementation = logoutImpl;
+// For backward compatibility
+export const logoutUser = logout;

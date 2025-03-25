@@ -33,11 +33,15 @@ import { getRelevantContext } from "@/utils/ragService";
 import { isAuthenticated } from "@/utils/authService";
 import { QuizState, QuizQuestion } from "@/types/quiz";
 
+interface QuizGeneratorProps {
+  initialTopic?: string;
+}
+
 // Component to generate quizzes
-const QuizGenerator = () => {
+const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [learningObjectives, setLearningObjectives] = useState("");
+  const [learningObjectives, setLearningObjectives] = useState(initialTopic);
   const [difficultyLevel, setDifficultyLevel] = useState<"easy" | "medium" | "hard">("medium");
   const [questionCount, setQuestionCount] = useState(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
@@ -62,9 +66,9 @@ const QuizGenerator = () => {
   };
 
   // Process uploaded content for quiz context
-  const handleFileProcessed = async (extractedText: string, fileName: string) => {
+  const handleFileProcessed = (extractedText: string) => {
     setUploadedContent(extractedText);
-    toast.success(`${fileName} processed successfully!`);
+    toast.success(`File processed successfully!`);
     setUseUploadedContent(true);
   };
 
@@ -201,7 +205,7 @@ const QuizGenerator = () => {
                 onCheckedChange={setUseUploadedContent}
               />
               <Label htmlFor="use-uploaded" className="font-medium">
-                将上传的内容用于生成更精确的问题
+                将上传的���容用于生成更精确的问题
               </Label>
             </div>
           )}

@@ -6,18 +6,21 @@ const DB_QUIZZES_KEY = "quiz_db_quizzes";
 const DB_ATTEMPTS_KEY = "quiz_db_attempts";
 
 // Save a quiz to the database
-export const saveQuizToDatabase = (questions: QuizQuestion[], title: string): string => {
-  const quizId = crypto.randomUUID();
+export const saveQuizToDatabase = (
+  quizId: string,
+  quizData: {
+    id: string;
+    title: string;
+    objectives: string;
+    createdAt: string;
+    questions: QuizQuestion[];
+    difficulty?: 'easy' | 'medium' | 'hard';
+    isComplete?: boolean;
+  }
+) => {
   const quizzes = getQuizzesFromDatabase();
   
-  const newQuiz = {
-    id: quizId,
-    title,
-    questions,
-    createdAt: new Date().toISOString()
-  };
-  
-  quizzes.push(newQuiz);
+  quizzes.push(quizData);
   localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(quizzes));
   
   return quizId;

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { loginUser } from "@/utils/authService";
+import { login } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -40,9 +39,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     setIsLoading(true);
     
     try {
-      await loginUser(email, password);
-      toast.success("Login successful");
-      onSuccess();
+      const result = login(email, password);
+      if (result.success) {
+        toast.success("Login successful");
+        onSuccess();
+      } else {
+        toast.error(result.error || "Login failed");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
