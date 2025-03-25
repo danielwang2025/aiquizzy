@@ -1,31 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { QuizHistory, DashboardStats } from '@/types/quiz';
 import { loadQuizHistory } from '@/utils/historyService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { Skeleton } from "@/components/ui/skeleton"
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, Legend 
+} from 'recharts';
+import { ChartContainer } from "@/components/ui/chart";
 
 const Dashboard: React.FC = () => {
   const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
@@ -162,47 +145,11 @@ const Dashboard: React.FC = () => {
     };
   };
 
-  // Chart data
-  const chartData = {
-    labels: stats.recentScores.map((_, index) => `Attempt ${index + 1}`).reverse(),
-    datasets: [
-      {
-        label: 'Score',
-        data: stats.recentScores.reverse(),
-        fill: true,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        pointBorderColor: 'rgba(54, 162, 235, 1)',
-        pointBackgroundColor: '#fff',
-        pointBorderWidth: 1,
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: 'rgba(54, 162, 235, 1)',
-        pointHoverBorderColor: 'rgba(220, 220, 220, 1)',
-        pointHoverBorderWidth: 2,
-        pointRadius: 3,
-        pointHitRadius: 10,
-      },
-    ],
-  };
-
-  // Chart options
-  const chartOptions = {
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-      },
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-    },
-  };
+  // Format chart data for recharts
+  const chartData = stats.recentScores.map((score, index) => ({
+    name: `Attempt ${index + 1}`,
+    score: score
+  })).reverse();
 
   return (
     <div className="container mx-auto py-10">
@@ -255,7 +202,24 @@ const Dashboard: React.FC = () => {
             <Skeleton className="h-[300px]" />
           ) : (
             <div className="h-[300px]">
-              <Line data={chartData} options={chartOptions} />
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="score" 
+                    name="Score" 
+                    stroke="#3b82f6" 
+                    fill="#3b82f6" 
+                    strokeWidth={2}
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           )}
         </CardContent>

@@ -1,3 +1,4 @@
+
 // This is a placeholder implementation for auth service functions
 // In a real application, you would integrate with an auth provider like Firebase, Auth0, etc.
 
@@ -41,6 +42,11 @@ export const getCurrentUser = (): User | null => {
     return null;
   }
 };
+
+// Alias functions to match the expected imports
+export const loginUser = login;
+export const registerUser = register;
+export const logoutUser = logout;
 
 // Mock login function
 export const login = (email: string, password: string): Promise<User> => {
