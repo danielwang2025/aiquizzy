@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { loginUser } from "@/utils/authService";
+import { loginUser, sendMagicLink } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   
   // Generate and store CSRF token on component mount
   useEffect(() => {
@@ -47,6 +48,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    setIsMagicLinkLoading(true);
+
+    try {
+      await sendMagicLink(email);
+      toast.success("Magic link sent to your email");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to send magic link");
+    } finally {
+      setIsMagicLinkLoading(false);
     }
   };
   
@@ -92,6 +111,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           disabled={isLoading}
         >
           {isLoading ? "Logging in..." : "Login"}
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-muted-foreground">Or</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleMagicLink}
+          disabled={isMagicLinkLoading}
+        >
+          {isMagicLinkLoading ? "Sending..." : "Login with Magic Link"}
         </Button>
       </form>
       
