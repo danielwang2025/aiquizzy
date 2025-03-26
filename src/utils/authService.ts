@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, LearningPreferences } from "@/types/quiz";
 import { v4 as uuidv4 } from "uuid";
@@ -66,7 +67,8 @@ export const initAuth = async (): Promise<void> => {
           .insert({
             id: newUser.id,
             email: newUser.email,
-            display_name: newUser.displayName
+            display_name: newUser.displayName,
+            password_hash: 'MANAGED_BY_SUPABASE' // Add the required password_hash field
           });
           
         if (insertError) {
@@ -102,10 +104,10 @@ export const registerUser = async (
       const { error: profileError } = await supabase
         .from('users')
         .insert({
+          id: authData.user.id,
           email,
-          password_hash: 'MANAGED_BY_SUPABASE', // Required field
-          display_name: displayName,
-          id: authData.user.id
+          display_name: displayName || email.split('@')[0],
+          password_hash: 'MANAGED_BY_SUPABASE' // Add the required password_hash field
         });
 
       if (profileError) {
@@ -156,7 +158,7 @@ export const login = async (email: string, password: string): Promise<User> => {
           id: user.id,
           email: user.email,
           display_name: user.displayName,
-          password_hash: 'MANAGED_BY_SUPABASE' // Required field
+          password_hash: 'MANAGED_BY_SUPABASE' // Add the required password_hash field
         });
         
       currentUser = user;
