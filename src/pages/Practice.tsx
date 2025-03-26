@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -27,79 +26,89 @@ const Practice = () => {
   const [showCurrentHint, setShowCurrentHint] = useState(false);
   
   useEffect(() => {
-    if (quizId) {
-      // Special handling for demo mode
-      if (quizId === "demo") {
-        // Create a demo quiz with 5 questions
-        const demoQuiz = {
-          id: "demo",
-          title: "Demo Quiz",
-          questions: [
-            {
-              id: "demo-q1",
-              type: "multiple_choice",
-              question: "What is React primarily used for?",
-              options: ["Server-side scripting", "Building user interfaces", "Database management", "Network configuration"],
-              correctAnswer: 1,
-              explanation: "React is a JavaScript library for building user interfaces, particularly single-page applications.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q2",
-              type: "multiple_choice",
-              question: "Which lifecycle method is called after a component is rendered for the first time?",
-              options: ["componentWillMount", "componentDidMount", "componentWillUpdate", "componentDidUpdate"],
-              correctAnswer: 1,
-              explanation: "componentDidMount is called once the component has been rendered to the DOM for the first time.",
-              difficulty: "medium"
-            },
-            {
-              id: "demo-q3",
-              type: "fill_in",
-              question: "In React, the function that is used to update state variables is called ________.",
-              correctAnswer: "setState",
-              explanation: "setState is the method used to update state in class components in React.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q4",
-              type: "multiple_choice",
-              question: "What does JSX stand for?",
-              options: ["JavaScript XML", "Java Standard XML", "JavaScript Extension", "Java Syntax Extension"],
-              correctAnswer: 0,
-              explanation: "JSX stands for JavaScript XML. It allows us to write HTML in React.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q5",
-              type: "fill_in",
-              question: "The React Hook used to perform side effects in function components is called ________.",
-              correctAnswer: "useEffect",
-              explanation: "useEffect is a Hook that lets you perform side effects in function components.",
-              difficulty: "medium"
-            }
-          ]
-        };
+    const fetchQuiz = async () => {
+      if (quizId) {
+        // Special handling for demo mode
+        if (quizId === "demo") {
+          // Create a demo quiz with 5 questions
+          const demoQuiz = {
+            id: "demo",
+            title: "Demo Quiz",
+            questions: [
+              {
+                id: "demo-q1",
+                type: "multiple_choice",
+                question: "What is React primarily used for?",
+                options: ["Server-side scripting", "Building user interfaces", "Database management", "Network configuration"],
+                correctAnswer: 1,
+                explanation: "React is a JavaScript library for building user interfaces, particularly single-page applications.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q2",
+                type: "multiple_choice",
+                question: "Which lifecycle method is called after a component is rendered for the first time?",
+                options: ["componentWillMount", "componentDidMount", "componentWillUpdate", "componentDidUpdate"],
+                correctAnswer: 1,
+                explanation: "componentDidMount is called once the component has been rendered to the DOM for the first time.",
+                difficulty: "medium"
+              },
+              {
+                id: "demo-q3",
+                type: "fill_in",
+                question: "In React, the function that is used to update state variables is called ________.",
+                correctAnswer: "setState",
+                explanation: "setState is the method used to update state in class components in React.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q4",
+                type: "multiple_choice",
+                question: "What does JSX stand for?",
+                options: ["JavaScript XML", "Java Standard XML", "JavaScript Extension", "Java Syntax Extension"],
+                correctAnswer: 0,
+                explanation: "JSX stands for JavaScript XML. It allows us to write HTML in React.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q5",
+                type: "fill_in",
+                question: "The React Hook used to perform side effects in function components is called ________.",
+                correctAnswer: "useEffect",
+                explanation: "useEffect is a Hook that lets you perform side effects in function components.",
+                difficulty: "medium"
+              }
+            ]
+          };
+          
+          setQuiz(demoQuiz);
+          setUserAnswers(Array(demoQuiz.questions.length).fill(null));
+          setLoading(false);
+          return;
+        }
         
-        setQuiz(demoQuiz);
-        setUserAnswers(Array(demoQuiz.questions.length).fill(null));
-        setLoading(false);
-        return;
-      }
-      
-      const quizData = getQuizById(quizId);
-      if (quizData) {
-        setQuiz(quizData);
-        setUserAnswers(Array(quizData.questions.length).fill(null));
+        try {
+          const quizData = await getQuizById(quizId);
+          if (quizData) {
+            setQuiz(quizData);
+            setUserAnswers(Array(quizData.questions.length).fill(null));
+          } else {
+            toast.error("Quiz not found");
+            navigate("/customize");
+          }
+        } catch (error) {
+          console.error("Error fetching quiz:", error);
+          toast.error("Error loading quiz");
+          navigate("/customize");
+        }
       } else {
-        toast.error("Quiz not found");
+        // If no quizId is provided, redirect to customize page
         navigate("/customize");
       }
-    } else {
-      // If no quizId is provided, redirect to customize page
-      navigate("/customize");
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    
+    fetchQuiz();
   }, [quizId, navigate]);
   
   // Reset hint state when changing questions
@@ -427,3 +436,4 @@ const Practice = () => {
 };
 
 export default Practice;
+

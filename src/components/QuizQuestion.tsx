@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
@@ -35,8 +34,16 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
       setAnimatedIn(true);
     }, 50 * index);
 
-    // Check if this question is already disputed
-    setIsAlreadyDisputed(isQuestionDisputed(question.id));
+    const checkIfDisputed = async () => {
+      try {
+        const disputed = await isQuestionDisputed(question.id);
+        setIsAlreadyDisputed(disputed);
+      } catch (error) {
+        console.error("Error checking if question is disputed:", error);
+      }
+    };
+    
+    checkIfDisputed();
 
     return () => clearTimeout(timer);
   }, [index, question.id]);
@@ -248,7 +255,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Dispute Form Dialog */}
       {showResult && onDisputeQuestion && (
         <DisputeForm
           question={question}

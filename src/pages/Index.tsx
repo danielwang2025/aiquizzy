@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -17,6 +17,7 @@ import {
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory } from "@/utils/historyService";
 import { motion } from "framer-motion";
+import { QuizHistory } from "@/types/quiz";
 import {
   Carousel,
   CarouselContent,
@@ -28,9 +29,26 @@ import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
 
 const Index = () => {
-  const history = loadQuizHistory();
-  const hasHistory = history.attempts.length > 0;
   const [topic, setTopic] = useState("");
+  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const quizHistory = await loadQuizHistory();
+        setHistory(quizHistory);
+      } catch (error) {
+        console.error("Error loading quiz history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHistory();
+  }, []);
+  
+  const hasHistory = history.attempts.length > 0;
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -314,7 +332,7 @@ const Index = () => {
           </div>
         </section>
         
-        {hasHistory && (
+        {hasHistory && !loading && (
           <section>
             <h2 className="text-2xl font-bold text-center mb-8">Recent Activity</h2>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-border max-w-2xl mx-auto">
@@ -354,3 +372,4 @@ const Index = () => {
 };
 
 export default Index;
+

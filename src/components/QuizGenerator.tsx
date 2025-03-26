@@ -1,4 +1,3 @@
-
 import React, { useState, useReducer, useEffect } from "react";
 import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
@@ -154,21 +153,30 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   
   // Load quiz history from localStorage on component mount
   useEffect(() => {
-    setQuizHistory(loadQuizHistory());
-    
-    // Check if demo limit has been reached
-    if (!isAuth) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      // Reset counter if it's been more than 24 hours
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
-        localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
-      } else if (usage.count >= 5) {
-        setDemoLimitReached(true);
+    const fetchHistory = async () => {
+      try {
+        const history = await loadQuizHistory();
+        setQuizHistory(history);
+        
+        // Check if demo limit has been reached
+        if (!isAuth) {
+          const demoUsage = localStorage.getItem("demoQuizUsage");
+          const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
+          
+          // Reset counter if it's been more than 24 hours
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          if (Date.now() - usage.timestamp > oneDayMs) {
+            localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
+          } else if (usage.count >= 5) {
+            setDemoLimitReached(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading quiz history:", error);
       }
-    }
+    };
+    
+    fetchHistory();
   }, [isAuth]);
 
   // Generate quiz based on learning objectives
@@ -328,9 +336,15 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       result,
     };
     
-    saveQuizAttempt(attempt);
-    
-    setQuizHistory(loadQuizHistory());
+    saveQuizAttempt(attempt).then(() => {
+      loadQuizHistory().then(history => {
+        setQuizHistory(history);
+      }).catch(error => {
+        console.error("Error loading quiz history after save:", error);
+      });
+    }).catch(error => {
+      console.error("Error saving quiz attempt:", error);
+    });
   };
 
   // Handle question dispute
@@ -346,15 +360,22 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       return;
     }
     
-    state.questions.forEach(question => {
-      if (selectedIncorrectQuestions.includes(question.id)) {
-        addToReviewList(question);
-      }
-    });
+    const promises = state.questions
+      .filter(question => selectedIncorrectQuestions.includes(question.id))
+      .map(question => addToReviewList(question));
     
-    toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
-    setQuizHistory(loadQuizHistory());
-    setSelectedIncorrectQuestions([]);
+    Promise.all(promises)
+      .then(() => {
+        toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
+        return loadQuizHistory();
+      })
+      .then(history => {
+        setQuizHistory(history);
+        setSelectedIncorrectQuestions([]);
+      })
+      .catch(error => {
+        console.error("Error adding to review list:", error);
+      });
   };
 
   // Toggle selection of incorrect question
@@ -394,20 +415,37 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
 
   // Handle removing a question from review list
   const handleRemoveFromReviewList = (id: string) => {
-    removeFromReviewList(id);
-    setQuizHistory(loadQuizHistory());
+    removeFromReviewList(id)
+      .then(() => loadQuizHistory())
+      .then(history => {
+        setQuizHistory(history);
+      })
+      .catch(error => {
+        console.error("Error removing from review list:", error);
+      });
   };
 
   // Clear review list
   const handleClearReviewList = () => {
-    clearReviewList();
-    setQuizHistory(loadQuizHistory());
+    clearReviewList()
+      .then(() => loadQuizHistory())
+      .then(history => {
+        setQuizHistory(history);
+      })
+      .catch(error => {
+        console.error("Error clearing review list:", error);
+      });
   };
 
   // Clear all history
   const handleClearHistory = () => {
-    clearAllHistory();
-    setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
+    clearAllHistory()
+      .then(() => {
+        setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
+      })
+      .catch(error => {
+        console.error("Error clearing history:", error);
+      });
   };
 
   // Practice review list questions and navigate to practice page
@@ -418,10 +456,15 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     }
     
     // Save the review questions as a quiz in the database
-    const quizId = saveQuizToDatabase(questions, "Review List Practice");
-    
-    // Navigate to practice page with the quiz ID
-    navigate(`/practice/${quizId}`);
+    saveQuizToDatabase(questions, "Review List Practice")
+      .then(quizId => {
+        // Navigate to practice page with the quiz ID
+        navigate(`/practice/${quizId}`);
+      })
+      .catch(error => {
+        console.error("Error creating review practice quiz:", error);
+        toast.error("Failed to create practice quiz");
+      });
   };
 
   // Reset the quiz
@@ -438,7 +481,13 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
 
   // Update quiz history (used by DisputedQuestions component)
   const handleUpdateHistory = () => {
-    setQuizHistory(loadQuizHistory());
+    loadQuizHistory()
+      .then(history => {
+        setQuizHistory(history);
+      })
+      .catch(error => {
+        console.error("Error updating history:", error);
+      });
   };
 
   return (

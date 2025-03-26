@@ -1,92 +1,72 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
-import { loadQuizHistory, saveQuizHistory } from "@/utils/historyService";
-import { getCurrentUser } from "@/utils/authService";
-import { LearningPreferences, User } from "@/types/quiz";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { loadQuizHistory, updateLearningPreferences } from "@/utils/historyService";
+import { getCurrentUser, updateUserProfile } from "@/utils/authService";
+import { LearningPreferences, QuizHistory, User } from "@/types/quiz";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { ArrowRight, Bookmark, CreditCard, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
-import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [preferences, setPreferences] = useState<LearningPreferences>({
-    preferredDifficulty: "medium",
-    preferredQuestionTypes: ["multiple_choice", "fill_in"],
-    topicsOfInterest: [],
-    dailyGoal: 10,
-    reminderEnabled: false
-  });
-  const [newTopic, setNewTopic] = useState("");
+  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
+  const [preferences, setPreferences] = useState<LearningPreferences>({});
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      
-      // Load learning preferences
-      const history = loadQuizHistory();
-      if (history.learningPreferences) {
-        setPreferences(history.learningPreferences);
-      }
-    }
-  }, []);
-  
-  const handleSavePreferences = () => {
-    const history = loadQuizHistory();
-    history.learningPreferences = preferences;
-    saveQuizHistory(history);
-    
-    // Also update user preferences if we had user auth backend
-    toast.success("Learning preferences saved successfully!");
-  };
-  
-  const handleAddTopic = () => {
-    if (!newTopic.trim()) return;
-    
-    if (!preferences.topicsOfInterest?.includes(newTopic)) {
-      setPreferences(prev => ({
-        ...prev,
-        topicsOfInterest: [...(prev.topicsOfInterest || []), newTopic.trim()]
-      }));
-      setNewTopic("");
-    }
-  };
-  
-  const handleRemoveTopic = (topic: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      topicsOfInterest: prev.topicsOfInterest?.filter(t => t !== topic) || []
-    }));
-  };
-  
-  const handleToggleQuestionType = (type: 'multiple_choice' | 'fill_in') => {
-    setPreferences(prev => {
-      const currentTypes = prev.preferredQuestionTypes || [];
-      
-      if (currentTypes.includes(type)) {
-        // Don't allow removing if it's the last type
-        if (currentTypes.length === 1) {
-          return prev;
+    const initialize = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        
+        const quizHistory = await loadQuizHistory();
+        setHistory(quizHistory);
+        
+        if (currentUser?.learningPreferences) {
+          setPreferences(currentUser.learningPreferences);
+        } else if (quizHistory.learningPreferences) {
+          setPreferences(quizHistory.learningPreferences);
         }
-        return {
-          ...prev,
-          preferredQuestionTypes: currentTypes.filter(t => t !== type)
-        };
-      } else {
-        return {
-          ...prev,
-          preferredQuestionTypes: [...currentTypes, type]
-        };
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+    
+    initialize();
+  }, []);
+
+  const handleSavePreferences = async () => {
+    try {
+      await updateLearningPreferences(preferences);
+      
+      if (user) {
+        await updateUserProfile({
+          ...user,
+          learningPreferences: preferences
+        });
+      }
+      
+      toast.success("Learning preferences updated successfully");
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast.error("Failed to update preferences");
+    }
   };
-  
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -103,7 +83,7 @@ const Profile: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navigation />
