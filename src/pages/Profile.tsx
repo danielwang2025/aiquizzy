@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, updateLearningPreferences } from "@/utils/historyService";
 import { getCurrentUser, updateUserProfile } from "@/utils/authService";
 import { LearningPreferences, QuizHistory, User } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowRight, Bookmark, CreditCard, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Check, CreditCard, LogOut, Settings, Target, User as UserIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ const Profile: React.FC = () => {
   const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [preferences, setPreferences] = useState<LearningPreferences>({});
   const [loading, setLoading] = useState(true);
+  const [newTopic, setNewTopic] = useState("");
   
   useEffect(() => {
     const initialize = async () => {
@@ -44,6 +46,47 @@ const Profile: React.FC = () => {
     
     initialize();
   }, []);
+
+  const handleToggleQuestionType = (type: "multiple_choice" | "fill_in") => {
+    setPreferences(prev => {
+      const currentTypes = prev.preferredQuestionTypes || [];
+      if (currentTypes.includes(type)) {
+        return {
+          ...prev,
+          preferredQuestionTypes: currentTypes.filter(t => t !== type)
+        };
+      } else {
+        return {
+          ...prev,
+          preferredQuestionTypes: [...currentTypes, type]
+        };
+      }
+    });
+  };
+
+  const handleAddTopic = () => {
+    if (!newTopic.trim()) return;
+    
+    setPreferences(prev => {
+      const currentTopics = prev.topicsOfInterest || [];
+      if (!currentTopics.includes(newTopic.trim())) {
+        return {
+          ...prev,
+          topicsOfInterest: [...currentTopics, newTopic.trim()]
+        };
+      }
+      return prev;
+    });
+    
+    setNewTopic("");
+  };
+
+  const handleRemoveTopic = (topic: string) => {
+    setPreferences(prev => ({
+      ...prev,
+      topicsOfInterest: (prev.topicsOfInterest || []).filter(t => t !== topic)
+    }));
+  };
 
   const handleSavePreferences = async () => {
     try {

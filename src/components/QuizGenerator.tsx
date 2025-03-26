@@ -1,802 +1,355 @@
-import React, { useState, useReducer, useEffect } from "react";
-import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
-import { generateQuestions } from "@/utils/api";
-import LoadingSpinner from "./LoadingSpinner";
-import QuizQuestionComponent from "./QuizQuestion";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { 
-  loadQuizHistory, 
-  saveQuizAttempt, 
-  addToReviewList, 
-  removeFromReviewList,
-  clearReviewList,
-  clearAllHistory 
-} from "@/utils/historyService";
-import { saveQuizToDatabase } from "@/utils/databaseService";
-import QuizHistory from "./QuizHistory";
-import ReviewList from "./ReviewList";
-import DisputedQuestions from "./DisputedQuestions";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Checkbox } from "@/components/ui/checkbox";
-import FileUploader from "./FileUploader";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated } from "@/utils/authService";
+import { v4 as uuidv4 } from "uuid";
+import { QuizQuestion, QuizHistory } from "@/types/quiz";
+import { saveQuizToDatabase } from "@/utils/databaseService";
+import { loadQuizHistory, saveQuizAttempt } from "@/utils/historyService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Trash2 } from "lucide-react";
 
-// Interface for QuizGenerator props
-interface QuizGeneratorProps {
-  initialTopic?: string;
-}
-
-// Action types
-type QuizAction =
-  | { type: "SET_LOADING" }
-  | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
-  | { type: "SET_ANSWER"; payload: { index: number; answer: string | number } }
-  | { type: "COMPLETE_QUIZ"; payload: QuizResult }
-  | { type: "RESET_QUIZ" }
-  | { type: "LOAD_ATTEMPT"; payload: QuizAttempt }
-  | { type: "SET_ERROR"; payload: string }
-  | { type: "REMOVE_QUESTION"; payload: string };
-
-// Initial state for the quiz
-const initialState: QuizState = {
-  questions: [],
-  currentQuestion: 0,
-  answers: [],
-  result: null,
-  status: "idle",
-  error: null,
-};
-
-// Reducer function to manage quiz state
-function quizReducer(state: QuizState, action: QuizAction): QuizState {
-  switch (action.type) {
-    case "SET_LOADING":
-      return { ...state, status: "loading", error: null };
-    case "SET_QUESTIONS":
-      return {
-        ...state,
-        questions: action.payload,
-        answers: Array(action.payload.length).fill(null),
-        status: "active",
-        result: null,
-        error: null,
-      };
-    case "SET_ANSWER":
-      const newAnswers = [...state.answers];
-      newAnswers[action.payload.index] = action.payload.answer;
-      return { ...state, answers: newAnswers };
-    case "COMPLETE_QUIZ":
-      return { ...state, result: action.payload, status: "completed" };
-    case "RESET_QUIZ":
-      return { ...initialState };
-    case "LOAD_ATTEMPT":
-      return {
-        questions: action.payload.questions,
-        answers: action.payload.userAnswers,
-        result: action.payload.result,
-        currentQuestion: 0,
-        status: "completed",
-        error: null,
-      };
-    case "SET_ERROR":
-      return { ...state, error: action.payload, status: "idle" };
-    case "REMOVE_QUESTION":
-      const filteredQuestions = state.questions.filter(q => q.id !== action.payload);
-      const filteredAnswers = state.answers.filter((_, idx) => 
-        state.questions[idx].id !== action.payload
-      );
-      
-      let updatedResult = state.result;
-      if (state.status === "completed" && state.result) {
-        const totalQuestions = filteredQuestions.length;
-        let correctAnswers = 0;
-        let incorrectAnswers = 0;
-        
-        filteredQuestions.forEach((question, index) => {
-          const isCorrect = filteredAnswers[index] === question.correctAnswer;
-          if (isCorrect) correctAnswers++;
-          else incorrectAnswers++;
-        });
-        
-        const score = totalQuestions > 0 
-          ? Math.round((correctAnswers / totalQuestions) * 100) 
-          : 0;
-          
-        updatedResult = {
-          totalQuestions,
-          correctAnswers,
-          incorrectAnswers,
-          score,
-          feedback: state.result.feedback
-        };
-      }
-      
-      return { 
-        ...state, 
-        questions: filteredQuestions, 
-        answers: filteredAnswers,
-        result: updatedResult
-      };
-    default:
-      return state;
-  }
-}
-
-const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
-  const [state, dispatch] = useReducer(quizReducer, initialState);
-  const [objectives, setObjectives] = useState(initialTopic);
-  const [extractedText, setExtractedText] = useState("");
-  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
-  const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
+const QuizGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const isAuth = isAuthenticated();
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [newQuestion, setNewQuestion] = useState<QuizQuestion>({
+    id: uuidv4(),
+    type: "multiple_choice",
+    question: "",
+    options: ["", "", "", ""],
+    correctAnswer: "",
+    explanation: "",
+    difficulty: "medium",
+    topic: "",
+    subtopic: ""
+  });
+  const [title, setTitle] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
   
-  // New state variables for customization options
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [questionCount, setQuestionCount] = useState<number>(5);
-  const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
-  
-  // Demo mode state
-  const [demoLimitReached, setDemoLimitReached] = useState(false);
-  
-  // Load quiz history from localStorage on component mount
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const history = await loadQuizHistory();
-        setQuizHistory(history);
-        
-        // Check if demo limit has been reached
-        if (!isAuth) {
-          const demoUsage = localStorage.getItem("demoQuizUsage");
-          const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-          
-          // Reset counter if it's been more than 24 hours
-          const oneDayMs = 24 * 60 * 60 * 1000;
-          if (Date.now() - usage.timestamp > oneDayMs) {
-            localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
-          } else if (usage.count >= 5) {
-            setDemoLimitReached(true);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading quiz history:", error);
-      }
+    const loadHistoryData = async () => {
+      const historyData = await loadQuizHistory();
+      setHistory(historyData);
     };
-    
-    fetchHistory();
-  }, [isAuth]);
+    loadHistoryData();
+  }, []);
 
-  // Generate quiz based on learning objectives
-  const handleGenerate = async () => {
-    const combinedObjectives = objectives.trim();
-    
-    if (!combinedObjectives) {
-      toast.error("Please enter learning objectives");
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setNewQuestion({ ...newQuestion, [e.target.name]: e.target.value });
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...newQuestion.options];
+    newOptions[index] = value;
+    setNewQuestion({ ...newQuestion, options: newOptions });
+  };
+
+  const handleAddQuestion = () => {
+    if (!newQuestion.question.trim()) {
+      toast.error("Question cannot be empty");
       return;
     }
     
-    // Check if demo limit has been reached for non-authenticated users
-    if (!isAuth) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      if (usage.count >= 5) {
-        setDemoLimitReached(true);
-        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
+    if (newQuestion.type === "multiple_choice") {
+      if (!newQuestion.options.every(option => option.trim())) {
+        toast.error("All options must be filled");
         return;
       }
-      
-      // Update usage count
-      const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
-      localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
-      
-      // Show remaining attempts
-      const remaining = 5 - newUsage.count;
-      if (remaining <= 2) {
-        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
+      if (newQuestion.correctAnswer === "") {
+        toast.error("Please select a correct answer");
+        return;
       }
-      
-      if (newUsage.count >= 5) {
-        setDemoLimitReached(true);
+    } else if (newQuestion.type === "fill_in") {
+      if (!newQuestion.correctAnswer.trim()) {
+        toast.error("Correct answer cannot be empty");
+        return;
       }
     }
 
-    dispatch({ type: "SET_LOADING" });
-
-    try {
-      // If we have extracted text, include it in the API call
-      const promptWithContext = extractedText 
-        ? `Learning objectives: ${objectives}\n\nContext from uploaded document: ${extractedText}`
-        : objectives;
-      
-      const questions = await generateQuestions(promptWithContext, {
-        difficulty,
-        count: questionCount,
-        questionTypes
-      });
-      
-      dispatch({ type: "SET_QUESTIONS", payload: questions });
-      
-      // Store the quiz in the database
-      const quizTitle = objectives.length > 50 
-        ? objectives.substring(0, 50) + "..." 
-        : objectives;
-      
-      const quizId = saveQuizToDatabase(questions, quizTitle);
-      console.log("Quiz saved to database with ID:", quizId);
-      
-      toast.success("Quiz generated successfully!");
-    } catch (error) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: "Failed to generate quiz. Please try again.",
-      });
-      toast.error("Failed to generate quiz. Please check the console for details.");
-    }
+    setQuestions([...questions, newQuestion]);
+    setNewQuestion({
+      id: uuidv4(),
+      type: "multiple_choice",
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: "",
+      explanation: "",
+      difficulty: "medium",
+      topic: "",
+      subtopic: ""
+    });
+    toast.success("Question added successfully");
+  };
+  
+  const handleRemoveQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
+    toast.success("Question removed successfully");
   };
 
-  const handleFileTextExtracted = (text: string) => {
-    setExtractedText(text);
-    toast.success("Text extracted and will be used to enhance quiz questions");
-  };
-
-  // Handle question type selection
-  const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
-    setQuestionTypes(prev => {
-      if (prev.includes(type) && prev.length > 1) {
-        return prev.filter(t => t !== type);
-      } 
-      else if (!prev.includes(type)) {
-        return [...prev, type];
-      }
-      return prev;
+  const handleTypeChange = (type: "multiple_choice" | "fill_in") => {
+    setNewQuestion({
+      ...newQuestion,
+      type,
+      correctAnswer: "",
+      options: type === "multiple_choice" ? ["", "", "", ""] : []
     });
   };
 
-  // Handle answer selection
-  const handleAnswer = (index: number, answer: string | number) => {
-    dispatch({
-      type: "SET_ANSWER",
-      payload: { index, answer },
-    });
-  };
-
-  // Calculate and show results
-  const handleComplete = () => {
-    const { questions, answers } = state;
-    
-    if (answers.some(answer => answer === null)) {
-      toast.error("Please answer all questions before submitting");
-      return;
-    }
-
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let incorrectQuestionIds: string[] = [];
-
-    questions.forEach((question, index) => {
-      const userAnswer = answers[index];
-      const isCorrect = 
-        question.type === "fill_in" 
-          ? String(userAnswer).toLowerCase().trim() === String(question.correctAnswer).toLowerCase().trim()
-          : userAnswer === question.correctAnswer;
-
-      if (isCorrect) {
-        correctAnswers++;
-      } else {
-        incorrectAnswers++;
-        incorrectQuestionIds.push(question.id);
-      }
-    });
-
-    const score = Math.round((correctAnswers / questions.length) * 100);
-    
-    let feedback = "";
-    if (score >= 90) {
-      feedback = "Excellent! You've mastered these learning objectives.";
-    } else if (score >= 70) {
-      feedback = "Good job! You have a solid understanding of the material.";
-    } else if (score >= 50) {
-      feedback = "You're on the right track, but there's room for improvement.";
-    } else {
-      feedback = "You might want to review the material again to strengthen your understanding.";
-    }
-
-    const result: QuizResult = {
-      totalQuestions: questions.length,
-      correctAnswers,
-      incorrectAnswers,
-      score,
-      feedback,
-    };
-
-    dispatch({ type: "COMPLETE_QUIZ", payload: result });
-    
-    setSelectedIncorrectQuestions(incorrectQuestionIds);
-
-    const attempt: QuizAttempt = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      objectives,
-      questions,
-      userAnswers: answers,
-      result,
-    };
-    
-    saveQuizAttempt(attempt).then(() => {
-      loadQuizHistory().then(history => {
-        setQuizHistory(history);
-      }).catch(error => {
-        console.error("Error loading quiz history after save:", error);
-      });
-    }).catch(error => {
-      console.error("Error saving quiz attempt:", error);
-    });
-  };
-
-  // Handle question dispute
-  const handleDisputeQuestion = (questionId: string) => {
-    dispatch({ type: "REMOVE_QUESTION", payload: questionId });
-    setQuizHistory(loadQuizHistory());
-  };
-
-  // Add selected incorrect questions to review list
-  const handleAddToReviewList = () => {
-    if (selectedIncorrectQuestions.length === 0) {
-      toast.error("No questions selected to add to review list");
-      return;
-    }
-    
-    const promises = state.questions
-      .filter(question => selectedIncorrectQuestions.includes(question.id))
-      .map(question => addToReviewList(question));
-    
-    Promise.all(promises)
-      .then(() => {
-        toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
-        return loadQuizHistory();
-      })
-      .then(history => {
-        setQuizHistory(history);
-        setSelectedIncorrectQuestions([]);
-      })
-      .catch(error => {
-        console.error("Error adding to review list:", error);
-      });
-  };
-
-  // Toggle selection of incorrect question
-  const toggleSelectQuestion = (id: string) => {
-    setSelectedIncorrectQuestions(prev => 
-      prev.includes(id) 
-        ? prev.filter(qId => qId !== id) 
-        : [...prev, id]
-    );
-  };
-
-  // Select all incorrect questions
-  const selectAllIncorrectQuestions = () => {
-    const incorrectIds = state.questions
-      .filter((_, index) => {
-        const userAnswer = state.answers[index];
-        const correctAnswer = state.questions[index].correctAnswer;
-        
-        return state.questions[index].type === "fill_in" 
-          ? String(userAnswer).toLowerCase().trim() !== String(correctAnswer).toLowerCase().trim()
-          : userAnswer !== correctAnswer;
-      })
-      .map(q => q.id);
-    
-    setSelectedIncorrectQuestions(incorrectIds);
-  };
-
-  // Deselect all incorrect questions
-  const deselectAllIncorrectQuestions = () => {
-    setSelectedIncorrectQuestions([]);
-  };
-
-  // View a specific quiz attempt
-  const handleViewAttempt = (attempt: QuizAttempt) => {
-    dispatch({ type: "LOAD_ATTEMPT", payload: attempt });
-  };
-
-  // Handle removing a question from review list
-  const handleRemoveFromReviewList = (id: string) => {
-    removeFromReviewList(id)
-      .then(() => loadQuizHistory())
-      .then(history => {
-        setQuizHistory(history);
-      })
-      .catch(error => {
-        console.error("Error removing from review list:", error);
-      });
-  };
-
-  // Clear review list
-  const handleClearReviewList = () => {
-    clearReviewList()
-      .then(() => loadQuizHistory())
-      .then(history => {
-        setQuizHistory(history);
-      })
-      .catch(error => {
-        console.error("Error clearing review list:", error);
-      });
-  };
-
-  // Clear all history
-  const handleClearHistory = () => {
-    clearAllHistory()
-      .then(() => {
-        setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
-      })
-      .catch(error => {
-        console.error("Error clearing history:", error);
-      });
-  };
-
-  // Practice review list questions and navigate to practice page
-  const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
+  const handleSubmit = async () => {
     if (questions.length === 0) {
-      toast.error("No questions to practice");
+      toast.error("Please add some questions to the quiz");
       return;
     }
     
-    // Save the review questions as a quiz in the database
-    saveQuizToDatabase(questions, "Review List Practice")
-      .then(quizId => {
-        // Navigate to practice page with the quiz ID
-        navigate(`/practice/${quizId}`);
-      })
-      .catch(error => {
-        console.error("Error creating review practice quiz:", error);
-        toast.error("Failed to create practice quiz");
-      });
-  };
+    if (!title.trim()) {
+      toast.error("Please add a title to the quiz");
+      return;
+    }
 
-  // Reset the quiz
-  const handleReset = () => {
-    dispatch({ type: "RESET_QUIZ" });
-    setObjectives("");
-    setSelectedIncorrectQuestions([]);
-  };
-
-  // Try again with the same objectives
-  const handleTryAgain = () => {
-    handleGenerate();
-  };
-
-  // Update quiz history (used by DisputedQuestions component)
-  const handleUpdateHistory = () => {
-    loadQuizHistory()
-      .then(history => {
-        setQuizHistory(history);
-      })
-      .catch(error => {
-        console.error("Error updating history:", error);
-      });
+    setIsLoading(true);
+    try {
+      const quizId = await saveQuizToDatabase(questions, title);
+      toast.success("Quiz saved successfully");
+      
+      // Save a dummy attempt to record objectives
+      const attemptId = uuidv4();
+      const now = new Date().toISOString();
+      const dummyAttempt = {
+        id: attemptId,
+        date: now,
+        objectives: title,
+        questions: questions,
+        userAnswers: [],
+        result: {
+          totalQuestions: questions.length,
+          correctAnswers: 0,
+          incorrectAnswers: 0,
+          score: 0
+        }
+      };
+      await saveQuizAttempt(dummyAttempt);
+      
+      navigate(`/practice/${quizId}`);
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      toast.error("Failed to save quiz");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Quiz Generator</h2>
-        
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">History & Review</Button>
-          </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-            <Tabs defaultValue="history" className="mt-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="history">Quiz History</TabsTrigger>
-                <TabsTrigger value="review">Review List</TabsTrigger>
-                <TabsTrigger value="disputed">Disputed</TabsTrigger>
-              </TabsList>
-              <TabsContent value="history" className="mt-4">
-                <QuizHistory 
-                  attempts={quizHistory.attempts}
-                  onViewAttempt={handleViewAttempt}
-                  onClearHistory={handleClearHistory}
-                />
-              </TabsContent>
-              <TabsContent value="review" className="mt-4">
-                <ReviewList 
-                  questions={quizHistory.reviewList}
-                  onRemoveQuestion={handleRemoveFromReviewList}
-                  onClearAll={handleClearReviewList}
-                  onPracticeQuestions={handlePracticeReviewQuestions}
-                />
-              </TabsContent>
-              <TabsContent value="disputed" className="mt-4">
-                <DisputedQuestions 
-                  questions={quizHistory.disputedQuestions}
-                  onUpdate={handleUpdateHistory}
-                />
-              </TabsContent>
-            </Tabs>
-          </SheetContent>
-        </Sheet>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Create Your Custom Quiz</h1>
+      
+      <div className="mb-4">
+        <Label htmlFor="quizTitle">Quiz Title</Label>
+        <Input
+          type="text"
+          id="quizTitle"
+          placeholder="Enter quiz title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
       </div>
 
-      {state.status === "idle" && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border"
-        >
-          <div className="mb-6">
-            <label htmlFor="objectives" className="block text-sm font-medium mb-2">
-              Learning Objectives
-            </label>
-            <textarea
-              id="objectives"
-              className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm"
-              placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')"
-              value={objectives}
-              onChange={(e) => setObjectives(e.target.value)}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Add New Question</CardTitle>
+          <CardDescription>Create a new question for your quiz</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="questionType">Question Type</Label>
+            <Select onValueChange={(value) => handleTypeChange(value as "multiple_choice" | "fill_in")}>
+              <SelectTrigger id="questionType">
+                <SelectValue placeholder="Select question type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                <SelectItem value="fill_in">Fill in the Blank</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="questionText">Question Text</Label>
+            <Textarea
+              id="questionText"
+              name="question"
+              placeholder="Enter your question"
+              value={newQuestion.question}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          {newQuestion.type === "multiple_choice" && (
+            <div className="space-y-3">
+              {newQuestion.options.map((option, index) => (
+                <div key={index} className="space-y-1">
+                  <Label htmlFor={`option${index + 1}`}>Option {index + 1}</Label>
+                  <Input
+                    type="text"
+                    id={`option${index + 1}`}
+                    placeholder={`Enter option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => handleOptionChange(index, e.target.value)}
+                  />
+                </div>
+              ))}
+              <div className="space-y-2">
+                <Label htmlFor="correctAnswer">Correct Answer</Label>
+                <Select onValueChange={(value) => setNewQuestion({ ...newQuestion, correctAnswer: value })}>
+                  <SelectTrigger id="correctAnswer">
+                    <SelectValue placeholder="Select correct answer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {newQuestion.options.map((option, index) => (
+                      <SelectItem key={index} value={index.toString()}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {newQuestion.type === "fill_in" && (
+            <div className="space-y-2">
+              <Label htmlFor="correctAnswerFillIn">Correct Answer</Label>
+              <Input
+                type="text"
+                id="correctAnswerFillIn"
+                name="correctAnswer"
+                placeholder="Enter the correct answer"
+                value={newQuestion.correctAnswer}
+                onChange={handleInputChange}
+              />
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="explanation">Explanation (optional)</Label>
+            <Textarea
+              id="explanation"
+              name="explanation"
+              placeholder="Enter explanation"
+              value={newQuestion.explanation}
+              onChange={handleInputChange}
             />
           </div>
           
-          <FileUploader onTextExtracted={handleFileTextExtracted} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Difficulty Level
-              </label>
-              <Select value={difficulty} onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Question Types
-              </label>
-              <div className="flex space-x-4">
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="multiple-choice" 
-                    checked={questionTypes.includes("multiple_choice")}
-                    onCheckedChange={() => handleQuestionTypeChange("multiple_choice")}
-                  />
-                  <label htmlFor="multiple-choice" className="ml-2 text-sm">
-                    Multiple Choice
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="fill-in" 
-                    checked={questionTypes.includes("fill_in")}
-                    onCheckedChange={() => handleQuestionTypeChange("fill_in")}
-                  />
-                  <label htmlFor="fill-in" className="ml-2 text-sm">
-                    Fill in the Blank
-                  </label>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Difficulty</Label>
+            <Select onValueChange={(value) => setNewQuestion({ ...newQuestion, difficulty: value as "easy" | "medium" | "hard" })}>
+              <SelectTrigger id="difficulty">
+                <SelectValue placeholder="Select difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">
-                Number of Questions: {questionCount}
-              </label>
-            </div>
-            <Slider 
-              min={3} 
-              max={20} 
-              step={1} 
-              value={[questionCount]} 
-              onValueChange={(value) => setQuestionCount(value[0])}
-              className="my-4"
+          <div className="space-y-2">
+            <Label htmlFor="topic">Topic (optional)</Label>
+            <Input
+              type="text"
+              id="topic"
+              name="topic"
+              placeholder="Enter topic"
+              value={newQuestion.topic}
+              onChange={handleInputChange}
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>3</span>
-              <span>10</span>
-              <span>20</span>
-            </div>
           </div>
           
-          {demoLimitReached && !isAuth ? (
-            <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-amber-800 font-medium">You've reached the demo limit (5 quizzes).</p>
-              <p className="text-sm text-amber-700 mb-4">Sign in to create unlimited quizzes and track your progress.</p>
-              <Button 
-                onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()}
-                className="w-full"
-              >
-                Sign In to Continue
-              </Button>
-            </div>
-          ) : (
-            <button
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-              onClick={handleGenerate}
-            >
-              Generate Quiz
-            </button>
-          )}
-          
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Enter specific learning objectives to generate customized questions tailored to your learning needs.
-          </p>
-        </motion.div>
-      )}
+          <div className="space-y-2">
+            <Label htmlFor="subtopic">Subtopic (optional)</Label>
+            <Input
+              type="text"
+              id="subtopic"
+              name="subtopic"
+              placeholder="Enter subtopic"
+              value={newQuestion.subtopic}
+              onChange={handleInputChange}
+            />
+          </div>
 
-      {state.status === "loading" && (
-        <div className="min-h-[300px] flex flex-col items-center justify-center">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
-          <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
+          <Button onClick={handleAddQuestion}>Add Question</Button>
+        </CardContent>
+      </Card>
+
+      {questions.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold">Quiz Questions</h2>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-3">
+              {questions.map((question) => (
+                <Card key={question.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle>{question.question}</CardTitle>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleRemoveQuestion(question.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <CardDescription>
+                      {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {question.type === "multiple_choice" && (
+                      <div className="space-y-2">
+                        {question.options.map((option, index) => (
+                          <div key={index}>
+                            <Label>{option}</Label>
+                            {question.correctAnswer === index.toString() && (
+                              <span className="text-green-500 ml-2">(Correct Answer)</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {question.type === "fill_in" && (
+                      <div>
+                        <Label>Correct Answer: {question.correctAnswer}</Label>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       )}
 
-      {(state.status === "active" || state.status === "completed") && (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">{objectives}</h2>
-            <button
-              className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors"
-              onClick={handleReset}
-            >
-              New Quiz
-            </button>
-          </div>
-
-          <div className="mb-8">
-            {state.questions.map((question, index) => {
-              const isIncorrect = state.status === "completed" && 
-                state.answers[index] !== question.correctAnswer;
-              
-              return (
-                <div key={question.id} className="mb-6">
-                  <QuizQuestionComponent
-                    question={question}
-                    userAnswer={state.answers[index]}
-                    onAnswer={(answer) => handleAnswer(index, answer)}
-                    showResult={state.status === "completed"}
-                    index={index}
-                    onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined}
-                  />
-                  
-                  {state.status === "completed" && isIncorrect && (
-                    <div className="mt-2 ml-11 flex items-center space-x-2">
-                      <Checkbox 
-                        id={`add-to-review-${question.id}`}
-                        checked={selectedIncorrectQuestions.includes(question.id)}
-                        onCheckedChange={() => toggleSelectQuestion(question.id)}
-                      />
-                      <label 
-                        htmlFor={`add-to-review-${question.id}`}
-                        className="text-sm text-muted-foreground cursor-pointer"
-                      >
-                        Add to review list
-                      </label>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {state.status === "active" && (
-            <button
-              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-              onClick={handleComplete}
-            >
-              Check Answers
-            </button>
-          )}
-
-          {state.status === "completed" && state.result && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl p-6 border border-border bg-white shadow-sm"
-            >
-              <h3 className="text-xl font-semibold mb-2">Quiz Results</h3>
-              
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                  <p className="text-sm text-muted-foreground">Total Questions</p>
-                  <p className="text-2xl font-semibold">{state.result.totalQuestions}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-500/10 text-center">
-                  <p className="text-sm text-green-800">Correct</p>
-                  <p className="text-2xl font-semibold text-green-700">{state.result.correctAnswers}</p>
-                </div>
-                <div className="p-4 rounded-lg bg-red-500/10 text-center">
-                  <p className="text-sm text-red-800">Incorrect</p>
-                  <p className="text-2xl font-semibold text-red-700">{state.result.incorrectAnswers}</p>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Score</span>
-                  <span className="font-semibold">{state.result.score}%</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2.5">
-                  <div 
-                    className="h-2.5 rounded-full bg-primary transition-all duration-1000" 
-                    style={{ width: `${state.result.score}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
-              
-              {state.result.incorrectAnswers > 0 && (
-                <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Add incorrect questions to review list</span>
-                    <div className="space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={selectAllIncorrectQuestions}
-                        className="text-xs h-7"
-                      >
-                        Select All
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={deselectAllIncorrectQuestions}
-                        className="text-xs h-7"
-                      >
-                        Deselect All
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleAddToReviewList}
-                    disabled={selectedIncorrectQuestions.length === 0}
-                    className="w-full mt-2"
-                  >
-                    Add {selectedIncorrectQuestions.length} Selected Question(s) to Review List
-                  </Button>
-                </div>
-              )}
-              
-              <Button
-                className="w-full py-3 mt-2"
-                onClick={handleTryAgain}
-              >
-                Try Again
-              </Button>
-            </motion.div>
-          )}
-        </div>
-      )}
+      <Button
+        variant="primary"
+        size="lg"
+        className="mt-6 w-full"
+        onClick={handleSubmit}
+        disabled={isLoading}
+      >
+        {isLoading ? "Saving Quiz..." : "Save Quiz and Start Practicing"}
+      </Button>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, LearningPreferences } from "@/types/quiz";
 import { v4 as uuidv4 } from "uuid";
@@ -84,47 +83,38 @@ export const initAuth = async (): Promise<void> => {
 };
 
 // Register a new user
-export const register = async (email: string, password: string, displayName?: string): Promise<User> => {
+export const registerUser = async (
+  email: string,
+  password: string,
+  displayName?: string
+): Promise<void> => {
   try {
-    const { data, error } = await supabase.auth.signUp({
+    // First, register with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password
+      password,
     });
-    
-    if (error) throw error;
-    
-    if (!data.user) {
-      throw new Error("Failed to create user");
+
+    if (authError) throw authError;
+
+    // Then store additional data in users table
+    if (authData?.user) {
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          email,
+          password_hash: 'MANAGED_BY_SUPABASE', // We don't store the actual password
+          display_name: displayName,
+          id: authData.user.id
+        });
+
+      if (profileError) {
+        console.error("Error creating user profile:", profileError);
+        // Attempt to continue even if profile creation fails
+      }
     }
-    
-    // Create user profile
-    const user: User = {
-      id: data.user.id,
-      email: data.user.email || email,
-      displayName: displayName || email.split('@')[0],
-      createdAt: new Date().toISOString()
-    };
-    
-    // Store in Supabase
-    const { error: insertError } = await supabase
-      .from("users")
-      .insert({
-        id: user.id,
-        email: user.email,
-        display_name: user.displayName
-      });
-      
-    if (insertError) {
-      console.error("Error creating user profile:", insertError);
-    }
-    
-    // Store locally
-    currentUser = user;
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    
-    return user;
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Error registering user:", error);
     throw error;
   }
 };
@@ -212,29 +202,19 @@ export const logout = async (): Promise<void> => {
 };
 
 // Update user profile
-export const updateUserProfile = async (updates: Partial<User>): Promise<User> => {
+export const updateUserProfile = async (user: User): Promise<void> => {
   try {
-    if (!currentUser) {
-      throw new Error("No user logged in");
-    }
-    
     const { error } = await supabase
-      .from("users")
+      .from('users')
       .update({
-        display_name: updates.displayName,
-        learning_preferences: updates.learningPreferences
+        display_name: user.displayName,
+        learning_preferences: user.learningPreferences ? JSON.stringify(user.learningPreferences) : null
       })
-      .eq("id", currentUser.id);
-      
+      .eq('id', user.id);
+
     if (error) throw error;
-    
-    // Update local user data
-    currentUser = { ...currentUser, ...updates };
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
-    
-    return currentUser;
   } catch (error) {
-    console.error("Update profile error:", error);
+    console.error("Error updating user profile:", error);
     throw error;
   }
 };

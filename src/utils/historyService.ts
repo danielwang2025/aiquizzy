@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -419,7 +418,6 @@ export const clearAllHistory = async (): Promise<void> => {
 
 // Add a disputed question
 export const addDisputedQuestion = async (
-  questionId: string,
   question: QuizQuestion,
   userAnswer: string | number | null,
   disputeReason: string
@@ -436,12 +434,12 @@ export const addDisputedQuestion = async (
           id: question.id,
           type: question.type,
           question: question.question,
-          options: JSON.stringify(question.options),
+          options: JSON.stringify(question.options || []),
           correct_answer: String(question.correctAnswer),
-          explanation: question.explanation,
-          difficulty: question.difficulty,
-          topic: question.topic,
-          subtopic: question.subtopic
+          explanation: question.explanation || "",
+          difficulty: question.difficulty || "medium",
+          topic: question.topic || "",
+          subtopic: question.subtopic || ""
         });
 
       if (questionError) throw questionError;
@@ -452,8 +450,8 @@ export const addDisputedQuestion = async (
         .insert({
           id: uuidv4(),
           user_id: user.id,
-          question_id: questionId,
-          user_answer: String(userAnswer),
+          question_id: question.id,
+          user_answer: userAnswer !== null ? String(userAnswer) : null,
           dispute_reason: disputeReason,
           date_disputed: new Date().toISOString(),
           status: 'pending'
@@ -465,7 +463,7 @@ export const addDisputedQuestion = async (
     // Also update localStorage
     const history = await loadQuizHistory();
     const disputedQuestion: DisputedQuestion = {
-      questionId,
+      questionId: question.id,
       question,
       userAnswer,
       disputeReason,
@@ -484,7 +482,7 @@ export const addDisputedQuestion = async (
     // Fallback to localStorage only
     const history = JSON.parse(localStorage.getItem("quizHistory") || '{"attempts":[],"reviewList":[],"disputedQuestions":[]}');
     const disputedQuestion = {
-      questionId,
+      questionId: question.id,
       question,
       userAnswer,
       disputeReason,
@@ -495,6 +493,77 @@ export const addDisputedQuestion = async (
     const updatedHistory = {
       ...history,
       disputedQuestions: [...history.disputedQuestions, disputedQuestion]
+    };
+    localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
+  }
+};
+
+// Remove disputed question
+export const removeDisputedQuestion = async (questionId: string): Promise<void> => {
+  try {
+    if (isAuthenticated()) {
+      const user = await getCurrentUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from('disputed_questions')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('question_id', questionId);
+
+      if (error) throw error;
+    }
+
+    // Also update localStorage
+    const history = await loadQuizHistory();
+    const updatedHistory = {
+      ...history,
+      disputedQuestions: history.disputedQuestions.filter(q => q.questionId !== questionId)
+    };
+    localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
+  } catch (error) {
+    console.error("Error removing disputed question:", error);
+    
+    // Fallback to localStorage only
+    const history = JSON.parse(localStorage.getItem("quizHistory") || '{"attempts":[],"reviewList":[],"disputedQuestions":[]}');
+    const updatedHistory = {
+      ...history,
+      disputedQuestions: history.disputedQuestions.filter((q: DisputedQuestion) => q.questionId !== questionId)
+    };
+    localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
+  }
+};
+
+// Clear all disputed questions
+export const clearDisputedQuestions = async (): Promise<void> => {
+  try {
+    if (isAuthenticated()) {
+      const user = await getCurrentUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from('disputed_questions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    }
+
+    // Also update localStorage
+    const history = await loadQuizHistory();
+    const updatedHistory = {
+      ...history,
+      disputedQuestions: []
+    };
+    localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
+  } catch (error) {
+    console.error("Error clearing disputed questions:", error);
+    
+    // Fallback to localStorage only
+    const history = JSON.parse(localStorage.getItem("quizHistory") || '{"attempts":[],"reviewList":[],"disputedQuestions":[]}');
+    const updatedHistory = {
+      ...history,
+      disputedQuestions: []
     };
     localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
   }
@@ -536,9 +605,12 @@ export const updateLearningPreferences = async (preferences: LearningPreferences
       const user = await getCurrentUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Convert LearningPreferences to JSON for Supabase
+      const preferencesJson = JSON.stringify(preferences);
+
       const { error } = await supabase
         .from('users')
-        .update({ learning_preferences: preferences })
+        .update({ learning_preferences: preferencesJson })
         .eq('id', user.id);
 
       if (error) throw error;
