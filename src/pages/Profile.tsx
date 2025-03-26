@@ -15,6 +15,7 @@ import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "luci
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [preferences, setPreferences] = useState<LearningPreferences>({
     preferredDifficulty: "medium",
     preferredQuestionTypes: ["multiple_choice", "fill_in"],
@@ -25,16 +26,22 @@ const Profile: React.FC = () => {
   const [newTopic, setNewTopic] = useState("");
   
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      
-      // Load learning preferences
-      const history = loadQuizHistory();
-      if (history.learningPreferences) {
-        setPreferences(history.learningPreferences);
+    const fetchUser = async () => {
+      setLoading(true);
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        
+        // Load learning preferences
+        const history = loadQuizHistory();
+        if (history.learningPreferences) {
+          setPreferences(history.learningPreferences);
+        }
       }
-    }
+      setLoading(false);
+    };
+    
+    fetchUser();
   }, []);
   
   const handleSavePreferences = () => {
@@ -86,6 +93,17 @@ const Profile: React.FC = () => {
       }
     });
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+        <Navigation />
+        <div className="max-w-md mx-auto text-center py-12">
+          <h1 className="text-3xl font-bold mb-6">Loading profile...</h1>
+        </div>
+      </div>
+    );
+  }
   
   if (!user) {
     return (
