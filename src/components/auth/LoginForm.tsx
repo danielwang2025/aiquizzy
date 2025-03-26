@@ -1,11 +1,10 @@
 
-import React, { useState } from "react";
-import { loginUser, sendMagicLink } from "@/utils/authService";
+import React, { useState, useEffect } from "react";
+import { loginUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { escapeHtml } from "@/utils/securityUtils";
-import { Mail } from "lucide-react";
+import { escapeHtml, generateCsrfToken, storeCsrfToken } from "@/utils/securityUtils";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -16,7 +15,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
+  
+  // Generate and store CSRF token on component mount
+  useEffect(() => {
+    const token = generateCsrfToken();
+    storeCsrfToken(token);
+  }, []);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,24 +50,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     }
   };
   
-  const handleMagicLink = async () => {
-    if (!email) {
-      toast.error("Please enter your email address");
-      return;
-    }
-    
-    setIsMagicLinkLoading(true);
-    
-    try {
-      await sendMagicLink(email);
-      toast.success("Magic link sent to your email");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to send magic link");
-    } finally {
-      setIsMagicLinkLoading(false);
-    }
-  };
-  
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
@@ -87,19 +73,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         </div>
         
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <button
-              type="button"
-              className="text-xs text-primary hover:underline"
-              onClick={handleMagicLink}
-              disabled={isMagicLinkLoading}
-            >
-              {isMagicLinkLoading ? "Sending..." : "Use magic link"}
-            </button>
-          </div>
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
           <Input
             id="password"
             type="password"
@@ -116,26 +92,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           disabled={isLoading}
         >
           {isLoading ? "Logging in..." : "Login"}
-        </Button>
-        
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t"></span>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or</span>
-          </div>
-        </div>
-        
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleMagicLink}
-          disabled={isMagicLinkLoading}
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          {isMagicLinkLoading ? "Sending..." : "Sign in with Email Link"}
         </Button>
       </form>
       

@@ -10,36 +10,26 @@ import { toast } from "sonner";
 
 const AuthManager: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [showRegister, setShowRegister] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   
   useEffect(() => {
-    // Check authentication status on mount
-    const checkAuth = async () => {
-      const authStatus = await isAuthenticated();
-      setIsAuth(authStatus);
-      
-      if (authStatus) {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
-      }
-    };
-    
-    checkAuth();
+    // Check authentication status
+    setIsAuth(isAuthenticated());
+    setCurrentUser(getCurrentUser());
   }, []);
   
-  const handleAuthSuccess = async () => {
+  const handleAuthSuccess = () => {
     setIsAuth(true);
-    const user = await getCurrentUser();
-    setCurrentUser(user);
+    setCurrentUser(getCurrentUser());
     setShowAuthSheet(false);
     // Reset auth sheet to login view for next time
     setShowRegister(false);
   };
   
-  const handleLogout = async () => {
-    await logoutUser();
+  const handleLogout = () => {
+    logoutUser();
     setIsAuth(false);
     setCurrentUser(null);
     toast.success("You have been logged out");

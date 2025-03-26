@@ -1,3 +1,4 @@
+
 export interface QuizQuestion {
   id: string;
   type: 'multiple_choice' | 'fill_in';
@@ -71,7 +72,7 @@ export interface DisputedQuestion {
   status: 'pending' | 'reviewed';
 }
 
-// Updated User interface to match Supabase's user structure
+// Add user authentication types
 export interface User {
   id: string;
   email: string;

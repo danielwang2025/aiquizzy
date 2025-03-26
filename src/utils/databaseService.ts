@@ -1,146 +1,82 @@
 
-import { supabase } from './supabaseClient';
-import { v4 as uuidv4 } from 'uuid';
+import { QuizQuestion, QuizResult, QuizAttempt } from "@/types/quiz";
+
+// LocalStorage keys
+const DB_QUIZZES_KEY = "quiz_db_quizzes";
+const DB_ATTEMPTS_KEY = "quiz_db_attempts";
+
+// Save a quiz to the database
+export const saveQuizToDatabase = (questions: QuizQuestion[], title: string): string => {
+  const quizId = crypto.randomUUID();
+  const quizzes = getQuizzesFromDatabase();
+  
+  const newQuiz = {
+    id: quizId,
+    title,
+    questions,
+    createdAt: new Date().toISOString()
+  };
+  
+  quizzes.push(newQuiz);
+  localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(quizzes));
+  
+  return quizId;
+};
+
+// Get all quizzes from the database
+export const getQuizzesFromDatabase = () => {
+  const quizzesJson = localStorage.getItem(DB_QUIZZES_KEY);
+  return quizzesJson ? JSON.parse(quizzesJson) : [];
+};
 
 // Get a quiz by ID
-export const getQuizById = async (quizId) => {
-  try {
-    const { data, error } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('id', quizId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching quiz:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching quiz:', error);
-    return null;
-  }
+export const getQuizById = (id: string) => {
+  const quizzes = getQuizzesFromDatabase();
+  return quizzes.find((quiz: any) => quiz.id === id) || null;
 };
 
-// Save a new quiz
-export const saveQuiz = async (quiz, userId) => {
-  try {
-    const quizId = quiz.id || uuidv4();
-    
-    const { data, error } = await supabase
-      .from('quizzes')
-      .insert([
-        {
-          id: quizId,
-          title: quiz.title,
-          questions: quiz.questions,
-          created_by: userId,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error saving quiz:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error saving quiz:', error);
-    return null;
-  }
+// Save quiz attempt
+export const saveQuizAttemptToDatabase = (
+  quizId: string,
+  userAnswers: (string | number | null)[],
+  result: QuizResult
+) => {
+  const attempts = getQuizAttemptsFromDatabase();
+  
+  const newAttempt = {
+    id: crypto.randomUUID(),
+    quizId,
+    userAnswers,
+    result,
+    date: new Date().toISOString()
+  };
+  
+  attempts.push(newAttempt);
+  localStorage.setItem(DB_ATTEMPTS_KEY, JSON.stringify(attempts));
+  
+  return newAttempt.id;
 };
 
-// Save a quiz attempt
-export const saveQuizAttempt = async (quizId, userId, userAnswers, result) => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_attempts')
-      .insert([
-        {
-          id: uuidv4(),
-          quiz_id: quizId,
-          user_id: userId,
-          user_answers: userAnswers,
-          result: result,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error saving quiz attempt:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error saving quiz attempt:', error);
-    return null;
-  }
+// Get quiz attempts
+export const getQuizAttemptsFromDatabase = () => {
+  const attemptsJson = localStorage.getItem(DB_ATTEMPTS_KEY);
+  return attemptsJson ? JSON.parse(attemptsJson) : [];
 };
 
-// Get all quizzes for a user
-export const getUserQuizzes = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('created_by', userId);
-    
-    if (error) {
-      console.error('Error fetching user quizzes:', error);
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching user quizzes:', error);
-    return [];
-  }
-};
-
-// Get quiz attempts for a user
-export const getUserQuizAttempts = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('quiz_attempts')
-      .select('*, quizzes(title)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching user quiz attempts:', error);
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching user quiz attempts:', error);
-    return [];
-  }
+// Get quiz attempts by quiz ID
+export const getQuizAttemptsByQuizId = (quizId: string) => {
+  const attempts = getQuizAttemptsFromDatabase();
+  return attempts.filter((attempt: any) => attempt.quizId === quizId);
 };
 
 // Delete a quiz
-export const deleteQuiz = async (quizId) => {
-  try {
-    const { error } = await supabase
-      .from('quizzes')
-      .delete()
-      .eq('id', quizId);
-    
-    if (error) {
-      console.error('Error deleting quiz:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error deleting quiz:', error);
-    return false;
-  }
+export const deleteQuizFromDatabase = (id: string) => {
+  const quizzes = getQuizzesFromDatabase();
+  const filteredQuizzes = quizzes.filter((quiz: any) => quiz.id !== id);
+  localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(filteredQuizzes));
+  
+  // Also delete associated attempts
+  const attempts = getQuizAttemptsFromDatabase();
+  const filteredAttempts = attempts.filter((attempt: any) => attempt.quizId !== id);
+  localStorage.setItem(DB_ATTEMPTS_KEY, JSON.stringify(filteredAttempts));
 };

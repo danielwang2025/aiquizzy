@@ -75,7 +75,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     
     try {
       await registerUser(email, password, displayName);
-      toast.success("Registration successful! Please check your email for verification.");
+      toast.success("Registration successful");
       onSuccess();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
