@@ -1,25 +1,38 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const AuthManager: React.FC = () => {
-  const { user, signOut, loading } = useAuth();
+  const [isAuth, setIsAuth] = useState(false);
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [showRegister, setShowRegister] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   
+  useEffect(() => {
+    // Check authentication status
+    setIsAuth(isAuthenticated());
+    setCurrentUser(getCurrentUser());
+  }, []);
+  
   const handleAuthSuccess = () => {
+    setIsAuth(true);
+    setCurrentUser(getCurrentUser());
     setShowAuthSheet(false);
     // Reset auth sheet to login view for next time
     setShowRegister(false);
   };
   
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    logoutUser();
+    setIsAuth(false);
+    setCurrentUser(null);
+    toast.success("You have been logged out");
   };
   
   const toggleRegisterLogin = () => {
@@ -28,16 +41,15 @@ const AuthManager: React.FC = () => {
   
   return (
     <div>
-      {user ? (
+      {isAuth ? (
         <div className="flex items-center gap-2">
           <div className="text-sm">
-            <span className="font-medium">{user.displayName || user.email}</span>
+            <span className="font-medium">{currentUser?.displayName || currentUser?.email}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            disabled={loading}
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory } from "@/utils/historyService";
-import { QuizAttempt, DashboardStats, QuizHistory } from "@/types/quiz";
+import { QuizAttempt, DashboardStats } from "@/types/quiz";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -47,26 +48,9 @@ import {
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "all">("week");
-  const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
-  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const quizHistory = await loadQuizHistory();
-        setHistory(quizHistory);
-      } catch (error) {
-        console.error("Error loading quiz history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchHistory();
-  }, []);
-  
-  useEffect(() => {
-    if (loading) return;
+    const history = loadQuizHistory();
     
     if (history.attempts.length === 0) {
       setStats(null);
@@ -202,7 +186,7 @@ const Dashboard: React.FC = () => {
       mostChallengedTopics
     });
     
-  }, [timeRange, history, loading]);
+  }, [timeRange]);
   
   const COLORS = ["#4f46e5", "#3b82f6", "#0ea5e9", "#06b6d4", "#14b8a6", "#10b981"];
   const DIFFICULTY_COLORS = {

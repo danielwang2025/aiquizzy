@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from "react";
+import { loginUser, sendMagicLink } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { escapeHtml, generateCsrfToken, storeCsrfToken } from "@/utils/securityUtils";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -14,7 +14,7 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signIn, sendMagicLink, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   
   // Generate and store CSRF token on component mount
@@ -38,11 +38,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       return;
     }
     
+    setIsLoading(true);
+    
     try {
-      await signIn(email, password);
+      await loginUser(email, password);
+      toast.success("Login successful");
       onSuccess();
     } catch (error) {
-      // Error is already handled by the Auth context
+      toast.error(error instanceof Error ? error.message : "Login failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,8 +61,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
 
     try {
       await sendMagicLink(email);
+      toast.success("Magic link sent to your email");
     } catch (error) {
-      // Error is already handled by the Auth context
+      toast.error(error instanceof Error ? error.message : "Failed to send magic link");
     } finally {
       setIsMagicLinkLoading(false);
     }
@@ -102,9 +108,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         <Button
           type="submit"
           className="w-full"
-          disabled={loading}
+          disabled={isLoading}
         >
-          {loading ? "Logging in..." : "Login"}
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
 
         <div className="relative">
