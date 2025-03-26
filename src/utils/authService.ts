@@ -1,6 +1,7 @@
 
 import { User } from "@/types/quiz";
 import { addCsrfToHeaders, validateStrongPassword } from "./securityUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 // LocalStorage keys
 const USER_KEY = "quiz_user";
@@ -10,7 +11,7 @@ const AUTH_TOKEN_KEY = "quiz_auth_token";
 const SIMULATED_DELAY = 800;
 
 /**
- * Simple user registration with security enhancements
+ * User registration with Supabase
  */
 export const registerUser = async (email: string, password: string, displayName?: string): Promise<User> => {
   try {
@@ -23,34 +24,45 @@ export const registerUser = async (email: string, password: string, displayName?
     // Add simulated API delay
     await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
     
-    // Check if email is already registered
-    const existingUsers = localStorage.getItem("quiz_users");
-    const users = existingUsers ? JSON.parse(existingUsers) : [];
+    // Register user with Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName || email.split('@')[0]
+        }
+      }
+    });
     
-    const existingUser = users.find((u: any) => u.email === email);
-    if (existingUser) {
-      throw new Error("Email already registered");
+    if (error) throw error;
+    
+    if (!data.user) {
+      throw new Error("Failed to create user account");
     }
     
-    // Create new user
+    // Create user in our users table
+    const { error: insertError } = await supabase.from('users').insert({
+      id: data.user.id,
+      email: email,
+      display_name: displayName || email.split('@')[0],
+      password_hash: `hashed_${password}` // This is just a placeholder, the real hash is in Supabase Auth
+    });
+    
+    if (insertError) {
+      console.error("Error creating user profile:", insertError);
+      // We'll continue anyway since the auth user was created
+    }
+    
     const newUser: User = {
-      id: crypto.randomUUID(),
+      id: data.user.id,
       email,
       displayName: displayName || email.split('@')[0],
       createdAt: new Date().toISOString()
     };
     
-    // In a real application, we would hash the password using bcrypt or Argon2
-    // For this demo, we'll simulate password hashing with a simple prefix
-    const hashedPassword = `hashed_${password}`;
-    
-    // Store user with hashed password
-    users.push({ ...newUser, password: hashedPassword });
-    localStorage.setItem("quiz_users", JSON.stringify(users));
-    
-    // Save user in localStorage and return
+    // Save user in localStorage for backwards compatibility
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    localStorage.setItem(AUTH_TOKEN_KEY, newUser.id); // Simple token
     
     return newUser;
   } catch (error) {
@@ -60,68 +72,50 @@ export const registerUser = async (email: string, password: string, displayName?
 };
 
 /**
- * User login with security enhancements
+ * User login with Supabase
  */
 export const loginUser = async (email: string, password: string): Promise<User> => {
   try {
-    // Add simulated API delay and rate limiting
+    // Add simulated API delay
     await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
     
-    // Implement basic rate limiting
-    const attempts = localStorage.getItem(`login_attempts_${email}`) || "0";
-    const attemptCount = parseInt(attempts, 10);
-    const lastAttemptTime = parseInt(localStorage.getItem(`last_attempt_${email}`) || "0", 10);
-    const now = Date.now();
+    // Login with Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
     
-    // If more than 5 failed attempts within 15 minutes, block login
-    if (attemptCount >= 5 && now - lastAttemptTime < 15 * 60 * 1000) {
-      const minutesLeft = Math.ceil((15 * 60 * 1000 - (now - lastAttemptTime)) / 60000);
-      throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minutes.`);
-    }
+    if (error) throw error;
     
-    // Get users from localStorage
-    const existingUsers = localStorage.getItem("quiz_users");
-    if (!existingUsers) {
-      // Increment failed attempts
-      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
-      localStorage.setItem(`last_attempt_${email}`, now.toString());
+    if (!data.user) {
       throw new Error("Invalid credentials");
     }
     
-    const users = JSON.parse(existingUsers);
+    // Get user data from our users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
     
-    // In a real app, we would hash the password and compare hashes
-    // For this demo, we'll use our simulated hashing
-    const hashedPassword = `hashed_${password}`;
-    
-    // Find user with matching email and hashed password
-    const user = users.find((u: any) => 
-      u.email === email && (u.password === hashedPassword || u.password === password)
-    );
-    
-    if (!user) {
-      // Increment failed attempts
-      localStorage.setItem(`login_attempts_${email}`, (attemptCount + 1).toString());
-      localStorage.setItem(`last_attempt_${email}`, now.toString());
-      throw new Error("Invalid credentials");
+    if (userError && userError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which we can ignore
+      console.error("Error fetching user data:", userError);
     }
     
-    // Reset login attempts on successful login
-    localStorage.removeItem(`login_attempts_${email}`);
-    localStorage.removeItem(`last_attempt_${email}`);
-    
-    // Save user in localStorage
-    const userData: User = {
-      id: user.id,
-      email: user.email,
-      displayName: user.displayName,
-      createdAt: user.createdAt
+    // Create user object from Supabase data
+    const user: User = {
+      id: data.user.id,
+      email: data.user.email || email,
+      displayName: userData?.display_name || data.user.user_metadata?.display_name || email.split('@')[0],
+      createdAt: data.user.created_at || new Date().toISOString(),
+      learningPreferences: userData?.learning_preferences
     };
     
-    localStorage.setItem(USER_KEY, JSON.stringify(userData));
-    localStorage.setItem(AUTH_TOKEN_KEY, userData.id); // Simple token
+    // Save user in localStorage for backwards compatibility
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(AUTH_TOKEN_KEY, data.session.access_token); // For backwards compatibility
     
-    return userData;
+    return user;
   } catch (error) {
     console.error("Login error:", error);
     throw error;
@@ -136,9 +130,15 @@ export const sendMagicLink = async (email: string): Promise<boolean> => {
     // Add simulated API delay
     await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
     
-    // In a real app, this would send an actual email with a magic link
-    // For this demo, we'll simulate it
-    console.log(`Magic link sent to ${email}`);
+    // Send magic link with Supabase
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
+    });
+    
+    if (error) throw error;
     
     // Store the email for validation
     localStorage.setItem("magic_link_pending", email);
@@ -154,13 +154,26 @@ export const sendMagicLink = async (email: string): Promise<boolean> => {
  * Get current user
  */
 export const getCurrentUser = (): User | null => {
-  const userJson = localStorage.getItem(USER_KEY);
-  if (!userJson) return null;
-  
   try {
+    // First check if we have a user in Supabase
+    const { data } = supabase.auth.getSession();
+    if (data.session?.user) {
+      // Return user from Supabase session
+      return {
+        id: data.session.user.id,
+        email: data.session.user.email || "",
+        displayName: data.session.user.user_metadata?.display_name || data.session.user.email?.split('@')[0] || "",
+        createdAt: data.session.user.created_at || new Date().toISOString()
+      };
+    }
+    
+    // Fallback to localStorage for backwards compatibility
+    const userJson = localStorage.getItem(USER_KEY);
+    if (!userJson) return null;
+    
     return JSON.parse(userJson) as User;
   } catch (error) {
-    console.error("Error parsing user data:", error);
+    console.error("Error getting current user:", error);
     return null;
   }
 };
@@ -169,15 +182,32 @@ export const getCurrentUser = (): User | null => {
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
+  // Check Supabase session first
+  const { data } = supabase.auth.getSession();
+  if (data.session) return true;
+  
+  // Fallback to localStorage for backwards compatibility
   return localStorage.getItem(AUTH_TOKEN_KEY) !== null;
 };
 
 /**
  * Logout user
  */
-export const logoutUser = (): void => {
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(AUTH_TOKEN_KEY);
+export const logoutUser = async (): Promise<void> => {
+  try {
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+    
+    // Clear localStorage for backwards compatibility
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch (error) {
+    console.error("Logout error:", error);
+    
+    // Even if Supabase logout fails, clear local storage
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
 };
 
 /**
@@ -191,10 +221,11 @@ export const authenticatedFetch = async (url: string, options: RequestInit = {})
     throw new Error("User not authenticated");
   }
   
-  const authToken = localStorage.getItem(AUTH_TOKEN_KEY);
+  const session = supabase.auth.getSession();
   const headers = new Headers(options.headers);
   
   // Add authentication token
+  const authToken = localStorage.getItem(AUTH_TOKEN_KEY) || session.data?.session?.access_token;
   headers.set("Authorization", `Bearer ${authToken}`);
   
   // Add CSRF token
