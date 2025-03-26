@@ -103,7 +103,7 @@ export const registerUser = async (
         .from('users')
         .insert({
           email,
-          password_hash: 'MANAGED_BY_SUPABASE', // We don't store the actual password
+          password_hash: 'MANAGED_BY_SUPABASE', // Required field
           display_name: displayName,
           id: authData.user.id
         });
@@ -155,7 +155,8 @@ export const login = async (email: string, password: string): Promise<User> => {
         .insert({
           id: user.id,
           email: user.email,
-          display_name: user.displayName
+          display_name: user.displayName,
+          password_hash: 'MANAGED_BY_SUPABASE' // Required field
         });
         
       currentUser = user;

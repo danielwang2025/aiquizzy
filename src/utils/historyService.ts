@@ -587,14 +587,14 @@ export const isQuestionDisputed = async (questionId: string): Promise<boolean> =
     }
 
     // Fallback to localStorage
-    const history = JSON.parse(localStorage.getItem("quizHistory") || '{"attempts":[],"reviewList":[],"disputedQuestions":[]}');
-    return history.disputedQuestions.some((q: DisputedQuestion) => q.questionId === questionId);
+    const history = await loadQuizHistory();
+    return history.disputedQuestions.some((q) => q.questionId === questionId);
   } catch (error) {
     console.error("Error checking if question is disputed:", error);
     
     // Fallback to localStorage
-    const history = JSON.parse(localStorage.getItem("quizHistory") || '{"attempts":[],"reviewList":[],"disputedQuestions":[]}');
-    return history.disputedQuestions.some((q: DisputedQuestion) => q.questionId === questionId);
+    const history = await loadQuizHistory();
+    return history.disputedQuestions.some((q) => q.questionId === questionId);
   }
 };
 
@@ -635,3 +635,4 @@ export const updateLearningPreferences = async (preferences: LearningPreferences
     localStorage.setItem("quizHistory", JSON.stringify(updatedHistory));
   }
 };
+

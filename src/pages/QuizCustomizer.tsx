@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -72,7 +71,7 @@ const QuizCustomizer = () => {
           </motion.div>
           
           {isAuth ? (
-            <QuizGenerator initialTopic={topicFromUrl} />
+            <QuizGenerator />
           ) : (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}

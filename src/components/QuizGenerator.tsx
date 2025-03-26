@@ -21,7 +21,11 @@ import {
 } from "@/components/ui/accordion"
 import { Trash2 } from "lucide-react";
 
-const QuizGenerator: React.FC = () => {
+interface QuizGeneratorProps {
+  initialTopic?: string;
+}
+
+const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [newQuestion, setNewQuestion] = useState<QuizQuestion>({
@@ -32,10 +36,10 @@ const QuizGenerator: React.FC = () => {
     correctAnswer: "",
     explanation: "",
     difficulty: "medium",
-    topic: "",
+    topic: initialTopic,
     subtopic: ""
   });
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTopic ? `Quiz about ${initialTopic}` : "");
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<QuizHistory>({ attempts: [], reviewList: [], disputedQuestions: [] });
   
@@ -64,7 +68,7 @@ const QuizGenerator: React.FC = () => {
     }
     
     if (newQuestion.type === "multiple_choice") {
-      if (!newQuestion.options.every(option => option.trim())) {
+      if (!newQuestion.options.every(option => typeof option === 'string' && option.trim())) {
         toast.error("All options must be filled");
         return;
       }
@@ -73,7 +77,7 @@ const QuizGenerator: React.FC = () => {
         return;
       }
     } else if (newQuestion.type === "fill_in") {
-      if (!newQuestion.correctAnswer.trim()) {
+      if (typeof newQuestion.correctAnswer === "string" && !newQuestion.correctAnswer.trim()) {
         toast.error("Correct answer cannot be empty");
         return;
       }
@@ -342,7 +346,7 @@ const QuizGenerator: React.FC = () => {
       )}
 
       <Button
-        variant="primary"
+        variant="default"
         size="lg"
         className="mt-6 w-full"
         onClick={handleSubmit}
