@@ -129,28 +129,6 @@ export const loginUser = async (email: string, password: string): Promise<User> 
 };
 
 /**
- * Send magic link to user email
- */
-export const sendMagicLink = async (email: string): Promise<boolean> => {
-  try {
-    // Add simulated API delay
-    await new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
-    
-    // In a real app, this would send an actual email with a magic link
-    // For this demo, we'll simulate it
-    console.log(`Magic link sent to ${email}`);
-    
-    // Store the email for validation
-    localStorage.setItem("magic_link_pending", email);
-    
-    return true;
-  } catch (error) {
-    console.error("Magic link error:", error);
-    throw error;
-  }
-};
-
-/**
  * Get current user
  */
 export const getCurrentUser = (): User | null => {
