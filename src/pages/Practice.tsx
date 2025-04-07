@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -9,12 +8,7 @@ import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { QuizQuestion } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Medal, HelpCircle, Lightbulb } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ArrowLeft, ArrowRight, Medal } from "lucide-react";
 
 const Practice = () => {
   const { quizId } = useParams();
@@ -24,7 +18,6 @@ const Practice = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(string | number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [showCurrentHint, setShowCurrentHint] = useState(false);
   
   useEffect(() => {
     if (quizId) {
@@ -102,11 +95,6 @@ const Practice = () => {
     setLoading(false);
   }, [quizId, navigate]);
   
-  // Reset hint state when changing questions
-  useEffect(() => {
-    setShowCurrentHint(false);
-  }, [currentQuestionIndex]);
-  
   const handleAnswer = (answer: string | number) => {
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = answer;
@@ -125,10 +113,6 @@ const Practice = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
-  };
-  
-  const toggleHint = () => {
-    setShowCurrentHint(!showCurrentHint);
   };
   
   const calculateResults = () => {
@@ -156,23 +140,6 @@ const Practice = () => {
     };
   };
   
-  const getGeneralHint = (question: QuizQuestion) => {
-    if (question.type === "multiple_choice") {
-      return "Consider the meaning of each option, eliminate clearly incorrect choices, and then select from the remaining options.";
-    } else {
-      return "Recall key concepts and terminology related to the question. Try to express your answer using appropriate terminology.";
-    }
-  };
-  
-  const getSpecificHint = (question: QuizQuestion) => {
-    // This would ideally come from the API, but for now we'll generate a generic hint
-    if (question.type === "multiple_choice") {
-      return "Look for keywords in the question that match with specific options. Think about related concepts that might help narrow down your choices.";
-    } else {
-      return "The answer is likely related to the main concept being tested. Consider synonyms or alternative phrasings if you're stuck.";
-    }
-  };
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -197,8 +164,8 @@ const Practice = () => {
     );
   }
   
-  const currentQuestion = quiz.questions[currentQuestionIndex];
-  const progressPercentage = (currentQuestionIndex / (quiz.questions.length - 1)) * 100;
+  const currentQuestion = quiz?.questions[currentQuestionIndex];
+  const progressPercentage = quiz ? (currentQuestionIndex / (quiz.questions.length - 1)) * 100 : 0;
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -207,7 +174,7 @@ const Practice = () => {
       <main className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">
-            {quiz.title}
+            {quiz?.title}
           </h1>
           
           {!showResults ? (
@@ -215,7 +182,7 @@ const Practice = () => {
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Progress</span>
-                  <span className="text-sm font-medium">{currentQuestionIndex + 1} / {quiz.questions.length}</span>
+                  <span className="text-sm font-medium">{currentQuestionIndex + 1} / {quiz?.questions.length}</span>
                 </div>
                 <Progress value={progressPercentage} className="h-2" />
               </div>
@@ -227,43 +194,15 @@ const Practice = () => {
                       {currentQuestionIndex + 1}
                     </span>
                     <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md capitalize text-sm font-medium">
-                      {currentQuestion.difficulty}
+                      {currentQuestion?.difficulty}
                     </span>
                     <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-sm font-medium">
-                      {currentQuestion.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
+                      {currentQuestion?.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
                     </span>
                   </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8"
-                    onClick={toggleHint}
-                  >
-                    <HelpCircle className="h-4 w-4 mr-1" />
-                    Not Sure
-                  </Button>
                 </div>
                 
                 <div className="mb-8">
-                  <h2 className="text-xl font-medium mb-6">
-                    {currentQuestion.question}
-                  </h2>
-                  
-                  {showCurrentHint && (
-                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg animate-fade-in">
-                      <div className="flex items-start">
-                        <Lightbulb className="h-5 w-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <h4 className="font-medium text-amber-800 mb-1">Hint</h4>
-                          <p className="text-sm text-amber-700">
-                            {getSpecificHint(currentQuestion)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
                   <QuizQuestionComponent 
                     question={currentQuestion}
                     userAnswer={userAnswers[currentQuestionIndex]}
@@ -289,7 +228,7 @@ const Practice = () => {
                     disabled={userAnswers[currentQuestionIndex] === null}
                     className="flex items-center bg-blue-600 hover:bg-blue-700"
                   >
-                    {currentQuestionIndex === quiz.questions.length - 1 ? (
+                    {currentQuestionIndex === quiz?.questions.length - 1 ? (
                       <>Complete Quiz<Medal className="h-4 w-4 ml-1" /></>
                     ) : (
                       <>Next<ArrowRight className="h-4 w-4 ml-1" /></>

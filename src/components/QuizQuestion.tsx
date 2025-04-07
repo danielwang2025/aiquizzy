@@ -4,9 +4,10 @@ import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
 import DisputeForm from "./DisputeForm";
 import { isQuestionDisputed } from "@/utils/historyService";
-import { CheckCircle, HelpCircle } from 'lucide-react';
+import { CheckCircle, HelpCircle, Lightbulb } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { getBasicHint } from "@/utils/hintService";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -29,6 +30,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [isAlreadyDisputed, setIsAlreadyDisputed] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [hint, setHint] = useState<string>("");
+  const [isLoadingHint, setIsLoadingHint] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,14 +64,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
 
   const toggleHint = () => {
     setShowHint(!showHint);
-  };
-
-  const getHint = () => {
-    if (question.type === "multiple_choice") {
-      return "Try to eliminate obviously incorrect options first. Focus on the key terms in the question.";
-    } else {
-      const answer = String(question.correctAnswer);
-      return `The answer starts with "${answer.charAt(0)}" and has ${answer.length} characters.`;
+    
+    // Generate hint if not already available
+    if (!hint && !showHint) {
+      // Use the basic hint for immediate feedback
+      setHint(getBasicHint(question));
     }
   };
 
@@ -121,9 +121,14 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           transition={{ duration: 0.3 }}
           className="mb-5 ml-11 p-3 border border-amber-200 bg-amber-50 rounded-lg"
         >
-          <p className="text-amber-800">
-            <strong>Hint:</strong> {getHint()}
-          </p>
+          <div className="flex items-start">
+            <Lightbulb className="h-5 w-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-amber-800">
+                <strong>Hint:</strong> {isLoadingHint ? "Loading hint..." : hint}
+              </p>
+            </div>
+          </div>
         </motion.div>
       )}
 
