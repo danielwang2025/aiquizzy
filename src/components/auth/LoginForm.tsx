@@ -18,7 +18,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      // 应用HTML转义以防XSS攻击
+      // Apply HTML escaping to prevent XSS attacks
       const sanitizedValue = escapeHtml(e.target.value);
       setter(sanitizedValue);
     };
@@ -27,7 +27,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("请填写所有字段");
+      toast.error("Please fill in all fields");
       return;
     }
     
@@ -35,10 +35,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     
     try {
       await loginUser(email, password);
-      toast.success("登录成功");
+      toast.success("Login successful");
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "登录失败");
+      toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -47,14 +47,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">登录</h1>
-        <p className="text-muted-foreground">输入您的凭据以访问您的账户</p>
+        <h1 className="text-2xl font-bold">Login</h1>
+        <p className="text-muted-foreground">Enter your credentials to access your account</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium">
-            邮箱
+            Email
           </label>
           <Input
             id="email"
@@ -68,7 +68,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium">
-            密码
+            Password
           </label>
           <Input
             id="password"
@@ -85,19 +85,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? "登录中..." : "登录"}
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
       
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          还没有账户？{" "}
+          Don't have an account?{" "}
           <button
             type="button"
             className="text-primary hover:underline"
             onClick={onRegisterClick}
           >
-            注册
+            Register
           </button>
         </p>
       </div>
