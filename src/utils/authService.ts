@@ -63,15 +63,11 @@ export const loginUser = async (email: string, password: string): Promise<User> 
     }
 
     // 获取用户资料
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', data.user.id)
       .single();
-
-    if (profileError) {
-      console.error("获取用户资料失败:", profileError);
-    }
 
     // 构建用户数据
     const userData: User = {

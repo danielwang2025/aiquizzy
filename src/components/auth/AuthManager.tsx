@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
@@ -24,10 +23,15 @@ const AuthManager: React.FC = () => {
         if (session) {
           setIsAuth(true);
           const user = await getCurrentUser();
-          setCurrentUser(user);
+          if (user) {
+            setCurrentUser(user);
+            // Also save to localStorage for historyService to use
+            localStorage.setItem('current_user', JSON.stringify(user));
+          }
         } else {
           setIsAuth(false);
           setCurrentUser(null);
+          localStorage.removeItem('current_user');
         }
       }
     );
@@ -40,7 +44,11 @@ const AuthManager: React.FC = () => {
         
         if (isAuthResult) {
           const user = await getCurrentUser();
-          setCurrentUser(user);
+          if (user) {
+            setCurrentUser(user);
+            // Also save to localStorage for historyService to use
+            localStorage.setItem('current_user', JSON.stringify(user));
+          }
         }
       } catch (error) {
         console.error("认证状态检查失败:", error);
@@ -68,6 +76,7 @@ const AuthManager: React.FC = () => {
     try {
       await logoutUser();
       toast.success("您已成功登出");
+      localStorage.removeItem('current_user');
       // 认证状态将通过onAuthStateChange更新
     } catch (error) {
       toast.error("登出失败");

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, saveQuizHistory } from "@/utils/historyService";
@@ -25,16 +24,22 @@ const Profile: React.FC = () => {
   const [newTopic, setNewTopic] = useState("");
   
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      
-      // Load learning preferences
-      const history = loadQuizHistory();
-      if (history.learningPreferences) {
-        setPreferences(history.learningPreferences);
+    const loadUserData = async () => {
+      try {
+        const userData = await getCurrentUser();
+        setUser(userData);
+        
+        // Load learning preferences
+        const history = loadQuizHistory();
+        if (history.learningPreferences) {
+          setPreferences(history.learningPreferences);
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
       }
-    }
+    };
+    
+    loadUserData();
   }, []);
   
   const handleSavePreferences = () => {

@@ -6,8 +6,19 @@ const HISTORY_KEY = "quiz_history";
 
 // Load quiz history from localStorage for current user
 export const loadQuizHistory = (): QuizHistory => {
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  let userId = null;
+  try {
+    // Instead of directly using the Promise, we'll use local storage for now
+    // The proper fix would be to make this function async, but that would require
+    // changing all callers as well
+    const savedUserData = localStorage.getItem('current_user');
+    if (savedUserData) {
+      const userData = JSON.parse(savedUserData);
+      userId = userData.id;
+    }
+  } catch (error) {
+    console.error("Error getting current user:", error);
+  }
   
   const savedHistory = localStorage.getItem(HISTORY_KEY);
   let history: QuizHistory = { attempts: [], reviewList: [], disputedQuestions: [] };
@@ -47,8 +58,17 @@ export const loadQuizHistory = (): QuizHistory => {
 
 // Save quiz history to localStorage
 export const saveQuizHistory = (history: QuizHistory): void => {
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  let userId = null;
+  try {
+    const savedUserData = localStorage.getItem('current_user');
+    if (savedUserData) {
+      const userData = JSON.parse(savedUserData);
+      userId = userData.id;
+    }
+  } catch (error) {
+    console.error("Error getting current user:", error);
+  }
+  
   const key = userId || 'anonymous';
   
   let allHistories = {};
@@ -73,8 +93,16 @@ export const saveQuizHistory = (history: QuizHistory): void => {
 
 // Add a new quiz attempt to history
 export const saveQuizAttempt = (attempt: QuizAttempt): void => {
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  let userId = null;
+  try {
+    const savedUserData = localStorage.getItem('current_user');
+    if (savedUserData) {
+      const userData = JSON.parse(savedUserData);
+      userId = userData.id;
+    }
+  } catch (error) {
+    console.error("Error getting current user:", error);
+  }
   
   // Add userId to attempt
   if (userId) {
