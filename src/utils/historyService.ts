@@ -141,8 +141,18 @@ export const clearReviewList = (): void => {
 
 // Clear all history for current user
 export const clearAllHistory = (): void => {
-  const currentUser = getCurrentUser();
-  const userId = currentUser?.id;
+  let userId = null;
+  try {
+    // Fix: Use localStorage instead of direct access to getCurrentUser() which returns a Promise
+    const savedUserData = localStorage.getItem('current_user');
+    if (savedUserData) {
+      const userData = JSON.parse(savedUserData);
+      userId = userData.id;
+    }
+  } catch (error) {
+    console.error("Error getting current user:", error);
+  }
+  
   const key = userId || 'anonymous';
   
   let allHistories = {};
@@ -200,4 +210,3 @@ export const isQuestionDisputed = (questionId: string): boolean => {
   const history = loadQuizHistory();
   return history.disputedQuestions.some(dq => dq.questionId === questionId);
 };
-
