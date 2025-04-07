@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
@@ -18,7 +17,7 @@ const AuthManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   useEffect(() => {
-    // 设置认证状态监听器
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
@@ -37,7 +36,7 @@ const AuthManager: React.FC = () => {
       }
     );
 
-    // 初始检查认证状态
+    // Initial check of auth status
     const checkAuth = async () => {
       try {
         setLoading(true);
@@ -53,7 +52,7 @@ const AuthManager: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error("认证状态检查失败:", error);
+        console.error("Failed to check authentication status:", error);
       } finally {
         setLoading(false);
       }
@@ -61,7 +60,7 @@ const AuthManager: React.FC = () => {
     
     checkAuth();
     
-    // 清理订阅
+    // Clean up subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -69,20 +68,20 @@ const AuthManager: React.FC = () => {
   
   const handleAuthSuccess = () => {
     setShowAuthSheet(false);
-    // 重置认证表单为登录视图
+    // Reset to login view
     setShowRegister(false);
-    // 认证状态将通过onAuthStateChange更新
+    // Auth state will be updated via onAuthStateChange
   };
   
   const handleLogout = async () => {
     try {
       await logoutUser();
-      toast.success("您已成功登出");
+      toast.success("Successfully logged out");
       localStorage.removeItem('current_user');
-      // 认证状态将通过onAuthStateChange更新
+      // Auth state will be updated via onAuthStateChange
     } catch (error) {
-      toast.error("登出失败");
-      console.error("登出错误:", error);
+      toast.error("Logout failed");
+      console.error("Logout error:", error);
     }
   };
   
@@ -91,7 +90,7 @@ const AuthManager: React.FC = () => {
   };
   
   if (loading) {
-    return <div className="flex items-center gap-2 opacity-50">加载中...</div>;
+    return <div className="flex items-center gap-2 opacity-50">Loading...</div>;
   }
   
   return (
@@ -107,7 +106,7 @@ const AuthManager: React.FC = () => {
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
-            登出
+            Logout
           </Button>
         </div>
       ) : (
@@ -115,7 +114,7 @@ const AuthManager: React.FC = () => {
           <SheetTrigger asChild>
             <Button variant="outline" size="sm">
               <User className="h-4 w-4 mr-2" />
-              登录 / 注册
+              Login / Register
             </Button>
           </SheetTrigger>
           <SheetContent>
