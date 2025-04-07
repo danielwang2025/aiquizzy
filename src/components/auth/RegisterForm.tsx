@@ -21,7 +21,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordStrength, setPasswordStrength] = useState<number>(0);
   
-  // Update password strength whenever password changes
+  // 密码强度更新
   useEffect(() => {
     if (!password) {
       setPasswordStrength(0);
@@ -29,7 +29,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       return;
     }
     
-    // Calculate password strength (simple version)
+    // 计算密码强度
     let strength = 0;
     if (password.length >= 8) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
@@ -39,14 +39,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     
     setPasswordStrength(strength);
     
-    // Validate password
+    // 验证密码
     const validation = validateStrongPassword(password);
-    setPasswordError(validation.message);
+    setPasswordError(validation.isValid ? undefined : validation.message);
   }, [password]);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Apply HTML escaping for XSS protection
+      // 应用HTML转义以防XSS攻击
       const sanitizedValue = escapeHtml(e.target.value);
       setter(sanitizedValue);
     };
@@ -55,11 +55,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     e.preventDefault();
     
     if (!email || !password || !confirmPassword) {
-      toast.error("Please fill in all required fields");
+      toast.error("请填写所有必填字段");
       return;
     }
     
-    // Validate password strength
+    // 验证密码强度
     const passwordValidation = validateStrongPassword(password);
     if (!passwordValidation.isValid) {
       toast.error(passwordValidation.message);
@@ -67,7 +67,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     }
     
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("密码不匹配");
       return;
     }
     
@@ -75,10 +75,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     
     try {
       await registerUser(email, password, displayName);
-      toast.success("Registration successful");
+      toast.success("注册成功");
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Registration failed");
+      toast.error(error instanceof Error ? error.message : "注册失败");
     } finally {
       setIsLoading(false);
     }
@@ -87,14 +87,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create an Account</h1>
-        <p className="text-muted-foreground">Enter your information to create an account</p>
+        <h1 className="text-2xl font-bold">创建账户</h1>
+        <p className="text-muted-foreground">请输入您的信息创建账户</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium">
-            Email <span className="text-red-500">*</span>
+            邮箱 <span className="text-red-500">*</span>
           </label>
           <Input
             id="email"
@@ -108,12 +108,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         
         <div className="space-y-2">
           <label htmlFor="displayName" className="text-sm font-medium">
-            Display Name (optional)
+            显示名称 (可选)
           </label>
           <Input
             id="displayName"
             type="text"
-            placeholder="Your Name"
+            placeholder="您的名称"
             value={displayName}
             onChange={handleInputChange(setDisplayName)}
           />
@@ -121,7 +121,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium">
-            Password <span className="text-red-500">*</span>
+            密码 <span className="text-red-500">*</span>
           </label>
           <Input
             id="password"
@@ -132,7 +132,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             required
           />
           
-          {/* Password strength indicator */}
+          {/* 密码强度指示器 */}
           <div className="mt-1">
             <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
               <div 
@@ -156,7 +156,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             
             {!passwordError && password && (
               <div className="text-xs text-muted-foreground mt-1">
-                Password must be 8-12 characters with uppercase, lowercase, number, and special character.
+                密码必须是8-12个字符，包含大写字母、小写字母、数字和特殊字符。
               </div>
             )}
           </div>
@@ -164,7 +164,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         
         <div className="space-y-2">
           <label htmlFor="confirmPassword" className="text-sm font-medium">
-            Confirm Password <span className="text-red-500">*</span>
+            确认密码 <span className="text-red-500">*</span>
           </label>
           <Input
             id="confirmPassword"
@@ -181,19 +181,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           className="w-full"
           disabled={isLoading || !!passwordError}
         >
-          {isLoading ? "Creating account..." : "Register"}
+          {isLoading ? "创建账户中..." : "注册"}
         </Button>
       </form>
       
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
+          已有账户？{" "}
           <button
             type="button"
             className="text-primary hover:underline"
             onClick={onLoginClick}
           >
-            Login
+            登录
           </button>
         </p>
       </div>
