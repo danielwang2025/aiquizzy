@@ -11,7 +11,7 @@ export interface ApiKeys {
 
 // Default API keys from the codebase (for development only)
 const defaultApiKeys: ApiKeys = {
-  DEEPSEEK_API_KEY: "sk-8e77c6120a864abf9a412304be119a2e",
+  DEEPSEEK_API_KEY: "sk-9262fe69aaca44eb9d1357c3bacdd746",
   BREVO_API_KEY: "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",
   OPENAI_API_KEY: "", // This needs to be set by the user
 };

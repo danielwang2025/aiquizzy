@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
@@ -14,7 +15,7 @@ const AuthManager: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [showRegister, setShowRegister] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   
   useEffect(() => {
     // 设置认证状态监听器
@@ -39,6 +40,7 @@ const AuthManager: React.FC = () => {
     // 初始检查认证状态
     const checkAuth = async () => {
       try {
+        setLoading(true);
         const isAuthResult = await isAuthenticated();
         setIsAuth(isAuthResult);
         
