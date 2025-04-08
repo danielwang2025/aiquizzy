@@ -12,6 +12,8 @@ import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { getUserSubscription, getRemainingQuestions } from "@/utils/subscriptionService";
 import { UserSubscription } from "@/types/subscription";
+import ApiKeysManager from "@/components/ApiKeysManager";
+import { checkApiKeys } from "@/utils/api";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const QuizCustomizer = () => {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [remainingQuestions, setRemainingQuestions] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [needsApiKey, setNeedsApiKey] = useState(false);
 
   useEffect(() => {
     const loadSubscriptionData = async () => {
@@ -51,7 +54,19 @@ const QuizCustomizer = () => {
     };
     
     loadSubscriptionData();
+    checkApiKeyStatus();
   }, [isAuth]);
+
+  const checkApiKeyStatus = async () => {
+    try {
+      const { missingKeys } = await checkApiKeys();
+      setNeedsApiKey(missingKeys.includes("DEEPSEEK_API_KEY"));
+    } catch (error) {
+      console.error("Error checking API key status:", error);
+      // 假设需要API密钥，以确保用户可以配置它
+      setNeedsApiKey(true);
+    }
+  };
 
   const handleLoginClick = () => {
     // This will open the auth sheet from the Navigation component
@@ -109,6 +124,19 @@ const QuizCustomizer = () => {
               <FileText className="h-4 w-4" />
               <span>Create and export quizzes to Word documents with Times New Roman formatting</span>
             </motion.div>
+            
+            {needsApiKey && (
+              <motion.div 
+                variants={itemVariants}
+                className="flex items-center justify-center gap-2 mb-4"
+              >
+                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 py-2 px-4 rounded-lg border border-amber-200">
+                  <Lightbulb className="h-4 w-4" />
+                  <span className="text-sm font-medium">To generate quizzes, configure your DeepSeek API key</span>
+                  <ApiKeysManager />
+                </div>
+              </motion.div>
+            )}
           </motion.div>
           
           {isAuth ? (
