@@ -134,8 +134,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
                       {question.difficulty && (
                         <Badge variant="outline" className={cn(
                           "border-none", 
-                          question.difficulty === "easy" ? "bg-green-100/70 text-green-800" : 
-                          question.difficulty === "medium" ? "bg-amber-100/70 text-amber-800" :
+                          question.difficulty === "easy" || question.difficulty === "remember" ? "bg-green-100/70 text-green-800" : 
+                          question.difficulty === "medium" || question.difficulty === "understand" || question.difficulty === "apply" ? "bg-amber-100/70 text-amber-800" :
                           "bg-red-100/70 text-red-800"
                         )}>
                           {question.difficulty}

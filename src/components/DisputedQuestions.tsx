@@ -10,7 +10,7 @@ import {
   clearDisputedQuestions 
 } from "@/utils/historyService";
 import { toast } from "sonner";
-import { AlertTriangle, Trash2, Check, HelpCircle, Info } from "lucide-react";
+import { AlertTriangle, Trash2, Check, HelpCircle, Info, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DisputedQuestionsProps {

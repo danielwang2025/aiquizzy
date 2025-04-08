@@ -454,11 +454,12 @@ const Dashboard: React.FC = () => {
                           </Pie>
                           <ChartTooltip content={({ active, payload }) => {
                             if (active && payload && payload.length) {
+                              const item = payload[0];
                               return (
                                 <div className="glass-effect bg-white/70 backdrop-blur-md p-3 border border-white/30 shadow-lg rounded-md">
-                                  <p className="font-medium text-gray-900">{payload[0].name}</p>
-                                  <p className="text-blue-600">Questions: {payload[0].value}</p>
-                                  <p className="text-blue-600">({(Number(payload[0].percent) * 100).toFixed(2)}%)</p>
+                                  <p className="font-medium text-gray-900">{item.name}</p>
+                                  <p className="text-blue-600">Questions: {item.value}</p>
+                                  <p className="text-blue-600">({((item.payload as any).percent * 100).toFixed(2)}%)</p>
                                 </div>
                               );
                             }
