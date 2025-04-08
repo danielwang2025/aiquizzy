@@ -4,6 +4,7 @@ import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { processFileWithRAG } from "@/utils/ragService";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
@@ -52,7 +53,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         const text = await file.text();
         
         // Process with RAG
-        const processedText = processFileWithRAG(text, file.name);
+        const processedText = await processFileWithRAG(text, file.name);
         onTextExtracted(processedText);
         
         toast.success("Text extracted and processed with RAG!");
@@ -62,7 +63,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         
         reader.onload = async (event) => {
           try {
-            // Simulate text extraction from binary files
+            // In a real production environment, you'd use PDF.js or similar library
+            // to extract text from PDFs, but for simplicity we'll use a simulation
             const simulatedText = `
               ${file.name} content:
               This is extracted content from your learning material.
@@ -73,7 +75,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
             `;
             
             // Process with RAG
-            const processedText = processFileWithRAG(simulatedText, file.name);
+            const processedText = await processFileWithRAG(simulatedText, file.name);
             onTextExtracted(processedText);
             
             toast.success("Content extracted and processed with RAG!");
@@ -154,7 +156,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
             disabled={isLoading}
             onClick={extractTextFromFile}
           >
-            {isLoading ? "Processing with RAG..." : "Extract Content for Quiz"}
+            {isLoading ? (
+              <span className="flex items-center">
+                <LoadingSpinner size="sm" className="mr-2" />
+                Processing with RAG...
+              </span>
+            ) : (
+              "Extract Content for Quiz"
+            )}
           </Button>
         </div>
       )}
