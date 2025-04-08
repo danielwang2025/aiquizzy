@@ -13,21 +13,15 @@ const ApiKeyNotice: React.FC = () => {
     // 尝试调用 API 端点以检查是否设置了环境变量
     const checkApiKeys = async () => {
       try {
-        const response = await fetch('/api/generate-quiz', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            learningObjectives: "test"
-          })
-        });
+        const response = await fetch('/api/check-api-keys');
         
-        const data = await response.json();
-        
-        // 如果返回错误是关于 API 密钥的，则显示横幅
-        if (data.error && data.error.includes('API key not configured') && !dismissed) {
-          setShowBanner(true);
+        // 只有在响应状态为非200且错误相关API密钥时显示横幅
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          
+          if (data.error && data.error.includes('API key not configured') && !dismissed) {
+            setShowBanner(true);
+          }
         }
       } catch (error) {
         // 如果 API 端点不可用，可能是因为应用正在本地开发中，或者服务器端尚未配置

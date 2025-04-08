@@ -59,7 +59,7 @@ export async function generateQuestions(
     toast.dismiss();
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({ error: "服务器错误" }));
       console.error("API error:", errorData);
       throw new Error(`API error: ${errorData.error || "Unknown error"}`);
     }

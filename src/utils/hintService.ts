@@ -18,7 +18,9 @@ export async function generateHint(question: QuizQuestion): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to generate hint");
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Hint API error:", errorData);
+      throw new Error(errorData.error || "Failed to generate hint");
     }
 
     const data = await response.json();

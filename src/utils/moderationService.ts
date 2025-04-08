@@ -34,7 +34,9 @@ export const moderateContent = async (content: string): Promise<ModerationResult
     });
 
     if (!response.ok) {
-      throw new Error("Content moderation API error");
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Moderation API error:", errorData);
+      throw new Error(errorData.error || "Content moderation API error");
     }
 
     return await response.json();
@@ -108,6 +110,10 @@ export const localModerateContent = (content: string): ModerationResult => {
  * @returns Filtered text or null if completely blocked
  */
 export const filterUserInput = async (input: string): Promise<{ text: string | null; blocked: boolean }> => {
+  if (!input || input.trim() === '') {
+    return { text: '', blocked: false };
+  }
+  
   const result = await moderateContent(input);
   
   // Block completely if high severity issues detected
@@ -147,6 +153,8 @@ export const filterUserInput = async (input: string): Promise<{ text: string | n
  * @returns True if injection is detected
  */
 export const detectPromptInjection = (userInput: string): boolean => {
+  if (!userInput) return false;
+  
   const lowerInput = userInput.toLowerCase();
   
   // Common prompt injection patterns

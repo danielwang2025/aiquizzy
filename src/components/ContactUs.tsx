@@ -32,15 +32,41 @@ const ContactUs: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
   };
   
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic form validation
+    if (!formData.name.trim()) {
+      toast.error("请输入您的姓名");
+      return;
+    }
+    
+    if (!validateEmail(formData.email)) {
+      toast.error("请输入有效的电子邮件地址");
+      return;
+    }
+    
+    if (!formData.subject.trim()) {
+      toast.error("请输入主题");
+      return;
+    }
+    
+    if (!formData.message.trim() || formData.message.length < 10) {
+      toast.error("请输入至少10个字符的消息");
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
       // Check for prompt injection or harmful content in the message
       if (detectPromptInjection(formData.message)) {
-        toast.error("Your message contains potentially harmful content. Please reformulate it.");
+        toast.error("您的消息包含潜在有害内容。请重新表述。");
         setIsSubmitting(false);
         return;
       }
@@ -60,11 +86,11 @@ const ContactUs: React.FC = () => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: "发送消息失败" }));
         throw new Error(errorData.error || "Failed to send message");
       }
       
-      toast.success("Message sent successfully!");
+      toast.success("消息发送成功！");
       
       // Reset form
       setFormData({
@@ -75,7 +101,7 @@ const ContactUs: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to send message:", error);
-      toast.error("Failed to send message. Please try again.");
+      toast.error("发送消息失败。请稍后再试。");
     } finally {
       setIsSubmitting(false);
     }
