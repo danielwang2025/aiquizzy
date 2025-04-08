@@ -6,8 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Send, Mail } from "lucide-react";
 import { escapeHtml } from "@/utils/securityUtils";
-import { getApiKey } from "@/utils/envVars";
-import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
+import { detectPromptInjection } from "@/utils/moderationService";
 
 interface ContactFormData {
   name: string;
@@ -46,57 +45,23 @@ const ContactUs: React.FC = () => {
         return;
       }
 
-      // Wait for the moderation result
-      const moderationResult = await moderateContent(formData.message);
-      if (moderationResult.flagged) {
-        toast.error("Your message contains potentially harmful content and cannot be sent.");
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Get the Brevo API key from our environment variables
-      const BREVO_API_KEY = getApiKey("BREVO_API_KEY");
-      
-      // Create the email content
-      const emailContent = {
-        sender: {
-          name: formData.name,
-          email: formData.email
-        },
-        to: [{
-          email: "dickbussiness@163.com",
-          name: "Website Contact"
-        }],
-        subject: formData.subject,
-        htmlContent: `
-          <html>
-            <body>
-              <h2>New Contact Form Submission</h2>
-              <p><strong>From:</strong> ${formData.name} (${formData.email})</p>
-              <p><strong>Subject:</strong> ${formData.subject}</p>
-              <div>
-                <p><strong>Message:</strong></p>
-                <p>${formData.message.replace(/\n/g, '<br/>')}</p>
-              </div>
-            </body>
-          </html>
-        `
-      };
-      
-      // Direct API call to Brevo
-      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
+      // Send the message to our API
+      const response = await fetch('/api/send-message', {
+        method: 'POST',
         headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "api-key": BREVO_API_KEY
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(emailContent)
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message
+        })
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to send email");
+        throw new Error(errorData.error || "Failed to send message");
       }
       
       toast.success("Message sent successfully!");

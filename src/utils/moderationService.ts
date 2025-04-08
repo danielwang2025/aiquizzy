@@ -1,7 +1,4 @@
 
-import { getApiKey } from "@/utils/envVars";
-import OpenAI from "openai";
-
 /**
  * Content categories that can be flagged
  */
@@ -15,19 +12,6 @@ export interface ModerationCategories {
 }
 
 /**
- * Extended categories from OpenAI moderation API
- */
-export interface ExtendedModerationCategories extends ModerationCategories {
-  "sexual/minors": boolean;
-  "harassment/threatening": boolean;
-  "hate/threatening": boolean;
-  "illicit/violent": boolean;
-  "self-harm/intent": boolean;
-  "self-harm/instructions": boolean;
-  "violence/graphic": boolean;
-}
-
-/**
  * Result of content moderation
  */
 export interface ModerationResult {
@@ -37,82 +21,32 @@ export interface ModerationResult {
 }
 
 /**
- * OpenAI Moderation API result
- */
-interface OpenAIModerationResult {
-  id: string;
-  model: string;
-  results: {
-    flagged: boolean;
-    categories: Record<string, boolean>;
-    category_scores: Record<string, number>;
-    category_applied_input_types?: Record<string, string[]>;
-  }[];
-}
-
-/**
- * Content moderation using OpenAI's Moderation API
- * Falls back to local moderation if OpenAI key is not available
+ * Content moderation using server API
  */
 export const moderateContent = async (content: string): Promise<ModerationResult> => {
   try {
-    const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
+    const response = await fetch("/api/moderate-content", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ content })
+    });
 
-    // If we have an OpenAI API key, use their moderation API
-    if (OPENAI_API_KEY) {
-      const openai = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-      });
-
-      const moderation = await openai.moderations.create({
-        input: content,
-      });
-
-      const result = moderation.results[0];
-
-      // Map OpenAI categories to our simplified categories
-      const categories: ModerationCategories = {
-        sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
-        hate: result.categories.hate || result.categories["hate/threatening"] || false,
-        harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
-        selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
-                  result.categories["self-harm/instructions"] || false,
-        violence: result.categories.violence || result.categories["violence/graphic"] || false,
-        illicit: result.categories.illicit || result.categories["illicit/violent"] || false
-      };
-
-      // Map scores
-      const categoryScores: Record<keyof ModerationCategories, number> = {
-        sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
-        hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
-        harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
-        selfHarm: Math.max(
-          result.category_scores["self-harm"] || 0, 
-          result.category_scores["self-harm/intent"] || 0,
-          result.category_scores["self-harm/instructions"] || 0
-        ),
-        violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
-        illicit: Math.max(result.category_scores.illicit || 0, result.category_scores["illicit/violent"] || 0)
-      };
-
-      return {
-        flagged: result.flagged,
-        categories,
-        categoryScores
-      };
+    if (!response.ok) {
+      throw new Error("Content moderation API error");
     }
 
-    // Fallback to simple local moderation
-    return localModerateContent(content);
+    return await response.json();
   } catch (error) {
-    console.error("Error using OpenAI moderation, falling back to local moderation:", error);
-    // Fallback to local moderation in case of API errors
+    console.error("Error using moderation API, falling back to local moderation:", error);
+    // Fallback to simple local moderation in case of API errors
     return localModerateContent(content);
   }
 };
 
 /**
- * Basic local content moderation (fallback when OpenAI API is not available)
+ * Basic local content moderation (fallback when API is not available)
  */
 export const localModerateContent = (content: string): ModerationResult => {
   // Simple word-based detection for demo purposes
@@ -184,7 +118,7 @@ export const filterUserInput = async (input: string): Promise<{ text: string | n
   // For other issues, return filtered text
   let filteredText = input;
   
-  // Simple asterisk filtering for demo (in real app use more sophisticated methods)
+  // Simple asterisk filtering for demo
   const sensitiveTerms = {
     sexual: ["porn", "xxx", "sex", "nude"],
     hate: ["hate", "racist", "nazi", "bigot"],

@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import Pricing from "./pages/Pricing";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import ApiKeyNotice from "./components/ApiKeyNotice"; // 新添加的组件
 
 // Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient({
@@ -33,6 +34,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ApiKeyNotice /> {/* 在这里添加提示组件 */}
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/customize" element={<QuizCustomizer />} />
