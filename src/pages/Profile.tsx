@@ -16,7 +16,7 @@ import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "luci
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [preferences, setPreferences] = useState<LearningPreferences>({
-    preferredDifficulty: "understand", // Changed from "medium" to "understand"
+    preferredDifficulty: "understand",
     preferredBloomLevel: "understand",
     preferredQuestionTypes: ["multiple_choice", "fill_in"],
     topicsOfInterest: [],
@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
           <h1 className="text-3xl font-bold mb-8 text-center">Your Learning Profile</h1>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <UserIcon className="h-5 w-5 mr-2 text-blue-500" />
@@ -147,7 +147,7 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <BookOpen className="h-5 w-5 mr-2 text-emerald-500" />
@@ -176,7 +176,7 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <Target className="h-5 w-5 mr-2 text-red-500" />
@@ -201,7 +201,7 @@ const Profile: React.FC = () => {
           
           <h2 className="text-2xl font-semibold mb-6">Learning Preferences</h2>
           
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Settings className="h-5 w-5 mr-2" />
@@ -223,7 +223,7 @@ const Profile: React.FC = () => {
                       preferredBloomLevel: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
                     }))}
                   >
-                    <SelectTrigger id="difficulty">
+                    <SelectTrigger id="difficulty" className="bg-white">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
                     <SelectContent>
@@ -245,6 +245,7 @@ const Profile: React.FC = () => {
                         id="multiple_choice" 
                         checked={preferences.preferredQuestionTypes?.includes('multiple_choice')}
                         onCheckedChange={() => handleToggleQuestionType('multiple_choice')}
+                        className="data-[state=checked]:bg-blue-500"
                       />
                       <label 
                         htmlFor="multiple_choice"
@@ -258,6 +259,7 @@ const Profile: React.FC = () => {
                         id="fill_in" 
                         checked={preferences.preferredQuestionTypes?.includes('fill_in')}
                         onCheckedChange={() => handleToggleQuestionType('fill_in')}
+                        className="data-[state=checked]:bg-blue-500"
                       />
                       <label 
                         htmlFor="fill_in"
@@ -281,6 +283,7 @@ const Profile: React.FC = () => {
                       ...prev,
                       dailyGoal: parseInt(e.target.value) || 10
                     }))}
+                    className="bg-white"
                   />
                 </div>
                 
@@ -294,7 +297,7 @@ const Profile: React.FC = () => {
                       value={newTopic}
                       onChange={(e) => setNewTopic(e.target.value)}
                       placeholder="Add a topic (e.g., JavaScript, Physics)"
-                      className="rounded-r-none"
+                      className="rounded-r-none bg-white"
                     />
                     <Button
                       type="button"
@@ -309,7 +312,7 @@ const Profile: React.FC = () => {
                     {preferences.topicsOfInterest?.map((topic, index) => (
                       <div 
                         key={index} 
-                        className="bg-secondary rounded-full px-3 py-1 text-sm flex items-center"
+                        className="bg-secondary rounded-full px-3 py-1 text-sm flex items-center hover:bg-secondary/80 transition-colors"
                       >
                         {topic}
                         <button 
@@ -331,6 +334,7 @@ const Profile: React.FC = () => {
                       ...prev,
                       reminderEnabled: checked === true
                     }))}
+                    className="data-[state=checked]:bg-blue-500"
                   />
                   <label 
                     htmlFor="reminders"
@@ -341,7 +345,7 @@ const Profile: React.FC = () => {
                 </div>
                 
                 <Button 
-                  className="w-full"
+                  className="w-full hover:bg-blue-600 transition-colors"
                   onClick={handleSavePreferences}
                 >
                   <Check className="mr-2 h-4 w-4" />
