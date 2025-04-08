@@ -8,7 +8,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import * as pdfjsLib from "pdfjs-dist";
 
 // Need to set the worker source for PDF.js
-const pdfWorkerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+const pdfWorkerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;

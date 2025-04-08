@@ -13,7 +13,15 @@ import Profile from "./pages/Profile";
 import ReviewHub from "./pages/ReviewHub";
 import Contact from "./pages/Contact";
 
-const queryClient = new QueryClient();
+// Create a new QueryClient instance outside of the component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
