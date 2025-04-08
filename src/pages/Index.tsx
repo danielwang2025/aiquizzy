@@ -12,7 +12,8 @@ import {
   Target,
   ArrowRight,
   CheckCircle,
-  ChevronRight
+  ChevronRight,
+  Check
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory } from "@/utils/historyService";
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/carousel";
 import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const history = loadQuizHistory();
@@ -33,10 +35,10 @@ const Index = () => {
   const [topic, setTopic] = useState("");
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
       
-      <main className="py-8 px-4 max-w-screen-xl mx-auto">
+      <div className="container mx-auto px-4 py-8 md:py-16">
         {/* Hero Section */}
         <section className="relative py-16 mb-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">
@@ -88,6 +90,71 @@ const Index = () => {
               </div>
             </div>
           </motion.div>
+        </section>
+        
+        {/* Pricing Section */}
+        <section className="mb-16">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-muted-foreground text-lg">
+              Choose the right plan for your learning needs
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="bg-white p-6 rounded-xl shadow-sm border border-border"
+            >
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">Free Plan</h3>
+                <p className="text-2xl font-bold mt-2">$0<span className="text-muted-foreground text-sm">/month</span></p>
+              </div>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Up to 50 questions per month</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Basic question types</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Review list functionality</li>
+              </ul>
+              <Link to="/pricing">
+                <Button variant="outline" className="w-full">Get Started</Button>
+              </Link>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-primary-foreground p-6 rounded-xl shadow-md border-2 border-primary relative"
+            >
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded text-sm font-medium">
+                RECOMMENDED
+              </div>
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">Premium</h3>
+                <p className="text-2xl font-bold mt-2">$10<span className="text-muted-foreground text-sm">/month</span></p>
+              </div>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Up to 5,000 questions per month</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> All question types</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Advanced Bloom's taxonomy targeting</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Priority support</li>
+                <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" /> Export to Word with custom formatting</li>
+              </ul>
+              <Link to="/pricing">
+                <Button className="w-full">Subscribe Now</Button>
+              </Link>
+            </motion.div>
+          </div>
+          
+          <div className="text-center mt-6">
+            <Link to="/pricing" className="text-primary hover:underline">
+              View detailed pricing information
+            </Link>
+          </div>
         </section>
         
         {/* AI Question Examples Carousel */}
@@ -348,7 +415,9 @@ const Index = () => {
             </div>
           </section>
         )}
-      </main>
+      </div>
+      
+      <Footer />
     </div>
   );
 };

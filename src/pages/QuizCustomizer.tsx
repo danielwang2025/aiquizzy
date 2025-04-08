@@ -2,28 +2,55 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import QuizGenerator from "@/components/QuizGenerator";
-import { isAuthenticated } from "@/utils/authService";
+import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { LockKeyhole, Lightbulb, ArrowRight, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import SubscriptionBanner from "@/components/SubscriptionBanner";
+import { getUserSubscription, getRemainingQuestions } from "@/utils/subscriptionService";
+import { UserSubscription } from "@/types/subscription";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
   const [searchParams] = useSearchParams();
   const topicFromUrl = searchParams.get("topic") || "";
+  const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+  const [remainingQuestions, setRemainingQuestions] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuth) {
-      toast.info("Please sign in to create personalized quizzes", {
-        action: {
-          label: "Sign In",
-          onClick: handleLoginClick,
-        },
-      });
-    }
+    const loadSubscriptionData = async () => {
+      if (isAuth) {
+        try {
+          const user = await getCurrentUser();
+          if (user) {
+            const userSubscription = await getUserSubscription(user.id);
+            setSubscription(userSubscription);
+            
+            const remaining = await getRemainingQuestions(user.id);
+            setRemainingQuestions(remaining);
+          }
+        } catch (error) {
+          console.error("Error loading subscription data:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+        toast.info("Please sign in to create personalized quizzes", {
+          action: {
+            label: "Sign In",
+            onClick: handleLoginClick,
+          },
+        });
+      }
+    };
+    
+    loadSubscriptionData();
   }, [isAuth]);
 
   const handleLoginClick = () => {
@@ -46,10 +73,10 @@ const QuizCustomizer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navigation />
       
-      <main className="py-8 px-4 md:py-12">
+      <main className="py-8 px-4 md:py-12 flex-grow">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial="hidden"
@@ -79,7 +106,15 @@ const QuizCustomizer = () => {
           </motion.div>
           
           {isAuth ? (
-            <QuizGenerator initialTopic={topicFromUrl} />
+            <>
+              {!loading && (
+                <SubscriptionBanner 
+                  subscription={subscription} 
+                  remainingQuestions={remainingQuestions} 
+                />
+              )}
+              <QuizGenerator initialTopic={topicFromUrl} />
+            </>
           ) : (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -150,6 +185,8 @@ const QuizCustomizer = () => {
           )}
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };
