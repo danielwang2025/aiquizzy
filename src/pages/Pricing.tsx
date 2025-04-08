@@ -5,11 +5,12 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X } from "lucide-react";
+import { Check, X, Plus, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import { getSubscriptionPlans } from "@/utils/subscriptionService";
 import { isAuthenticated } from "@/utils/authService";
 import { toast } from "sonner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const Pricing = () => {
   const navigate = useNavigate();
@@ -119,22 +120,50 @@ const Pricing = () => {
             ))}
           </div>
           
-          <div className="mt-12 bg-muted p-6 rounded-lg max-w-4xl mx-auto">
-            <h2 className="font-semibold text-lg mb-3">Frequently Asked Questions</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium">How does the question limit work?</h3>
-                <p className="text-muted-foreground">Your question limit resets every month. Unused questions don't roll over to the next month.</p>
-              </div>
-              <div>
-                <h3 className="font-medium">Can I upgrade or downgrade my plan?</h3>
-                <p className="text-muted-foreground">Yes, you can change your plan at any time. Changes take effect at the start of your next billing cycle.</p>
-              </div>
-              <div>
-                <h3 className="font-medium">Is there a refund policy?</h3>
-                <p className="text-muted-foreground">We offer a 7-day money-back guarantee for all new subscriptions.</p>
-              </div>
-            </div>
+          <div className="mt-16 max-w-4xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-6 text-center">Frequently Asked Questions</h2>
+            <Accordion type="single" collapsible className="bg-card border rounded-lg">
+              <AccordionItem value="item-1">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  How does the question limit work?
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 text-muted-foreground">
+                  Your question limit resets every month. The count is based on the number of questions you generate. Unused questions don't roll over to the next month.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-2">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  Can I upgrade or downgrade my plan?
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 text-muted-foreground">
+                  Yes, you can change your plan at any time. Changes to your subscription will take effect at the start of your next billing cycle. There's no penalty for changing plans.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  Is there a refund policy?
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 text-muted-foreground">
+                  We offer a 7-day money-back guarantee for all new subscriptions. If you're not satisfied with our service, please contact our support team within 7 days of your purchase for a full refund.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-4">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  What payment methods do you accept?
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 text-muted-foreground">
+                  We accept all major credit cards, including Visa, Mastercard, and American Express. We also support PayPal for your convenience.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-5">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  Is my payment information secure?
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4 text-muted-foreground">
+                  Yes, all payment processing is handled by our secure payment processors. We never store your full credit card details on our servers.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </main>

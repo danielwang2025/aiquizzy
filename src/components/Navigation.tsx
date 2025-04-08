@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Settings, Book, BarChart, User, PlusCircle, Mail } from "lucide-react";
+import { Home, Settings, Book, BarChart, User, PlusCircle, Mail, DollarSign } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useMediaQuery } from "@/hooks/use-mobile";
 
@@ -13,6 +12,7 @@ const Navigation: React.FC = () => {
   
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
+    { path: "/pricing", label: "Pricing", icon: <DollarSign className="h-5 w-5" /> },
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
