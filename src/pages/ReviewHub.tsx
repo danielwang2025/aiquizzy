@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, removeFromReviewList, clearReviewList, addToReviewList } from "@/utils/historyService";
@@ -202,19 +203,23 @@ const ReviewHub: React.FC = () => {
   const wrongAnswersByTopic = generateWrongAnswersByTopic();
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/80 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
-      <div className="pt-24 md:pt-28 pb-16 md:pb-0">
-        <div className="container max-w-screen-xl mx-auto px-4">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 mb-2">
-              复习中心
-            </h1>
-            <p className="text-muted-foreground">
-              复习您曾经做过的问题和个人笔记
+      <main className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Review Center</span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight gradient-text">Study Review Hub</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Review your past quizzes and track your learning progress
             </p>
-          </div>
-          
+          </motion.div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="grid w-full grid-cols-3 bg-white/30 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-white/50">
               <TabsTrigger 
@@ -222,30 +227,30 @@ const ReviewHub: React.FC = () => {
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <List className="h-4 w-4" />
-                <span>复习列表</span>
+                <span>Review List</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="past-quizzes" 
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <Clock className="h-4 w-4" />
-                <span>历史记录</span>
+                <span>History</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <BarChart className="h-4 w-4" />
-                <span>复习分析</span>
+                <span>Analytics</span>
               </TabsTrigger>
             </TabsList>
             
             <div className="mt-6 mb-4 flex items-center justify-between">
               <div className="flex items-center">
                 <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                  {activeTab === "review-list" && "您的复习列表"}
-                  {activeTab === "past-quizzes" && "您的历史记录"}
-                  {activeTab === "analytics" && "复习分析"}
+                  {activeTab === "review-list" && "Your Review List"}
+                  {activeTab === "past-quizzes" && "Your Quiz History"}
+                  {activeTab === "analytics" && "Review Analytics"}
                 </h2>
               </div>
               
@@ -801,7 +806,7 @@ const ReviewHub: React.FC = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

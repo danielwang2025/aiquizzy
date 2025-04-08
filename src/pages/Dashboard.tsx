@@ -230,18 +230,22 @@ const Dashboard: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/80 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
-      <div className="pt-24 md:pt-28 pb-16 md:pb-0">
-        <div className="container max-w-screen-xl mx-auto px-4">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 mb-2">
-              学习仪表盘
-            </h1>
-            <p className="text-muted-foreground">
-              查看您的学习进度和统计信息
+      <main className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Your Dashboard</span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight gradient-text">Personal Dashboard</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Track your progress and manage your learning journey
             </p>
-          </div>
+          </motion.div>
           
           <motion.div 
             className="flex flex-col md:flex-row justify-between items-center mb-8"
@@ -620,8 +624,7 @@ const Dashboard: React.FC = () => {
             </motion.div>
           )}
         </div>
-      </div>
-      <Footer />
+      </main>
     </div>
   );
 };
