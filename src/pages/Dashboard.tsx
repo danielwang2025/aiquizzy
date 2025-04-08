@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory } from "@/utils/historyService";
@@ -48,8 +47,8 @@ import {
   AreaChart as AreaChartIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
 
-// Animation variants for motion components
 const fadeIn = {
   hidden: { opacity: 0, y: 10 },
   visible: { 
@@ -81,7 +80,6 @@ const Dashboard: React.FC = () => {
       return;
     }
     
-    // Filter attempts by time range
     let filteredAttempts = [...history.attempts];
     
     if (timeRange === "week") {
@@ -96,23 +94,18 @@ const Dashboard: React.FC = () => {
       );
     }
     
-    // Calculate stats from filtered attempts
     const totalAttempts = filteredAttempts.length;
     let totalQuestions = 0;
     let correctAnswers = 0;
     let totalScore = 0;
     
-    // Topic tracking
     const topicMap = new Map<string, { correct: number; total: number }>();
     
-    // Recent scores for chart
     const recentScores: { date: string; score: number }[] = [];
     
-    // Calculate daily streak
     let dailyStreak = 0;
     const dateSet = new Set<string>();
     
-    // Difficulty distribution
     const difficultyDistribution = {
       easy: 0,
       medium: 0,
@@ -132,7 +125,6 @@ const Dashboard: React.FC = () => {
         score: attempt.result.score
       });
       
-      // Process topics
       const topics = attempt.objectives.split(',').map(t => t.trim());
       topics.forEach(topic => {
         if (!topic) return;
@@ -146,7 +138,6 @@ const Dashboard: React.FC = () => {
         topicStats.total += attempt.questions.length;
       });
       
-      // Count difficulty distribution
       attempt.questions.forEach(question => {
         if (question.difficulty) {
           difficultyDistribution[question.difficulty]++;
@@ -154,7 +145,6 @@ const Dashboard: React.FC = () => {
       });
     });
     
-    // Convert topics to array for stats
     const topicPerformance = Array.from(topicMap.entries())
       .map(([topic, stats]) => ({
         topic,
@@ -163,13 +153,11 @@ const Dashboard: React.FC = () => {
       }))
       .sort((a, b) => b.questionsCount - a.questionsCount);
     
-    // Calculate most challenged topics (lowest correctRate)
     const mostChallengedTopics = [...topicPerformance]
       .sort((a, b) => a.correctRate - b.correctRate)
       .slice(0, 3)
       .map(t => t.topic);
     
-    // Calculate streak
     const dates = Array.from(dateSet).sort();
     let currentStreak = 1;
     
@@ -177,7 +165,6 @@ const Dashboard: React.FC = () => {
       const prevDate = new Date(dates[i-1]);
       const currDate = new Date(dates[i]);
       
-      // Check if dates are consecutive
       const diffTime = Math.abs(currDate.getTime() - prevDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
@@ -190,14 +177,12 @@ const Dashboard: React.FC = () => {
     
     dailyStreak = currentStreak;
     
-    // Format difficulty distribution for chart
     const difficultyData = [
       { name: 'Easy', value: difficultyDistribution.easy },
       { name: 'Medium', value: difficultyDistribution.medium },
       { name: 'Hard', value: difficultyDistribution.hard }
     ];
     
-    // Put everything together
     setStats({
       totalAttempts,
       totalQuestions,
@@ -245,11 +230,19 @@ const Dashboard: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-b from-background/80 to-background">
       <Navigation />
-      
-      <main className="py-8 px-4 max-w-screen-xl mx-auto">
-        <div className="max-w-6xl mx-auto">
+      <div className="pt-24 md:pt-28 pb-16 md:pb-0">
+        <div className="container max-w-screen-xl mx-auto px-4">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 mb-2">
+              学习仪表盘
+            </h1>
+            <p className="text-muted-foreground">
+              查看您的学习进度和统计信息
+            </p>
+          </div>
+          
           <motion.div 
             className="flex flex-col md:flex-row justify-between items-center mb-8"
             initial={{ opacity: 0, y: -20 }}
@@ -627,7 +620,8 @@ const Dashboard: React.FC = () => {
             </motion.div>
           )}
         </div>
-      </main>
+      </div>
+      <Footer />
     </div>
   );
 };

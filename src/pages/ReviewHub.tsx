@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, removeFromReviewList, clearReviewList, addToReviewList } from "@/utils/historyService";
@@ -33,7 +32,6 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 
-// Animation variants for motion components
 const fadeIn = {
   hidden: { opacity: 0, y: 10 },
   visible: { 
@@ -73,7 +71,6 @@ const ReviewHub: React.FC = () => {
   const [selectedAttempt, setSelectedAttempt] = useState<string | null>(null);
   
   useEffect(() => {
-    // Update filtered attempts based on search term
     const filtered = history.attempts.filter(attempt => 
       attempt.objectives.toLowerCase().includes(searchTerm.toLowerCase()) ||
       new Date(attempt.date).toLocaleDateString().includes(searchTerm)
@@ -82,7 +79,6 @@ const ReviewHub: React.FC = () => {
     setFilteredAttempts(filtered);
   }, [searchTerm, history.attempts]);
   
-  // Function to extract topics from all attempts
   const extractTopics = () => {
     const topicsSet = new Set<string>();
     
@@ -98,7 +94,6 @@ const ReviewHub: React.FC = () => {
   
   const topics = extractTopics();
   
-  // Update filtered attempts when topic filter changes
   useEffect(() => {
     if (topicFilter === "all") {
       setFilteredAttempts(history.attempts);
@@ -110,20 +105,16 @@ const ReviewHub: React.FC = () => {
     }
   }, [topicFilter, history.attempts]);
   
-  // Function to get filtered review list based on topic
   const getFilteredReviewList = () => {
     if (topicFilter === "all") {
       return history.reviewList;
     }
     
     return history.reviewList.filter(question => {
-      // For now, use the question text to infer the topic
-      // In a more sophisticated app, each question would have topic metadata
       return question.question.toLowerCase().includes(topicFilter.toLowerCase());
     });
   };
   
-  // Handle adding questions from a past quiz to review list
   const handleAddToReviewList = (questions: QuizQuestion[]) => {
     questions.forEach(question => {
       addToReviewList(question);
@@ -133,20 +124,17 @@ const ReviewHub: React.FC = () => {
     toast.success(`Added ${questions.length} questions to review list`);
   };
   
-  // Handle removing a question from review list
   const handleRemoveFromReviewList = (questionId: string) => {
     removeFromReviewList(questionId);
     setHistory(loadQuizHistory());
   };
   
-  // Handle clearing the review list
   const handleClearReviewList = () => {
     clearReviewList();
     setHistory(loadQuizHistory());
     toast.success("Review list cleared");
   };
   
-  // Handle practicing selected questions
   const handlePracticeSelected = () => {
     if (selectedQuestions.length === 0) {
       toast.error("Please select questions to practice");
@@ -157,18 +145,15 @@ const ReviewHub: React.FC = () => {
       selectedQuestions.includes(q.id)
     );
     
-    // Save selected questions as a quiz in the database
     const quizId = saveQuizToDatabase(
       questionsToReview,
       "Review Practice - " + new Date().toLocaleString()
     );
     
-    // Navigate to practice with the saved quiz
     toast.success(`Starting practice with ${questionsToReview.length} questions`);
     navigate(`/practice/${quizId}`);
   };
   
-  // Handle selecting a question
   const handleSelectQuestion = (questionId: string) => {
     setSelectedQuestions(prev => 
       prev.includes(questionId)
@@ -177,7 +162,6 @@ const ReviewHub: React.FC = () => {
     );
   };
   
-  // Handle selecting all questions
   const handleSelectAllQuestions = () => {
     const filteredList = getFilteredReviewList();
     if (selectedQuestions.length === filteredList.length) {
@@ -187,7 +171,6 @@ const ReviewHub: React.FC = () => {
     }
   };
   
-  // Generate data for wrong answers by topic chart
   const generateWrongAnswersByTopic = () => {
     const topicData: Record<string, { total: number; wrong: number }> = {};
     
@@ -219,17 +202,18 @@ const ReviewHub: React.FC = () => {
   const wrongAnswersByTopic = generateWrongAnswersByTopic();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-b from-background/80 to-background">
       <Navigation />
-      
-      <main className="py-8 px-4 max-w-screen-xl mx-auto">
-        <motion.div 
-          className="max-w-6xl mx-auto"
-          initial="hidden"
-          animate="visible"
-          variants={fadeIn}
-        >
-          <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Review & Practice Hub</h1>
+      <div className="pt-24 md:pt-28 pb-16 md:pb-0">
+        <div className="container max-w-screen-xl mx-auto px-4">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 mb-2">
+              复习中心
+            </h1>
+            <p className="text-muted-foreground">
+              复习您曾经做过的问题和个人笔记
+            </p>
+          </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="grid w-full grid-cols-3 bg-white/30 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-white/50">
@@ -238,30 +222,30 @@ const ReviewHub: React.FC = () => {
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <List className="h-4 w-4" />
-                <span>Review List</span>
+                <span>复习列表</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="past-quizzes" 
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <Clock className="h-4 w-4" />
-                <span>Past Quizzes</span>
+                <span>历史记录</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white"
               >
                 <BarChart className="h-4 w-4" />
-                <span>Review Analytics</span>
+                <span>复习分析</span>
               </TabsTrigger>
             </TabsList>
             
             <div className="mt-6 mb-4 flex items-center justify-between">
               <div className="flex items-center">
                 <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                  {activeTab === "review-list" && "Your Review List"}
-                  {activeTab === "past-quizzes" && "Your Quiz History"}
-                  {activeTab === "analytics" && "Review Analytics"}
+                  {activeTab === "review-list" && "您的复习列表"}
+                  {activeTab === "past-quizzes" && "您的历史记录"}
+                  {activeTab === "analytics" && "复习分析"}
                 </h2>
               </div>
               
@@ -270,11 +254,11 @@ const ReviewHub: React.FC = () => {
                   <SelectTrigger className="w-[180px] bg-white/30 backdrop-blur-sm border-white/30">
                     <div className="flex items-center">
                       <Filter className="h-4 w-4 mr-2" />
-                      <span>Filter by Topic</span>
+                      <span>按主题筛选</span>
                     </div>
                   </SelectTrigger>
                   <SelectContent className="glass-effect bg-white/70 backdrop-blur-md border-white/30">
-                    <SelectItem value="all">All Topics</SelectItem>
+                    <SelectItem value="all">所有主题</SelectItem>
                     {topics.map((topic, index) => (
                       <SelectItem key={index} value={topic}>{topic}</SelectItem>
                     ))}
@@ -285,7 +269,7 @@ const ReviewHub: React.FC = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search..."
+                      placeholder="搜索..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-9 w-[250px] bg-white/30 backdrop-blur-sm border-white/30"
@@ -305,8 +289,8 @@ const ReviewHub: React.FC = () => {
                     onClick={handleSelectAllQuestions}
                   >
                     {selectedQuestions.length === getFilteredReviewList().length && getFilteredReviewList().length > 0
-                      ? "Deselect All"
-                      : "Select All"}
+                      ? "取消全选"
+                      : "全选"}
                   </Button>
                   
                   {selectedQuestions.length > 0 && (
@@ -316,7 +300,7 @@ const ReviewHub: React.FC = () => {
                       className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                     >
                       <Play className="h-4 w-4" />
-                      Practice Selected ({selectedQuestions.length})
+                      选择练习 ({selectedQuestions.length})
                     </Button>
                   )}
                 </div>
@@ -329,7 +313,7 @@ const ReviewHub: React.FC = () => {
                     className="flex items-center gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Clear List
+                    清空列表
                   </Button>
                 )}
               </div>
@@ -380,14 +364,14 @@ const ReviewHub: React.FC = () => {
                               
                               {question.type === "fill_in" && (
                                 <div className="ml-6 mb-3 text-sm bg-white/40 p-3 rounded-lg">
-                                  <span className="font-medium text-green-700">Answer: </span>
+                                  <span className="font-medium text-green-700">答案: </span>
                                   <span>{question.correctAnswer}</span>
                                 </div>
                               )}
                               
                               {question.explanation && (
                                 <div className="ml-6 text-sm text-muted-foreground bg-white/20 p-3 rounded-lg border-l-4 border-blue-400">
-                                  <span className="font-medium">Explanation: </span>
+                                  <span className="font-medium">解释: </span>
                                   <span>{question.explanation}</span>
                                 </div>
                               )}
@@ -417,9 +401,9 @@ const ReviewHub: React.FC = () => {
                   transition={{ duration: 0.5 }}
                 >
                   <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Your review list is empty</h3>
+                  <h3 className="text-lg font-medium mb-2">您的复习列表为空</h3>
                   <p className="text-muted-foreground mb-6">
-                    Add questions from your past quizzes to review them later
+                    请从您的历史记录中添加问题以进行复习
                   </p>
                   <Button 
                     variant="outline" 
@@ -427,7 +411,7 @@ const ReviewHub: React.FC = () => {
                     className="flex items-center gap-2 mx-auto glass-effect bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30"
                   >
                     <Clock className="h-4 w-4" />
-                    Browse Past Quizzes
+                    查看历史记录
                   </Button>
                 </motion.div>
               )}
@@ -463,15 +447,15 @@ const ReviewHub: React.FC = () => {
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-6">
                               <div className="p-2 rounded-lg bg-blue-50/70 text-center min-w-20">
-                                <p className="text-xs text-muted-foreground">Questions</p>
+                                <p className="text-xs text-muted-foreground">问题</p>
                                 <p className="font-medium text-blue-700">{attempt.questions.length}</p>
                               </div>
                               <div className="p-2 rounded-lg bg-green-50/70 text-center min-w-20">
-                                <p className="text-xs text-muted-foreground">Score</p>
+                                <p className="text-xs text-muted-foreground">得分</p>
                                 <p className="font-medium text-green-700">{attempt.result.score}%</p>
                               </div>
                               <div className="p-2 rounded-lg bg-amber-50/70 text-center min-w-20">
-                                <p className="text-xs text-muted-foreground">Correct</p>
+                                <p className="text-xs text-muted-foreground">正确</p>
                                 <p className="font-medium text-amber-700">{attempt.result.correctAnswers} / {attempt.questions.length}</p>
                               </div>
                             </div>
@@ -490,12 +474,12 @@ const ReviewHub: React.FC = () => {
                                 {selectedAttempt === attempt.id ? (
                                   <>
                                     <Check className="h-4 w-4" />
-                                    <span>Viewing</span>
+                                    <span>查看中</span>
                                   </>
                                 ) : (
                                   <>
                                     <BookOpen className="h-4 w-4" />
-                                    <span>View Questions</span>
+                                    <span>查看问题</span>
                                   </>
                                 )}
                               </Button>
@@ -509,7 +493,7 @@ const ReviewHub: React.FC = () => {
                                 className="flex items-center gap-2 glass-effect bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30"
                               >
                                 <Plus className="h-4 w-4" />
-                                <span>Add Incorrect to Review</span>
+                                <span>添加错误到复习</span>
                               </Button>
                               
                               <Button
@@ -519,7 +503,7 @@ const ReviewHub: React.FC = () => {
                                 className="flex items-center gap-2 glass-effect bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30"
                               >
                                 <Repeat className="h-4 w-4" />
-                                <span>Retry</span>
+                                <span>重试</span>
                               </Button>
                             </div>
                           </div>
@@ -531,7 +515,7 @@ const ReviewHub: React.FC = () => {
                               animate={{ opacity: 1, height: "auto" }}
                               transition={{ duration: 0.4 }}
                             >
-                              <h3 className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Quiz Questions</h3>
+                              <h3 className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">考试问题</h3>
                               
                               {attempt.questions.map((question, index) => {
                                 const userAnswer = attempt.userAnswers[index];
@@ -575,15 +559,15 @@ const ReviewHub: React.FC = () => {
                                     {question.type === "fill_in" && (
                                       <div className="ml-7 mb-2 space-y-2">
                                         <div className="text-sm p-2 bg-white/40 rounded-lg">
-                                          <span className="font-medium">Your answer: </span>
+                                          <span className="font-medium">您的答案: </span>
                                           <span className={isCorrect ? "text-green-700" : "text-red-700 line-through"}>
-                                            {userAnswer !== null ? String(userAnswer) : "Not answered"}
+                                            {userAnswer !== null ? String(userAnswer) : "未回答"}
                                           </span>
                                         </div>
                                         
                                         {!isCorrect && (
                                           <div className="text-sm p-2 bg-white/40 rounded-lg">
-                                            <span className="font-medium text-green-700">Correct answer: </span>
+                                            <span className="font-medium text-green-700">正确答案: </span>
                                             <span>{question.correctAnswer}</span>
                                           </div>
                                         )}
@@ -591,8 +575,8 @@ const ReviewHub: React.FC = () => {
                                     )}
                                     
                                     {question.explanation && (
-                                      <div className="ml-7 text-sm text-slate-700 bg-white/40 p-2 rounded-lg">
-                                        <span className="font-medium">Explanation: </span>
+                                      <div className="ml-7 text-sm text-slate-700 bg-white/40 p-2 rounded-lg border-l-4 border-blue-400">
+                                        <span className="font-medium">解释: </span>
                                         <span>{question.explanation}</span>
                                       </div>
                                     )}
@@ -604,12 +588,12 @@ const ReviewHub: React.FC = () => {
                                         onClick={() => {
                                           addToReviewList(question);
                                           setHistory(loadQuizHistory());
-                                          toast.success("Added to review list");
+                                          toast.success("添加到复习列表");
                                         }}
                                         className="h-8 text-xs bg-blue-50/50 hover:bg-blue-100/50"
                                       >
                                         <Plus className="h-3 w-3 mr-1" />
-                                        Add to Review List
+                                        添加到复习列表
                                       </Button>
                                     </div>
                                   </div>
@@ -630,18 +614,18 @@ const ReviewHub: React.FC = () => {
                   transition={{ duration: 0.5 }}
                 >
                   <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No quiz history found</h3>
+                  <h3 className="text-lg font-medium mb-2">没有找到历史记录</h3>
                   <p className="text-muted-foreground mb-6">
                     {searchTerm || topicFilter !== "all" 
-                      ? "No quizzes match your search criteria"
-                      : "Take a quiz to see your history here"}
+                      ? "没有找到匹配搜索条件的考试"
+                      : "在这里查看您的历史记录"}
                   </p>
                   <Button 
                     onClick={() => navigate("/customize")}
                     className="flex items-center gap-2 mx-auto bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                   >
                     <Play className="h-4 w-4" />
-                    Start a New Quiz
+                    开始新考试
                   </Button>
                 </motion.div>
               )}
@@ -658,7 +642,7 @@ const ReviewHub: React.FC = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                         <BarChart className="h-5 w-5 mr-2 text-blue-500" />
-                        Topics Needing Review
+                        需要复习的主题
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -691,8 +675,8 @@ const ReviewHub: React.FC = () => {
                                       return (
                                         <div className="glass-effect bg-white/70 backdrop-blur-md p-3 border border-white/30 shadow-lg rounded-md">
                                           <p className="font-medium text-gray-900">{payload[0].payload.topic}</p>
-                                          <p className="text-red-600">Error Rate: {payload[0].value}%</p>
-                                          <p className="text-red-600">Wrong Answers: {payload[0].payload.wrongAnswers}</p>
+                                          <p className="text-red-600">错误率: {payload[0].value}%</p>
+                                          <p className="text-red-600">错误答案: {payload[0].payload.wrongAnswers}</p>
                                         </div>
                                       );
                                     }
@@ -707,7 +691,7 @@ const ReviewHub: React.FC = () => {
                                 </defs>
                                 <Bar 
                                   dataKey="wrongRate" 
-                                  name="Error Rate" 
+                                  name="错误率" 
                                   fill="url(#errorGradient)" 
                                   radius={[4, 4, 0, 0]}
                                 />
@@ -718,7 +702,7 @@ const ReviewHub: React.FC = () => {
                           <div className="flex flex-col items-center justify-center h-full bg-white/20 backdrop-blur-sm rounded-lg">
                             <BarChart className="h-12 w-12 text-muted-foreground mb-4" />
                             <p className="text-center text-muted-foreground">
-                              Complete more quizzes to see analytics
+                              完成更多考试以查看分析
                             </p>
                           </div>
                         )}
@@ -735,12 +719,12 @@ const ReviewHub: React.FC = () => {
                   <Card glass gradient hover glow bordered className="overflow-hidden">
                     <CardHeader>
                       <CardTitle className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-600">
-                        Spaced Repetition Recommendations
+                         spaced重复推荐
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-muted-foreground mb-6">
-                        Based on your performance, we recommend reviewing these topics:
+                        根据您的表现，我们建议复习这些主题：
                       </p>
                       
                       {wrongAnswersByTopic.length > 0 ? (
@@ -756,37 +740,37 @@ const ReviewHub: React.FC = () => {
                                       style={{ width: `${topic.wrongRate}%` }}
                                     ></div>
                                   </div>
-                                  <span>{topic.wrongRate}% error rate</span>
+                                  <span>{topic.wrongRate}%错误率</span>
                                 </div>
                               </div>
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   navigate("/customize");
-                                  toast.success(`Starting practice on ${topic.topic}`);
+                                  toast.success(`开始练习 ${topic.topic}`);
                                 }}
                                 className="flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                               >
-                                Practice <ArrowRight className="h-3 w-3 ml-1" />
+                                练习 <ArrowRight className="h-3 w-3 ml-1" />
                               </Button>
                             </div>
                           ))}
                           
                           <div className="pt-4">
                             <h3 className="font-medium mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                              Review Schedule
+                              复习计划
                             </h3>
                             <p className="text-sm text-muted-foreground mb-6">
-                              For optimal learning, follow this spaced repetition schedule:
+                              为了最佳学习，遵循以下 spaced重复计划：
                             </p>
                             
                             <div className="space-y-3">
                               {[
-                                { time: "Today", reason: "Initial review of new material" },
-                                { time: "Tomorrow", reason: "First reinforcement" },
-                                { time: "In 3 days", reason: "Second reinforcement" },
-                                { time: "In 1 week", reason: "Third reinforcement" },
-                                { time: "In 2 weeks", reason: "Long-term memory consolidation" }
+                                { time: "今天", reason: "新材料的首次复习" },
+                                { time: "明天", reason: "第一次强化" },
+                                { time: "三天后", reason: "第二次强化" },
+                                { time: "一周后", reason: "第三次强化" },
+                                { time: "两周后", reason: "长期记忆巩固" }
                               ].map((item, index) => (
                                 <div key={index} className="flex items-center gap-3 p-2 bg-white/20 rounded-lg">
                                   <div className="w-24 flex-shrink-0 font-medium text-blue-700">{item.time}</div>
@@ -799,14 +783,14 @@ const ReviewHub: React.FC = () => {
                       ) : (
                         <div className="text-center py-8 border border-dashed border-white/40 rounded-lg bg-white/10 backdrop-blur-md">
                           <p className="text-muted-foreground mb-4">
-                            No recommendations available yet
+                            暂无推荐可用
                           </p>
                           <Button
                             onClick={() => navigate("/customize")}
                             size="sm"
                             className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                           >
-                            Take More Quizzes
+                            进行更多考试
                           </Button>
                         </div>
                       )}
@@ -816,8 +800,8 @@ const ReviewHub: React.FC = () => {
               </div>
             </TabsContent>
           </Tabs>
-        </motion.div>
-      </main>
+        </div>
+      </div>
     </div>
   );
 };
