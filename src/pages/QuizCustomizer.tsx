@@ -73,26 +73,32 @@ const QuizCustomizer = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
       
-      <main className="py-8 px-4 md:py-12 flex-grow">
-        <div className="max-w-3xl mx-auto">
+      <main className="py-20 px-4 md:py-24 flex-grow">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="text-center mb-10"
+            className="text-center mb-16"
           >
+            <motion.span 
+              variants={itemVariants}
+              className="px-4 py-1.5 text-sm font-medium bg-indigo-100 text-indigo-700 rounded-full inline-block mb-4"
+            >
+              Create Quiz
+            </motion.span>
             <motion.h1 
               variants={itemVariants} 
-              className="text-3xl md:text-4xl font-bold mb-3 text-gradient-primary"
+              className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary"
             >
               Customize Your Quiz
             </motion.h1>
             <motion.p 
               variants={itemVariants} 
-              className="text-center text-muted-foreground mb-4 text-lg max-w-xl mx-auto"
+              className="text-center text-muted-foreground mb-6 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
             >
               Enter your learning objectives to get personalized practice questions
             </motion.p>
@@ -106,43 +112,51 @@ const QuizCustomizer = () => {
           </motion.div>
           
           {isAuth ? (
-            <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {!loading && (
-                <SubscriptionBanner 
-                  subscription={subscription} 
-                  remainingQuestions={remainingQuestions} 
-                />
+                <div className="mb-8">
+                  <SubscriptionBanner 
+                    subscription={subscription} 
+                    remainingQuestions={remainingQuestions} 
+                  />
+                </div>
               )}
-              <QuizGenerator initialTopic={topicFromUrl} />
-            </>
+              <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
+                <QuizGenerator initialTopic={topicFromUrl} />
+              </div>
+            </motion.div>
           ) : (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white p-8 rounded-xl shadow-sm border border-border"
+              className="neo-card p-8 md:p-12 rounded-2xl shadow-lg"
             >
               <div className="max-w-md mx-auto">
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center mb-12">
                   <motion.div 
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center"
+                    className="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg"
                   >
-                    <LockKeyhole className="w-10 h-10 text-blue-600" />
+                    <LockKeyhole className="w-12 h-12 text-white" />
                   </motion.div>
                 </div>
                 
-                <h2 className="text-2xl font-semibold mb-4 text-center">Sign In Required</h2>
-                <p className="mb-8 text-muted-foreground text-center text-lg leading-relaxed">
+                <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center tracking-tight">Sign In Required</h2>
+                <p className="mb-10 text-muted-foreground text-center text-lg leading-relaxed">
                   Sign in to create custom quizzes and save your learning progress
                 </p>
                 
-                <div className="grid gap-6">
+                <div className="grid gap-8">
                   <Button 
                     onClick={handleLoginClick} 
                     size="lg" 
-                    className="w-full py-6 text-lg btn-scale font-medium shadow-button hover:shadow-button-hover"
+                    className="w-full py-6 text-lg btn-3d font-medium shadow-button hover:shadow-button-hover bg-gradient-to-r from-blue-600 to-indigo-600"
                   >
                     Sign In or Register
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -153,20 +167,20 @@ const QuizCustomizer = () => {
                       <span className="w-full border-t"></span>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-4 py-1 text-muted-foreground font-medium">OR</span>
+                      <span className="bg-card px-4 py-1 text-muted-foreground font-medium">OR</span>
                     </div>
                   </div>
                   
                   <motion.div 
-                    className="bg-amber-50 p-5 rounded-lg border border-amber-200 card-hover"
+                    className="glass-card p-8 rounded-xl card-hover"
                     whileHover={{ y: -5 }}
                     transition={{ type: "spring", stiffness: 400 }}
                   >
                     <div className="flex items-start">
-                      <Lightbulb className="w-6 h-6 text-amber-600 mr-3 mt-0.5" />
+                      <Lightbulb className="w-6 h-6 text-amber-500 mr-3 mt-0.5" />
                       <div>
-                        <h4 className="font-semibold text-amber-800 mb-2 text-lg">Try Without Signing Up</h4>
-                        <p className="text-amber-700 mb-4 leading-relaxed">
+                        <h4 className="font-semibold text-lg mb-3">Try Without Signing Up</h4>
+                        <p className="mb-6 leading-relaxed">
                           You can try our basic version and generate up to 5 questions without registration
                         </p>
                         <Button 

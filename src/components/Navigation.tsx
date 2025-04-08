@@ -13,6 +13,7 @@ const Navigation: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isHomePage = location.pathname === "/";
   
   // 监听滚动事件，控制导航栏样式
   useEffect(() => {
@@ -47,14 +48,25 @@ const Navigation: React.FC = () => {
     <nav 
       className={cn(
         "fixed top-0 w-full z-50 transition-all duration-300",
-        scrolled ? "bg-background/80 backdrop-blur-lg shadow-sm" : "bg-transparent"
+        isHomePage ? (
+          scrolled 
+            ? "bg-white/90 dark:bg-background/90 backdrop-blur-lg shadow-sm" 
+            : "bg-white/10 backdrop-blur-md border-b border-white/10"
+        ) : (
+          scrolled 
+            ? "bg-background/80 backdrop-blur-lg shadow-sm" 
+            : "bg-transparent"
+        )
       )}
     >
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold gradient-text">
+              <span className={cn(
+                "text-xl font-bold",
+                isHomePage && !scrolled ? "text-white" : "gradient-text"
+              )}>
                 AI Quizzy
               </span>
             </Link>
@@ -69,8 +81,12 @@ const Navigation: React.FC = () => {
                   className={cn(
                     "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
                     location.pathname === item.path
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? isHomePage && !scrolled 
+                        ? "bg-white/20 text-white" 
+                        : "bg-primary/10 text-primary"
+                      : isHomePage && !scrolled
+                        ? "text-white/90 hover:bg-white/10 hover:text-white"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -92,6 +108,7 @@ const Navigation: React.FC = () => {
                   size="icon"
                   onClick={toggleMobileMenu}
                   aria-label="Toggle mobile menu"
+                  className={isHomePage && !scrolled ? "text-white hover:bg-white/10" : ""}
                 >
                   {mobileMenuOpen ? (
                     <X className="h-6 w-6" />

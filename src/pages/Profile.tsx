@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { loadQuizHistory, saveQuizHistory } from "@/utils/historyService";
 import { getCurrentUser } from "@/utils/authService";
 import { LearningPreferences, User } from "@/types/quiz";
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -96,31 +98,48 @@ const Profile: React.FC = () => {
   
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
         <Navigation />
         
-        <main className="py-8 px-4 max-w-screen-xl mx-auto">
+        <main className="py-20 px-4 max-w-screen-xl mx-auto">
           <div className="max-w-md mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
+            <h1 className="text-3xl font-bold mb-6 text-gradient-primary">Your Profile</h1>
             <p className="text-muted-foreground mb-8">
               Please log in to view and update your profile.
             </p>
           </div>
         </main>
+        <Footer />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
       
-      <main className="py-8 px-4 max-w-screen-xl mx-auto">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-center">Your Learning Profile</h1>
+      <main className="py-20 px-4 max-w-screen-xl mx-auto">
+        <div className="max-w-4xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Profile</span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">Your Learning Profile</h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Manage your preferences and track your learning journey
+            </p>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="hover:shadow-md transition-shadow">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
+          >
+            <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <UserIcon className="h-5 w-5 mr-2 text-blue-500" />
@@ -147,7 +166,7 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <BookOpen className="h-5 w-5 mr-2 text-emerald-500" />
@@ -176,7 +195,7 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <Target className="h-5 w-5 mr-2 text-red-500" />
@@ -197,165 +216,173 @@ const Profile: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
           
-          <h2 className="text-2xl font-semibold mb-6">Learning Preferences</h2>
-          
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                Edit Your Learning Preferences
-              </CardTitle>
-              <CardDescription>
-                Customize how you want to learn and what you want to focus on
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">Preferred Difficulty (Bloom's Level)</Label>
-                  <Select
-                    value={preferences.preferredDifficulty}
-                    onValueChange={(value) => setPreferences(prev => ({
-                      ...prev,
-                      preferredDifficulty: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create',
-                      preferredBloomLevel: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
-                    }))}
-                  >
-                    <SelectTrigger id="difficulty" className="bg-white">
-                      <SelectValue placeholder="Select difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="remember">Remember (Basic)</SelectItem>
-                      <SelectItem value="understand">Understand</SelectItem>
-                      <SelectItem value="apply">Apply</SelectItem>
-                      <SelectItem value="analyze">Analyze</SelectItem>
-                      <SelectItem value="evaluate">Evaluate</SelectItem>
-                      <SelectItem value="create">Create (Advanced)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-3">
-                  <Label>Preferred Question Types</Label>
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="multiple_choice" 
-                        checked={preferences.preferredQuestionTypes?.includes('multiple_choice')}
-                        onCheckedChange={() => handleToggleQuestionType('multiple_choice')}
-                        className="data-[state=checked]:bg-blue-500"
-                      />
-                      <label 
-                        htmlFor="multiple_choice"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Multiple Choice Questions
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="fill_in" 
-                        checked={preferences.preferredQuestionTypes?.includes('fill_in')}
-                        onCheckedChange={() => handleToggleQuestionType('fill_in')}
-                        className="data-[state=checked]:bg-blue-500"
-                      />
-                      <label 
-                        htmlFor="fill_in"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Fill-in-the-blank Questions
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="daily_goal">Daily Goal (questions)</Label>
-                  <Input
-                    id="daily_goal"
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={preferences.dailyGoal}
-                    onChange={(e) => setPreferences(prev => ({
-                      ...prev,
-                      dailyGoal: parseInt(e.target.value) || 10
-                    }))}
-                    className="bg-white"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="topics">Topics of Interest</Label>
-                  </div>
-                  <div className="flex">
-                    <Input
-                      id="topics"
-                      value={newTopic}
-                      onChange={(e) => setNewTopic(e.target.value)}
-                      placeholder="Add a topic (e.g., JavaScript, Physics)"
-                      className="rounded-r-none bg-white"
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAddTopic}
-                      className="rounded-l-none"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <h2 className="text-2xl font-semibold mb-8 text-gradient-primary">Learning Preferences</h2>
+            
+            <Card className="neo-card hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Settings className="h-5 w-5 mr-2" />
+                  Edit Your Learning Preferences
+                </CardTitle>
+                <CardDescription>
+                  Customize how you want to learn and what you want to focus on
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  <div className="space-y-3">
+                    <Label htmlFor="difficulty" className="text-base">Preferred Difficulty (Bloom's Level)</Label>
+                    <Select
+                      value={preferences.preferredDifficulty}
+                      onValueChange={(value) => setPreferences(prev => ({
+                        ...prev,
+                        preferredDifficulty: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create',
+                        preferredBloomLevel: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
+                      }))}
                     >
-                      Add
-                    </Button>
+                      <SelectTrigger id="difficulty" className="bg-white/50 dark:bg-white/5 h-12">
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="remember">Remember (Basic)</SelectItem>
+                        <SelectItem value="understand">Understand</SelectItem>
+                        <SelectItem value="apply">Apply</SelectItem>
+                        <SelectItem value="analyze">Analyze</SelectItem>
+                        <SelectItem value="evaluate">Evaluate</SelectItem>
+                        <SelectItem value="create">Create (Advanced)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {preferences.topicsOfInterest?.map((topic, index) => (
-                      <div 
-                        key={index} 
-                        className="bg-secondary rounded-full px-3 py-1 text-sm flex items-center hover:bg-secondary/80 transition-colors"
-                      >
-                        {topic}
-                        <button 
-                          className="ml-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleRemoveTopic(topic)}
+                  <div className="space-y-4">
+                    <Label className="text-base">Preferred Question Types</Label>
+                    <div className="flex flex-col space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id="multiple_choice" 
+                          checked={preferences.preferredQuestionTypes?.includes('multiple_choice')}
+                          onCheckedChange={() => handleToggleQuestionType('multiple_choice')}
+                          className="data-[state=checked]:bg-blue-500 h-5 w-5"
+                        />
+                        <label 
+                          htmlFor="multiple_choice"
+                          className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          ×
-                        </button>
+                          Multiple Choice Questions
+                        </label>
                       </div>
-                    ))}
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id="fill_in" 
+                          checked={preferences.preferredQuestionTypes?.includes('fill_in')}
+                          onCheckedChange={() => handleToggleQuestionType('fill_in')}
+                          className="data-[state=checked]:bg-blue-500 h-5 w-5"
+                        />
+                        <label 
+                          htmlFor="fill_in"
+                          className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Fill-in-the-blank Questions
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="reminders"
-                    checked={preferences.reminderEnabled}
-                    onCheckedChange={(checked) => setPreferences(prev => ({
-                      ...prev,
-                      reminderEnabled: checked === true
-                    }))}
-                    className="data-[state=checked]:bg-blue-500"
-                  />
-                  <label 
-                    htmlFor="reminders"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  
+                  <div className="space-y-3">
+                    <Label htmlFor="daily_goal" className="text-base">Daily Goal (questions)</Label>
+                    <Input
+                      id="daily_goal"
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={preferences.dailyGoal}
+                      onChange={(e) => setPreferences(prev => ({
+                        ...prev,
+                        dailyGoal: parseInt(e.target.value) || 10
+                      }))}
+                      className="bg-white/50 dark:bg-white/5 h-12"
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="topics" className="text-base">Topics of Interest</Label>
+                    </div>
+                    <div className="flex">
+                      <Input
+                        id="topics"
+                        value={newTopic}
+                        onChange={(e) => setNewTopic(e.target.value)}
+                        placeholder="Add a topic (e.g., JavaScript, Physics)"
+                        className="rounded-r-none bg-white/50 dark:bg-white/5 h-12"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAddTopic}
+                        className="rounded-l-none btn-3d"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-3 mt-4">
+                      {preferences.topicsOfInterest?.map((topic, index) => (
+                        <div 
+                          key={index} 
+                          className="bg-secondary rounded-full px-4 py-2 text-sm flex items-center hover:bg-secondary/80 transition-colors"
+                        >
+                          {topic}
+                          <button 
+                            className="ml-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleRemoveTopic(topic)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      id="reminders"
+                      checked={preferences.reminderEnabled}
+                      onCheckedChange={(checked) => setPreferences(prev => ({
+                        ...prev,
+                        reminderEnabled: checked === true
+                      }))}
+                      className="data-[state=checked]:bg-blue-500 h-5 w-5"
+                    />
+                    <label 
+                      htmlFor="reminders"
+                      className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Enable daily practice reminders
+                    </label>
+                  </div>
+                  
+                  <Button 
+                    className="w-full py-6 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-colors btn-3d"
+                    onClick={handleSavePreferences}
                   >
-                    Enable daily practice reminders
-                  </label>
+                    <Check className="mr-2 h-4 w-4" />
+                    Save Preferences
+                  </Button>
                 </div>
-                
-                <Button 
-                  className="w-full hover:bg-blue-600 transition-colors"
-                  onClick={handleSavePreferences}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Save Preferences
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

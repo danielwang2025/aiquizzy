@@ -5,14 +5,19 @@ import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { glass?: boolean; neo?: boolean }
->(({ className, glass, neo, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { 
+    glass?: boolean; 
+    neo?: boolean;
+    hover?: boolean;
+  }
+>(({ className, glass, neo, hover, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
       "rounded-lg border bg-card text-card-foreground shadow-sm",
       glass && "glass-effect",
       neo && "neo-card",
+      hover && "card-hover transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
       className
     )}
     {...props}
