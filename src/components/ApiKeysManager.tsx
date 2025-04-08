@@ -12,9 +12,16 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings, Key, Save, X } from "lucide-react";
-import { getAllApiKeys, setAllApiKeys, ApiKeys } from "@/utils/envVars";
+import { Settings, Key, Save, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Define the ApiKeys interface directly in this file
+interface ApiKeys {
+  DEEPSEEK_API_KEY: string;
+  BREVO_API_KEY: string;
+  OPENAI_API_KEY: string;
+}
 
 const ApiKeysManager = () => {
   const [apiKeys, setApiKeys] = useState<ApiKeys>({
@@ -24,8 +31,13 @@ const ApiKeysManager = () => {
   });
 
   useEffect(() => {
-    const keys = getAllApiKeys();
-    setApiKeys(keys);
+    // Initialize with values from localStorage if they exist
+    const storedKeys: ApiKeys = {
+      DEEPSEEK_API_KEY: localStorage.getItem("DEEPSEEK_API_KEY") || "",
+      BREVO_API_KEY: localStorage.getItem("BREVO_API_KEY") || "",
+      OPENAI_API_KEY: localStorage.getItem("OPENAI_API_KEY") || "",
+    };
+    setApiKeys(storedKeys);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,8 +49,17 @@ const ApiKeysManager = () => {
   };
 
   const handleSave = () => {
-    setAllApiKeys(apiKeys);
+    // Save to localStorage
+    Object.entries(apiKeys).forEach(([key, value]) => {
+      if (value) {
+        localStorage.setItem(key, value);
+      }
+    });
+    
     toast.success("API keys saved successfully");
+    toast.info("This is for local development only. In production, use Vercel environment variables.", {
+      duration: 5000,
+    });
   };
 
   return (
@@ -56,6 +77,17 @@ const ApiKeysManager = () => {
               Configure the API keys needed for the application to function properly.
             </DrawerDescription>
           </DrawerHeader>
+          
+          <div className="p-4">
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                For production deployment, please set these keys as environment variables in your Vercel dashboard.
+                This form is primarily for local development.
+              </AlertDescription>
+            </Alert>
+          </div>
+          
           <div className="p-4 pb-0">
             <div className="space-y-4">
               <div className="space-y-2">
