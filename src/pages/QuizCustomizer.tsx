@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import QuizGenerator from "@/components/QuizGenerator";
 import { isAuthenticated } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, Lightbulb, ArrowRight } from "lucide-react";
+import { LockKeyhole, Lightbulb, ArrowRight, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -65,10 +65,17 @@ const QuizCustomizer = () => {
             </motion.h1>
             <motion.p 
               variants={itemVariants} 
-              className="text-center text-muted-foreground mb-8 text-lg max-w-xl mx-auto"
+              className="text-center text-muted-foreground mb-4 text-lg max-w-xl mx-auto"
             >
               Enter your learning objectives to get personalized practice questions
             </motion.p>
+            <motion.div
+              variants={itemVariants}
+              className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-8"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Create and export quizzes to Word documents with Times New Roman formatting</span>
+            </motion.div>
           </motion.div>
           
           {isAuth ? (

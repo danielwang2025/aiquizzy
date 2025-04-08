@@ -31,13 +31,23 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/utils/authService";
+import { exportToDocx } from "@/utils/documentExport";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Download, FilePlus2, FileText } from "lucide-react";
 
-// Interface for QuizGenerator props
 interface QuizGeneratorProps {
   initialTopic?: string;
 }
 
-// Action types
 type QuizAction =
   | { type: "SET_LOADING" }
   | { type: "SET_QUESTIONS"; payload: QuizQuestion[] }
@@ -48,7 +58,6 @@ type QuizAction =
   | { type: "SET_ERROR"; payload: string }
   | { type: "REMOVE_QUESTION"; payload: string };
 
-// Initial state for the quiz
 const initialState: QuizState = {
   questions: [],
   currentQuestion: 0,
@@ -58,7 +67,6 @@ const initialState: QuizState = {
   error: null,
 };
 
-// Reducer function to manage quiz state
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case "SET_LOADING":
@@ -141,24 +149,22 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
   
-  // New state variables for customization options
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
   
-  // Demo mode state
+  const [includeAnswers, setIncludeAnswers] = useState(false);
+  const [documentTitle, setDocumentTitle] = useState("");
+  
   const [demoLimitReached, setDemoLimitReached] = useState(false);
   
-  // Load quiz history from localStorage on component mount
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
     
-    // Check if demo limit has been reached
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
       
-      // Reset counter if it's been more than 24 hours
       const oneDayMs = 24 * 60 * 60 * 1000;
       if (Date.now() - usage.timestamp > oneDayMs) {
         localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
@@ -168,7 +174,14 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     }
   }, [isAuth]);
 
-  // Generate quiz based on learning objectives
+  useEffect(() => {
+    if (objectives) {
+      setDocumentTitle(objectives.length > 50 
+        ? objectives.substring(0, 50) + "..." 
+        : objectives);
+    }
+  }, [objectives]);
+
   const handleGenerate = async () => {
     const combinedObjectives = objectives.trim();
     
@@ -177,7 +190,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       return;
     }
     
-    // Check if demo limit has been reached for non-authenticated users
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
@@ -188,11 +200,9 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
         return;
       }
       
-      // Update usage count
       const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
       localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
       
-      // Show remaining attempts
       const remaining = 5 - newUsage.count;
       if (remaining <= 2) {
         toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
@@ -214,7 +224,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       
       dispatch({ type: "SET_QUESTIONS", payload: questions });
       
-      // Store the quiz in the database
       const quizTitle = objectives.length > 50 
         ? objectives.substring(0, 50) + "..." 
         : objectives;
@@ -232,7 +241,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     }
   };
 
-  // Handle question type selection
   const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
     setQuestionTypes(prev => {
       if (prev.includes(type) && prev.length > 1) {
@@ -245,7 +253,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     });
   };
 
-  // Handle answer selection
   const handleAnswer = (index: number, answer: string | number) => {
     dispatch({
       type: "SET_ANSWER",
@@ -253,7 +260,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     });
   };
 
-  // Calculate and show results
   const handleComplete = () => {
     const { questions, answers } = state;
     
@@ -320,13 +326,11 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setQuizHistory(loadQuizHistory());
   };
 
-  // Handle question dispute
   const handleDisputeQuestion = (questionId: string) => {
     dispatch({ type: "REMOVE_QUESTION", payload: questionId });
     setQuizHistory(loadQuizHistory());
   };
 
-  // Add selected incorrect questions to review list
   const handleAddToReviewList = () => {
     if (selectedIncorrectQuestions.length === 0) {
       toast.error("No questions selected to add to review list");
@@ -344,7 +348,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setSelectedIncorrectQuestions([]);
   };
 
-  // Toggle selection of incorrect question
   const toggleSelectQuestion = (id: string) => {
     setSelectedIncorrectQuestions(prev => 
       prev.includes(id) 
@@ -353,7 +356,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     );
   };
 
-  // Select all incorrect questions
   const selectAllIncorrectQuestions = () => {
     const incorrectIds = state.questions
       .filter((_, index) => {
@@ -369,63 +371,74 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setSelectedIncorrectQuestions(incorrectIds);
   };
 
-  // Deselect all incorrect questions
   const deselectAllIncorrectQuestions = () => {
     setSelectedIncorrectQuestions([]);
   };
 
-  // View a specific quiz attempt
   const handleViewAttempt = (attempt: QuizAttempt) => {
     dispatch({ type: "LOAD_ATTEMPT", payload: attempt });
   };
 
-  // Handle removing a question from review list
   const handleRemoveFromReviewList = (id: string) => {
     removeFromReviewList(id);
     setQuizHistory(loadQuizHistory());
   };
 
-  // Clear review list
   const handleClearReviewList = () => {
     clearReviewList();
     setQuizHistory(loadQuizHistory());
   };
 
-  // Clear all history
   const handleClearHistory = () => {
     clearAllHistory();
     setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
   };
 
-  // Practice review list questions and navigate to practice page
   const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
     if (questions.length === 0) {
       toast.error("No questions to practice");
       return;
     }
     
-    // Save the review questions as a quiz in the database
     const quizId = saveQuizToDatabase(questions, "Review List Practice");
     
-    // Navigate to practice page with the quiz ID
     navigate(`/practice/${quizId}`);
   };
 
-  // Reset the quiz
   const handleReset = () => {
     dispatch({ type: "RESET_QUIZ" });
     setObjectives("");
     setSelectedIncorrectQuestions([]);
   };
 
-  // Try again with the same objectives
   const handleTryAgain = () => {
     handleGenerate();
   };
 
-  // Update quiz history (used by DisputedQuestions component)
-  const handleUpdateHistory = () => {
-    setQuizHistory(loadQuizHistory());
+  const handleExportToDocument = async () => {
+    try {
+      if (!state.questions || state.questions.length === 0) {
+        toast.error("No quiz questions to export");
+        return;
+      }
+      
+      toast.loading("Exporting document...");
+      
+      const title = documentTitle || objectives || "Quiz";
+      
+      await exportToDocx(
+        state.questions,
+        title,
+        includeAnswers
+      );
+      
+      toast.dismiss();
+      toast.success("Quiz exported to Word document");
+    } catch (error) {
+      console.error("Error exporting document:", error);
+      toast.dismiss();
+      toast.error("Failed to export document. Please try again.");
+    }
   };
 
   return (
@@ -595,12 +608,62 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">{objectives}</h2>
-            <button
-              className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors"
-              onClick={handleReset}
-            >
-              New Quiz
-            </button>
+            <div className="flex gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Export
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Export Quiz to Document</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="document-title">Document Title</Label>
+                      <input
+                        id="document-title"
+                        value={documentTitle}
+                        onChange={(e) => setDocumentTitle(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Quiz Title"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-answers"
+                        checked={includeAnswers}
+                        onCheckedChange={(checked) => setIncludeAnswers(!!checked)}
+                      />
+                      <Label htmlFor="include-answers">Include answers and explanations</Label>
+                    </div>
+                    <div className="pt-2 text-sm text-muted-foreground">
+                      Document will use Times New Roman font for professional formatting.
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Button onClick={handleExportToDocument} className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Export to Word
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              <button
+                className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors"
+                onClick={handleReset}
+              >
+                New Quiz
+              </button>
+            </div>
           </div>
 
           <div className="mb-8">
@@ -723,12 +786,62 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
                 </div>
               )}
               
-              <Button
-                className="w-full py-3 mt-2"
-                onClick={handleTryAgain}
-              >
-                Try Again
-              </Button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export to Word
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Export Quiz to Document</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="document-title-results">Document Title</Label>
+                        <input
+                          id="document-title-results"
+                          value={documentTitle}
+                          onChange={(e) => setDocumentTitle(e.target.value)}
+                          className="w-full p-2 border rounded"
+                          placeholder="Quiz Title"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="include-answers-results"
+                          checked={includeAnswers}
+                          onCheckedChange={(checked) => setIncludeAnswers(!!checked)}
+                        />
+                        <Label htmlFor="include-answers-results">Include answers and explanations</Label>
+                      </div>
+                      <div className="pt-2 text-sm text-muted-foreground">
+                        Document will use Times New Roman font for professional formatting.
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <DialogClose asChild>
+                        <Button onClick={handleExportToDocument} className="flex items-center gap-2">
+                          <Download className="w-4 h-4" />
+                          Export to Word
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                
+                <Button
+                  onClick={handleTryAgain}
+                  className="w-full"
+                >
+                  Try Again
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>
