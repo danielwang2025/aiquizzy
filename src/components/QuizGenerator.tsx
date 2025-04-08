@@ -386,7 +386,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
 
   const handleClearReviewList = () => {
     clearReviewList();
-    setQuizHistory(loadQuizHistory());
+    setQuizHistory({ attempts: [], reviewList: [], disputedQuestions: [] });
   };
 
   const handleClearHistory = () => {
@@ -439,6 +439,10 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       toast.dismiss();
       toast.error("Failed to export document. Please try again.");
     }
+  };
+
+  const handleUpdateHistory = () => {
+    setQuizHistory(loadQuizHistory());
   };
 
   return (
