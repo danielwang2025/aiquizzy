@@ -38,7 +38,7 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
     }
 
     return {
-      tier: data.tier,
+      tier: data.tier as SubscriptionTier,
       questionCount: data.question_count,
       subscriptionEndDate: data.subscription_end_date,
       isActive: data.is_active
