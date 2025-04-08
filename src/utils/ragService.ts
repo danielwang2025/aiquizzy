@@ -1,3 +1,4 @@
+
 import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { FaissStore } from "@langchain/community/vectorstores/faiss";
@@ -35,14 +36,22 @@ const createTextSplitter = () => {
 export const chunkDocument = async (text: string, source: string): Promise<Document<DocumentMetadata>[]> => {
   const splitter = createTextSplitter();
 
-  const doc = new Document({
+  const doc = new Document<DocumentMetadata>({
     pageContent: text,
     metadata: { source }
   });
 
-  const chunks = await splitter.splitDocuments([doc]);
+  const chunks = await splitter.splitDocuments([doc]) as Document<DocumentMetadata>[];
 
   console.log(`Document split into ${chunks.length} chunks`);
+  
+  // Ensure all chunks have the required metadata
+  for (const chunk of chunks) {
+    if (!chunk.metadata.source) {
+      chunk.metadata.source = source;
+    }
+  }
+  
   return chunks;
 };
 
@@ -74,7 +83,15 @@ export const searchSimilarDocuments = async (query: string, topK: number = 3): P
 
   try {
     console.log(`Searching for documents similar to: "${query}"`);
-    const results = await vectorStore.similaritySearch(query, topK);
+    const results = await vectorStore.similaritySearch(query, topK) as Document<DocumentMetadata>[];
+    
+    // Ensure all retrieved documents have the required metadata
+    for (const doc of results) {
+      if (!doc.metadata.source) {
+        doc.metadata.source = "unknown";
+      }
+    }
+    
     console.log(`Found ${results.length} relevant documents`);
     return results;
   } catch (error) {
