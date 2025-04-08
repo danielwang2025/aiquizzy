@@ -1,6 +1,5 @@
 
 import { QuizQuestion } from "@/types/quiz";
-import { getBasicHint } from "./api";
 
 /**
  * Generates a hint for a given quiz question
@@ -34,7 +33,11 @@ export async function generateHint(question: QuizQuestion): Promise<string> {
   }
 }
 
-// Export the getBasicHint function directly from this file
+/**
+ * Provides a basic hint for a quiz question when API is unavailable
+ * @param question The quiz question to generate a hint for
+ * @returns A basic hint string based on question type
+ */
 export function getBasicHint(question: QuizQuestion): string {
   if (question.type === "multiple_choice") {
     return "Try to eliminate obviously incorrect options first. Focus on the key terms in the question.";
