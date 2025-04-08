@@ -3,12 +3,13 @@ import React from "react";
 import { QuizQuestion } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Play, Filter, SortAsc } from "lucide-react";
+import { Trash2, Play, Filter, SortAsc, AlertCircle, Clock, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { saveQuizToDatabase } from "@/utils/databaseService";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface ReviewListProps {
   questions: QuizQuestion[];
@@ -44,21 +45,23 @@ const ReviewList: React.FC<ReviewListProps> = ({
   if (questions.length === 0) {
     return (
       <motion.div 
-        className="text-center py-12 border border-dashed rounded-lg glass-effect"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className="text-center py-12 border border-dashed rounded-lg glass-effect bg-white/10 backdrop-blur-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <img src="/placeholder.svg" alt="Empty" className="w-24 h-24 mx-auto opacity-30 mb-4" />
-        <p className="text-muted-foreground">No questions in your review list yet.</p>
+        <p className="text-muted-foreground mb-2">No questions in your review list yet.</p>
+        <p className="text-xs text-muted-foreground/70">Questions you mark for review will appear here</p>
       </motion.div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
+        <h3 className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
           Review List ({questions.length})
         </h3>
         <div className="space-x-2">
@@ -69,30 +72,30 @@ const ReviewList: React.FC<ReviewListProps> = ({
               handlePracticeSelected(questions);
               onPracticeQuestions(questions);
             }}
-            className="bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-600 shadow-sm hover:shadow-md transition-all duration-300"
+            className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-md hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
           >
-            <Play className="h-3.5 w-3.5 mr-1" />
+            <Play className="h-3.5 w-3.5 mr-1.5" />
             Practice All
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={onClearAll}
-            className="text-xs glass-effect border-white/20"
+            className="text-xs glass-effect bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all"
           >
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
             Clear All
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-3">
-        <Button variant="outline" size="sm" className="h-8 px-3 glass-effect border-white/20">
-          <Filter className="h-3.5 w-3.5 mr-1" />
+      <div className="flex items-center gap-2 mb-4">
+        <Button variant="outline" size="sm" className="h-8 px-3 glass-effect bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20">
+          <Filter className="h-3.5 w-3.5 mr-1.5" />
           <span className="text-xs">Filter</span>
         </Button>
-        <Button variant="outline" size="sm" className="h-8 px-3 glass-effect border-white/20">
-          <SortAsc className="h-3.5 w-3.5 mr-1" />
+        <Button variant="outline" size="sm" className="h-8 px-3 glass-effect bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20">
+          <SortAsc className="h-3.5 w-3.5 mr-1.5" />
           <span className="text-xs">Sort</span>
         </Button>
       </div>
@@ -103,7 +106,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
           initial="hidden"
           animate="visible"
           variants={{
-            visible: { transition: { staggerChildren: 0.05 } }
+            visible: { transition: { staggerChildren: 0.07 } }
           }}
         >
           {questions.map((question) => (
@@ -117,15 +120,26 @@ const ReviewList: React.FC<ReviewListProps> = ({
               <Card 
                 glass 
                 hover 
-                className="p-4 bg-white/70 dark:bg-black/10 shadow-sm border border-white/30"
+                className="p-4 bg-white/70 dark:bg-black/10 border-white/40 shadow-sm"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 mr-4">
-                    <p className="text-sm font-medium mb-2">{question.question}</p>
-                    <div className="flex items-center">
-                      <span className="bg-blue-100/70 text-blue-800 text-xs px-2 py-1 rounded backdrop-blur-sm">
+                    <p className="text-sm font-medium mb-3">{question.question}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={question.type === "multiple_choice" ? "default" : "outline"} className="bg-blue-100/70 text-blue-800 hover:bg-blue-200/70">
                         {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
-                      </span>
+                      </Badge>
+                      
+                      {question.difficulty && (
+                        <Badge variant="outline" className={cn(
+                          "border-none", 
+                          question.difficulty === "easy" ? "bg-green-100/70 text-green-800" : 
+                          question.difficulty === "medium" ? "bg-amber-100/70 text-amber-800" :
+                          "bg-red-100/70 text-red-800"
+                        )}>
+                          {question.difficulty}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -135,7 +149,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                       e.stopPropagation();
                       onRemoveQuestion(question.id);
                     }}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all rounded-full"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

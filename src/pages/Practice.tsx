@@ -8,7 +8,11 @@ import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { QuizQuestion } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Medal } from "lucide-react";
+import { ArrowLeft, ArrowRight, Medal, Clock, Zap, BarChart, BookOpen, Check, AlertCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const Practice = () => {
   const { quizId } = useParams();
@@ -21,9 +25,7 @@ const Practice = () => {
   
   useEffect(() => {
     if (quizId) {
-      // Special handling for demo mode
       if (quizId === "demo") {
-        // Create a demo quiz with 5 questions
         const demoQuiz = {
           id: "demo",
           title: "Demo Quiz",
@@ -89,7 +91,6 @@ const Practice = () => {
         navigate("/customize");
       }
     } else {
-      // If no quizId is provided, redirect to customize page
       navigate("/customize");
     }
     setLoading(false);

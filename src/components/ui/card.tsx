@@ -10,8 +10,10 @@ const Card = React.forwardRef<
     neo?: boolean;
     hover?: boolean;
     gradient?: boolean;
+    glow?: boolean;
+    bordered?: boolean;
   }
->(({ className, glass, neo, hover, gradient, ...props }, ref) => (
+>(({ className, glass, neo, hover, gradient, glow, bordered, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
@@ -20,6 +22,8 @@ const Card = React.forwardRef<
       neo && "neo-card shadow-[0_4px_12px_rgba(0,0,0,0.05),inset_2px_2px_4px_rgba(255,255,255,0.6),inset_-2px_-2px_4px_rgba(0,0,0,0.05)]",
       hover && "card-hover transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10",
       gradient && "bg-gradient-to-br from-blue-50/90 to-indigo-50/90 dark:from-blue-900/30 dark:to-indigo-900/30",
+      glow && "shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30",
+      bordered && "border-2 border-primary/20 hover:border-primary/40",
       className
     )}
     {...props}
