@@ -1,9 +1,8 @@
-
 import { Document } from "langchain/document";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { FaissStore } from "@langchain/community/vectorstores/faiss";
 import { getApiKey } from "@/utils/envVars";
-import { DeepSeekEmbeddings } from "@/llm/deepseek_embeddings"; // ⬅️ 你需要创建这个自定义模块
+import { OpenAIEmbeddings } from "@/llm/openai_embeddings";
 
 // In-memory storage for FAISS instances
 let vectorStore: FaissStore | null = null;
@@ -14,14 +13,14 @@ export interface DocumentMetadata {
   page?: number;
 }
 
-// Initialize embeddings model using DeepSeek API
+// Initialize embeddings model using OpenAI API
 const getEmbeddings = () => {
-  const apiKey = getApiKey("DEEPSEEK_API_KEY");
+  const apiKey = getApiKey("OPENAI_API_KEY");
   if (!apiKey) {
-    console.error("DeepSeek API key not found");
-    throw new Error("DeepSeek API key is required for embeddings");
+    console.error("OpenAI API key not found");
+    throw new Error("OpenAI API key is required for embeddings");
   }
-  return new DeepSeekEmbeddings({ apiKey });
+  return new OpenAIEmbeddings({ apiKey });
 };
 
 // Create text splitter for document chunking
