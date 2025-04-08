@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,20 +50,28 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
     try {
+      console.log("Starting PDF text extraction");
       const pdfData = new Uint8Array(await file.arrayBuffer());
+      console.log(`PDF data loaded, size: ${pdfData.length} bytes`);
+      
       const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
 
       let text = "";
       for (let i = 1; i <= pdf.numPages; i++) {
+        console.log(`Processing page ${i}/${pdf.numPages}`);
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        text += content.items.map((item: any) => item.str).join(" ") + "\n";
+        const pageText = content.items.map((item: any) => item.str).join(" ");
+        text += pageText + "\n";
+        console.log(`Page ${i} extracted, length: ${pageText.length} chars`);
       }
 
+      console.log(`PDF extraction complete, total text length: ${text.length} chars`);
       return text;
     } catch (error) {
       console.error("Error extracting text from PDF:", error);
-      throw new Error("Failed to extract text from PDF");
+      throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -72,28 +79,46 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
     if (!file) return;
 
     setIsLoading(true);
+    toast.loading("Processing file...");
 
     try {
+      console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
       let extractedText = "";
 
       if (file.type === "text/plain") {
+        console.log("Extracting text from plain text file");
         extractedText = await file.text();
+        console.log(`Text file extracted, length: ${extractedText.length} chars`);
       } else if (file.type === "application/pdf") {
+        console.log("Extracting text from PDF file");
         extractedText = await extractTextFromPdf(file);
       } else {
-        toast.error("Unsupported file type for content extraction");
+        console.error("Unsupported file type:", file.type);
+        toast.error(`Unsupported file type: ${file.type}`);
         setIsLoading(false);
         return;
       }
 
-      const processedText = await processFileWithRAG(extractedText, file.name);
-      onTextExtracted(processedText);
+      if (!extractedText || extractedText.trim().length === 0) {
+        console.error("No text extracted from file");
+        toast.error("Could not extract any text from the file");
+        setIsLoading(false);
+        return;
+      }
 
+      console.log(`Text extracted successfully, length: ${extractedText.length} chars`);
+      console.log("Starting RAG processing");
+      
+      const processedText = await processFileWithRAG(extractedText, file.name);
+      console.log("RAG processing completed successfully");
+      
+      onTextExtracted(processedText);
       toast.success("Text extracted and processed with RAG!");
     } catch (error) {
-      console.error("Error extracting text:", error);
-      toast.error("Failed to extract text from file");
+      console.error("Error processing file:", error);
+      toast.error(`Failed to process file: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
+      toast.dismiss();
       setIsLoading(false);
     }
   };

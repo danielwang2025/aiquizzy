@@ -16,11 +16,14 @@ export interface DocumentMetadata {
 // Initialize embeddings model using OpenAI API
 const getEmbeddings = () => {
   const apiKey = getApiKey("OPENAI_API_KEY");
-  if (!apiKey) {
-    console.error("OpenAI API key not found");
-    throw new Error("OpenAI API key is required for embeddings");
+  console.log("Getting OpenAI embeddings with API key:", apiKey ? "Key exists" : "No key found");
+  
+  try {
+    return new OpenAIEmbeddings({ apiKey });
+  } catch (error) {
+    console.error("Failed to initialize OpenAI embeddings:", error);
+    throw error;
   }
-  return new OpenAIEmbeddings({ apiKey });
 };
 
 // Create text splitter for document chunking
@@ -33,6 +36,13 @@ const createTextSplitter = () => {
 
 // Process document text and create chunks
 export const chunkDocument = async (text: string, source: string): Promise<Document<DocumentMetadata>[]> => {
+  console.log(`Starting to chunk document from ${source}, text length: ${text.length} chars`);
+  
+  if (!text || text.trim().length === 0) {
+    console.error("Empty document text received for chunking");
+    throw new Error("Empty document text");
+  }
+  
   const splitter = createTextSplitter();
 
   const doc = new Document<DocumentMetadata>({
@@ -40,6 +50,7 @@ export const chunkDocument = async (text: string, source: string): Promise<Docum
     metadata: { source }
   });
 
+  console.log("Created Document object, splitting into chunks...");
   const chunks = await splitter.splitDocuments([doc]) as Document<DocumentMetadata>[];
 
   console.log(`Document split into ${chunks.length} chunks`);
@@ -57,20 +68,28 @@ export const chunkDocument = async (text: string, source: string): Promise<Docum
 // Initialize or update vector store with documents
 export const addDocumentsToVectorDB = async (documents: Document<DocumentMetadata>[]): Promise<void> => {
   try {
+    console.log(`Attempting to add ${documents.length} documents to vector DB`);
+    
+    if (documents.length === 0) {
+      console.warn("No documents to add to vector DB");
+      return;
+    }
+    
     const embeddings = getEmbeddings();
+    console.log("Embeddings model initialized successfully");
 
     if (!vectorStore) {
       console.log("Initializing new vector store");
       vectorStore = await FaissStore.fromDocuments(documents, embeddings);
+      console.log("New vector store created successfully");
     } else {
       console.log("Adding documents to existing vector store");
       await vectorStore.addDocuments(documents);
+      console.log("Documents added to existing vector store successfully");
     }
-
-    console.log(`Added ${documents.length} chunks to vector database`);
   } catch (error) {
     console.error("Error adding documents to vector store:", error);
-    throw new Error("Failed to add documents to vector store");
+    throw new Error(`Failed to add documents to vector store: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -99,22 +118,6 @@ export const searchSimilarDocuments = async (query: string, topK: number = 3): P
   }
 };
 
-export const processFileWithRAG = async (fileContent: string, source: string): Promise<string> => {
-  try {
-    const chunks = await chunkDocument(fileContent, source);
-    await addDocumentsToVectorDB(chunks);
-
-    return `
-      Successfully processed ${chunks.length} chunks from ${source}.
-      Content indexed and ready for quiz generation.
-      The system will use this content to enhance quiz questions.
-    `;
-  } catch (error) {
-    console.error("Error processing file with RAG:", error);
-    throw new Error("Failed to process file with RAG");
-  }
-};
-
 export const getRelevantContext = async (topic: string): Promise<string> => {
   try {
     if (!vectorStore) {
@@ -131,6 +134,31 @@ export const getRelevantContext = async (topic: string): Promise<string> => {
   } catch (error) {
     console.error("Error getting relevant context:", error);
     return "Error retrieving context from documents.";
+  }
+};
+
+export const processFileWithRAG = async (fileContent: string, source: string): Promise<string> => {
+  try {
+    console.log(`Processing file with RAG: ${source}, content length: ${fileContent.length} chars`);
+    
+    if (!fileContent || fileContent.trim().length === 0) {
+      throw new Error("File content is empty");
+    }
+    
+    const chunks = await chunkDocument(fileContent, source);
+    console.log(`Successfully chunked file into ${chunks.length} chunks`);
+    
+    await addDocumentsToVectorDB(chunks);
+    console.log("Successfully added chunks to vector database");
+
+    return `
+      Successfully processed ${chunks.length} chunks from ${source}.
+      Content indexed and ready for quiz generation.
+      The system will use this content to enhance quiz questions.
+    `;
+  } catch (error) {
+    console.error("Error processing file with RAG:", error);
+    throw new Error(`Failed to process file with RAG: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
