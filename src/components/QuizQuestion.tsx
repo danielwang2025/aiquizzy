@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
