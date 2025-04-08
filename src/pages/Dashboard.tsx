@@ -42,8 +42,32 @@ import {
   Clock,
   Award,
   Target,
-  Brain
+  Brain,
+  Sparkles,
+  Zap,
+  AreaChart as AreaChartIcon
 } from "lucide-react";
+import { motion } from "framer-motion";
+
+// Animation variants for motion components
+const fadeIn = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5 }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -201,15 +225,20 @@ const Dashboard: React.FC = () => {
         <Navigation />
         
         <main className="py-8 px-4 max-w-screen-xl mx-auto">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-6">Your Learning Dashboard</h1>
+          <motion.div 
+            className="max-w-3xl mx-auto text-center"
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+          >
+            <h1 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Your Learning Dashboard</h1>
             <p className="text-muted-foreground mb-8">
               You haven't completed any quizzes yet. Take a quiz to see your progress here!
             </p>
-            <Button asChild>
+            <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg">
               <Link to="/customize">Create Your First Quiz</Link>
             </Button>
-          </div>
+          </motion.div>
         </main>
       </div>
     );
@@ -221,286 +250,380 @@ const Dashboard: React.FC = () => {
       
       <main className="py-8 px-4 max-w-screen-xl mx-auto">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold mb-4 md:mb-0">Your Learning Dashboard</h1>
+          <motion.div 
+            className="flex flex-col md:flex-row justify-between items-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-3xl font-bold mb-4 md:mb-0 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Your Learning Dashboard</h1>
             
             <div className="flex items-center gap-4">
-              <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
-                <TabsList>
-                  <TabsTrigger value="week">This Week</TabsTrigger>
-                  <TabsTrigger value="month">This Month</TabsTrigger>
-                  <TabsTrigger value="all">All Time</TabsTrigger>
+              <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="bg-white/30 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-white/50">
+                <TabsList className="bg-white/30 backdrop-blur-sm">
+                  <TabsTrigger value="week" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white">
+                    This Week
+                  </TabsTrigger>
+                  <TabsTrigger value="month" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white">
+                    This Month
+                  </TabsTrigger>
+                  <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/80 data-[state=active]:to-indigo-500/80 data-[state=active]:text-white">
+                    All Time
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
               
-              <Button asChild variant="outline">
+              <Button 
+                asChild 
+                variant="outline"
+                className="glass-effect bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 transition-all shadow-sm hover:shadow-md"
+              >
                 <Link to="/customize">
                   New Quiz
                 </Link>
               </Button>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Quizzes Completed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <BookOpen className="h-5 w-5 text-blue-500 mr-2" />
-                  <span className="text-3xl font-bold">{stats.totalAttempts}</span>
-                </div>
-              </CardContent>
-            </Card>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={fadeIn}>
+              <Card glass neo hover className="bg-white/20 backdrop-blur-sm border-white/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Quizzes Completed</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-blue-100/50 mr-3">
+                      <BookOpen className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <span className="text-3xl font-bold text-blue-700">{stats.totalAttempts}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Average Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <Award className="h-5 w-5 text-amber-500 mr-2" />
-                  <span className="text-3xl font-bold">{stats.averageScore}%</span>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeIn}>
+              <Card glass neo hover className="bg-white/20 backdrop-blur-sm border-white/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Average Score</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-amber-100/50 mr-3">
+                      <Award className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <span className="text-3xl font-bold text-amber-600">{stats.averageScore}%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Daily Streak</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <TrendingUp className="h-5 w-5 text-green-500 mr-2" />
-                  <span className="text-3xl font-bold">{stats.dailyStreak} day{stats.dailyStreak !== 1 ? 's' : ''}</span>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div variants={fadeIn}>
+              <Card glass neo hover className="bg-white/20 backdrop-blur-sm border-white/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Daily Streak</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-green-100/50 mr-3">
+                      <Zap className="h-5 w-5 text-green-500" />
+                    </div>
+                    <span className="text-3xl font-bold text-green-600">{stats.dailyStreak} <span className="text-sm font-normal">day{stats.dailyStreak !== 1 ? 's' : ''}</span></span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Questions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <Brain className="h-5 w-5 text-purple-500 mr-2" />
-                  <span className="text-3xl font-bold">{stats.totalQuestions}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <motion.div variants={fadeIn}>
+              <Card glass neo hover className="bg-white/20 backdrop-blur-sm border-white/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Questions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-purple-100/50 mr-3">
+                      <Brain className="h-5 w-5 text-purple-500" />
+                    </div>
+                    <span className="text-3xl font-bold text-purple-600">{stats.totalQuestions}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-                  Learning Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ChartContainer config={{}}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={stats.recentScores.slice(-10)}>
-                        <defs>
-                          <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.1}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                        <YAxis 
-                          domain={[0, 100]} 
-                          stroke="#6b7280" 
-                          fontSize={12} 
-                          tickFormatter={(value) => `${value}%`}
-                        />
-                        <ChartTooltip 
-                          content={({ active, payload }) => {
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <Card glass gradient hover glow bordered className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <AreaChartIcon className="h-5 w-5 mr-2 text-blue-500" />
+                    Learning Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ChartContainer config={{}}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.recentScores.slice(-10)}>
+                          <defs>
+                            <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            stroke="#6b7280" 
+                            fontSize={12} 
+                            tickFormatter={(value) => `${value}%`}
+                          />
+                          <ChartTooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="glass-effect bg-white/70 backdrop-blur-md p-3 border border-white/30 shadow-lg rounded-md">
+                                    <p className="font-medium text-gray-900">{payload[0].payload.date}</p>
+                                    <p className="text-blue-600">Score: {payload[0].value}%</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#4f46e5" 
+                            fillOpacity={1}
+                            fill="url(#scoreGradient)" 
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <Card glass gradient hover glow bordered className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-600">
+                    <Target className="h-5 w-5 mr-2 text-green-500" />
+                    Topic Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ChartContainer config={{}}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={stats.topicPerformance.slice(0, 5).map(t => ({
+                              name: t.topic,
+                              value: t.questionsCount
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={90}
+                            innerRadius={40}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {stats.topicPerformance.slice(0, 5).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               return (
-                                <div className="bg-white p-2 border border-gray-200 shadow-sm rounded-md">
-                                  <p className="font-medium">{payload[0].payload.date}</p>
-                                  <p>Score: {payload[0].value}%</p>
+                                <div className="glass-effect bg-white/70 backdrop-blur-md p-3 border border-white/30 shadow-lg rounded-md">
+                                  <p className="font-medium text-gray-900">{payload[0].name}</p>
+                                  <p className="text-blue-600">Questions: {payload[0].value}</p>
+                                  <p className="text-blue-600">({(Number(payload[0].percent) * 100).toFixed(2)}%)</p>
                                 </div>
                               );
                             }
                             return null;
-                          }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#4f46e5" 
-                          fillOpacity={1}
-                          fill="url(#scoreGradient)" 
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Target className="h-5 w-5 mr-2 text-green-500" />
-                  Topic Distribution
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ChartContainer config={{}}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={stats.topicPerformance.slice(0, 5).map(t => ({
-                            name: t.topic,
-                            value: t.questionsCount
-                          }))}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={90}
-                          innerRadius={40}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {stats.topicPerformance.slice(0, 5).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
+                          }} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="md:col-span-2 bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart2 className="h-5 w-5 mr-2 text-purple-500" />
-                  Topic Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ChartContainer config={{}}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={stats.topicPerformance.slice(0, 6)}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                        barCategoryGap={20}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis 
-                          dataKey="topic" 
-                          stroke="#6b7280" 
-                          fontSize={12} 
-                          angle={-45} 
-                          textAnchor="end" 
-                          height={60} 
-                        />
-                        <YAxis 
-                          domain={[0, 100]} 
-                          stroke="#6b7280" 
-                          fontSize={12} 
-                          tickFormatter={(value) => `${value}%`}
-                        />
-                        <ChartTooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="bg-white p-2 border border-gray-200 shadow-sm rounded-md">
-                                  <p className="font-medium">{payload[0].payload.topic}</p>
-                                  <p>Correct Rate: {payload[0].value}%</p>
-                                  <p>Questions: {payload[0].payload.questionsCount}</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Bar 
-                          dataKey="correctRate" 
-                          fill="url(#colorGradient)" 
-                          name="Correct Rate" 
-                          radius={[4, 4, 0, 0]}
+            <motion.div 
+              className="md:col-span-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              <Card glass hover gradient glow bordered className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+                    <BarChart2 className="h-5 w-5 mr-2 text-purple-500" />
+                    Topic Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ChartContainer config={{}}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={stats.topicPerformance.slice(0, 6)}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                          barCategoryGap={20}
                         >
-                          <defs>
-                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.8}/>
-                              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                            </linearGradient>
-                          </defs>
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis 
+                            dataKey="topic" 
+                            stroke="#6b7280" 
+                            fontSize={12} 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={60} 
+                          />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            stroke="#6b7280" 
+                            fontSize={12} 
+                            tickFormatter={(value) => `${value}%`}
+                          />
+                          <ChartTooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="glass-effect bg-white/70 backdrop-blur-md p-3 border border-white/30 shadow-lg rounded-md">
+                                    <p className="font-medium text-gray-900">{payload[0].payload.topic}</p>
+                                    <p className="text-blue-600">Correct Rate: {payload[0].value}%</p>
+                                    <p className="text-blue-600">Questions: {payload[0].payload.questionsCount}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar 
+                            dataKey="correctRate" 
+                            fill="url(#colorGradient)" 
+                            name="Correct Rate" 
+                            radius={[4, 4, 0, 0]}
+                          >
+                            <defs>
+                              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                              </linearGradient>
+                            </defs>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="h-5 w-5 mr-2 text-amber-500" />
-                  Learning Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex flex-col justify-center">
-                  <div className="text-center mb-8">
-                    <div className="text-5xl font-bold text-blue-600 mb-2">{stats.correctAnswers}</div>
-                    <div className="text-sm text-muted-foreground">Correct Answers</div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              <Card glass hover gradient glow bordered className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                    <Award className="h-5 w-5 mr-2 text-amber-500" />
+                    Learning Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex flex-col justify-center">
+                    <div className="text-center mb-8">
+                      <div className="relative inline-block">
+                        <div className="absolute inset-0 bg-blue-200 rounded-full blur-lg opacity-30"></div>
+                        <div className="text-5xl font-bold text-blue-600 mb-2 relative">{stats.correctAnswers}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">Correct Answers</div>
+                    </div>
+                    
+                    <div className="w-full bg-secondary rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                      <div 
+                        className="h-4 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg transition-all duration-1000" 
+                        style={{ width: `${stats.averageScore}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-sm text-center text-muted-foreground mb-6">
+                      {stats.averageScore}% Average Score
+                    </div>
+                    
+                    <div className="text-center">
+                      <Button 
+                        asChild
+                        className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg"
+                      >
+                        <Link to="/customize">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Practice More
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div className="w-full bg-secondary rounded-full h-4 mb-2">
-                    <div 
-                      className="h-4 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" 
-                      style={{ width: `${stats.averageScore}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-sm text-center text-muted-foreground mb-6">
-                    {stats.averageScore}% Average Score
-                  </div>
-                  
-                  <div className="text-center">
-                    <Button asChild>
-                      <Link to="/customize">Practice More</Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
           
           {stats.mostChallengedTopics.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Improvement Recommendations</h2>
-              <div className="bg-white/80 backdrop-blur-sm border border-border rounded-lg p-6">
-                <p className="mb-4">Based on your performance, here are topics you might want to focus on:</p>
-                <ul className="list-disc pl-6 space-y-2 mb-6">
-                  {stats.mostChallengedTopics.map((topic, index) => (
-                    <li key={index}>{topic}</li>
-                  ))}
-                </ul>
-                <Button asChild>
-                  <Link to="/customize">Practice These Topics</Link>
-                </Button>
-              </div>
-            </div>
+            <motion.div 
+              className="mt-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.6 }}
+            >
+              <h2 className="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Improvement Recommendations</h2>
+              <Card glass hover gradient glow bordered className="overflow-hidden">
+                <CardContent className="p-6">
+                  <p className="mb-4">Based on your performance, here are topics you might want to focus on:</p>
+                  <ul className="list-disc pl-6 space-y-2 mb-6">
+                    {stats.mostChallengedTopics.map((topic, index) => (
+                      <li key={index} className="text-gray-700">{topic}</li>
+                    ))}
+                  </ul>
+                  <Button 
+                    asChild
+                    className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg"
+                  >
+                    <Link to="/customize">
+                      <Target className="h-4 w-4 mr-2" />
+                      Practice These Topics
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
         </div>
       </main>
