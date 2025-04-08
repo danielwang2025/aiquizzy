@@ -9,7 +9,8 @@ export async function generateQuestions(
   learningObjectives: string,
   options: {
     count?: number;
-    difficulty?: 'easy' | 'medium' | 'hard';
+    difficulty?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
+    bloomLevel?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
     questionTypes?: ('multiple_choice' | 'fill_in')[];
   } = {}
 ): Promise<QuizQuestion[]> {
@@ -29,7 +30,7 @@ export async function generateQuestions(
     
     const {
       count = 5,
-      difficulty = 'medium',
+      bloomLevel = 'understand',
       questionTypes = ['multiple_choice', 'fill_in']
     } = options;
     
@@ -46,17 +47,32 @@ export async function generateQuestions(
     }
     
     console.log("Generating quiz for learning objectives:", learningObjectives);
-    console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
+    console.log("Options:", { count, bloomLevel, questionTypes, multipleChoiceCount, fillInCount });
     
     toast.loading("AI 正在生成练习题...");
 
     // Get the DeepSeek API key from our environment variables
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
+    // Create a description of the Bloom's level to guide the AI
+    const bloomLevelDescriptions = {
+      remember: "基础记忆级别 - 考验学生对事实、术语、概念的记忆和识别能力。问题类型：定义术语、列出要点、识别正确陈述等。",
+      understand: "理解级别 - 考验学生对所学内容的理解并能用自己的话解释的能力。问题类型：解释概念、总结内容、分类、比较差异等。",
+      apply: "应用级别 - 考验学生在新情境中应用所学知识解决问题的能力。问题类型：应用公式、使用概念解决实际问题、展示使用方法等。",
+      analyze: "分析级别 - 考验学生将信息分解为各组成部分并理解其关系的能力。问题类型：分析原因和结果、找出模式、辨别主要观点和支持证据等。",
+      evaluate: "评估级别 - 考验学生基于标准和证据做出判断的能力。问题类型：评判方法有效性、辩护观点、批判性分析论点、作出决策并证明等。",
+      create: "创造级别 - 考验学生将各元素组合成新整体的能力。问题类型：设计解决方案、提出假设、创建模型、开发计划等。"
+    };
+    
+    const bloomLevelDescription = bloomLevelDescriptions[bloomLevel];
+    
     // Customize the system prompt based on options
-    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。
+    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。
 
-使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
+问题应符合布鲁姆分类法中的"${bloomLevel}"认知层级：
+${bloomLevelDescription}
+
+使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "bloomLevel": "${bloomLevel}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "bloomLevel": "${bloomLevel}"}]}`;
     
     // Add CSRF token to headers
     const headers = addCsrfToHeaders({
@@ -140,7 +156,7 @@ export async function generateQuestions(
           ...q,
           id,
           correctAnswer,
-          difficulty: q.difficulty || difficulty,
+          bloomLevel: q.bloomLevel || bloomLevel,
           topic
         };
       });

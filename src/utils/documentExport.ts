@@ -1,5 +1,5 @@
 
-import { Document, Paragraph, TextRun, HeadingLevel, Packer, AlignmentType, BorderStyle } from "docx";
+import { Document, Paragraph, TextRun, HeadingLevel, Packer, AlignmentType } from "docx";
 import { QuizQuestion } from "@/types/quiz";
 import { saveAs } from "file-saver";
 
@@ -24,7 +24,7 @@ export const exportToDocx = async (
       const questionNumber = index + 1;
       const paragraphs = [];
 
-      // Question text
+      // Question text with Bloom's level
       paragraphs.push(
         new Paragraph({
           children: [
@@ -33,6 +33,10 @@ export const exportToDocx = async (
               bold: true,
             }),
             new TextRun(question.question),
+            new TextRun({
+              text: ` [${question.bloomLevel?.charAt(0).toUpperCase()}${question.bloomLevel?.slice(1)}]`,
+              italics: true,
+            }),
           ],
           spacing: {
             after: 200,

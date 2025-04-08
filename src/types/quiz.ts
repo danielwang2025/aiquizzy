@@ -6,7 +6,8 @@ export interface QuizQuestion {
   options?: string[];
   correctAnswer: string | number;
   explanation?: string;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  difficulty?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
+  bloomLevel?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
   topic?: string;
   subtopic?: string;
 }
@@ -31,7 +32,8 @@ export interface QuizAttempt {
   questions: QuizQuestion[];
   userAnswers: (string | number | null)[];
   result: QuizResult;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  difficulty?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
+  bloomLevel?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
   topics?: string[];
 }
 
@@ -55,7 +57,8 @@ export interface QuizHistory {
 }
 
 export interface LearningPreferences {
-  preferredDifficulty?: 'easy' | 'medium' | 'hard';
+  preferredDifficulty?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
+  preferredBloomLevel?: 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create';
   preferredQuestionTypes?: ('multiple_choice' | 'fill_in')[];
   topicsOfInterest?: string[];
   dailyGoal?: number; // Number of questions to practice per day

@@ -42,7 +42,16 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Download, FilePlus2, FileText } from "lucide-react";
+import { 
+  Download, 
+  FileText, 
+  BookOpen, 
+  Lightbulb, 
+  Pencil, 
+  BookCheck, 
+  FileCheck, 
+  FilePlus 
+} from "lucide-react";
 
 interface QuizGeneratorProps {
   initialTopic?: string;
@@ -149,7 +158,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
   
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [bloomLevel, setBloomLevel] = useState<"remember" | "understand" | "apply" | "analyze" | "evaluate" | "create">("understand");
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [questionTypes, setQuestionTypes] = useState<("multiple_choice" | "fill_in")[]>(["multiple_choice", "fill_in"]);
   
@@ -217,7 +226,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
 
     try {
       const questions = await generateQuestions(objectives, {
-        difficulty,
+        bloomLevel,
         count: questionCount,
         questionTypes
       });
@@ -445,6 +454,44 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     setQuizHistory(loadQuizHistory());
   };
 
+  const getBloomLevelIcon = (level: string) => {
+    switch (level) {
+      case 'remember':
+        return <BookOpen className="h-4 w-4 mr-2" />;
+      case 'understand':
+        return <Lightbulb className="h-4 w-4 mr-2" />;
+      case 'apply':
+        return <Pencil className="h-4 w-4 mr-2" />;
+      case 'analyze':
+        return <BookCheck className="h-4 w-4 mr-2" />;
+      case 'evaluate':
+        return <FileCheck className="h-4 w-4 mr-2" />;
+      case 'create':
+        return <FilePlus className="h-4 w-4 mr-2" />;
+      default:
+        return <Lightbulb className="h-4 w-4 mr-2" />;
+    }
+  };
+
+  const getBloomLevelDescription = (level: string) => {
+    switch (level) {
+      case 'remember':
+        return "记忆 - 回忆事实、术语和基本概念";
+      case 'understand':
+        return "理解 - 解释想法或概念";
+      case 'apply':
+        return "应用 - 在新情境中使用信息";
+      case 'analyze':
+        return "分析 - 区分不同部分之间的关系";
+      case 'evaluate':
+        return "评估 - 作出判断和决策";
+      case 'create':
+        return "创造 - 创建新的想法或产品";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -507,70 +554,109 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Difficulty Level
+                Bloom's Taxonomy Level
               </label>
-              <Select value={difficulty} onValueChange={(value) => setDifficulty(value as "easy" | "medium" | "hard")}>
+              <Select value={bloomLevel} onValueChange={(value) => setBloomLevel(value as "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select difficulty" />
+                  <SelectValue placeholder="Select cognitive level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="remember" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('remember')}
+                      <span>Remember</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="understand" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('understand')}
+                      <span>Understand</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="apply" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('apply')}
+                      <span>Apply</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="analyze" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('analyze')}
+                      <span>Analyze</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="evaluate" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('evaluate')}
+                      <span>Evaluate</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="create" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('create')}
+                      <span>Create</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Question Types
-              </label>
-              <div className="flex space-x-4">
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="multiple-choice" 
-                    checked={questionTypes.includes("multiple_choice")}
-                    onCheckedChange={() => handleQuestionTypeChange("multiple_choice")}
-                  />
-                  <label htmlFor="multiple-choice" className="ml-2 text-sm">
-                    Multiple Choice
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <Checkbox 
-                    id="fill-in" 
-                    checked={questionTypes.includes("fill_in")}
-                    onCheckedChange={() => handleQuestionTypeChange("fill_in")}
-                  />
-                  <label htmlFor="fill-in" className="ml-2 text-sm">
-                    Fill in the Blank
-                  </label>
-                </div>
+              
+              <div className="mt-2 text-sm text-muted-foreground">
+                {getBloomLevelDescription(bloomLevel)}
               </div>
             </div>
-          </div>
-          
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">
-                Number of Questions: {questionCount}
-              </label>
-            </div>
-            <Slider 
-              min={3} 
-              max={20} 
-              step={1} 
-              value={[questionCount]} 
-              onValueChange={(value) => setQuestionCount(value[0])}
-              className="my-4"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>3</span>
-              <span>10</span>
-              <span>20</span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Question Types
+                </label>
+                <div className="flex space-x-4">
+                  <div className="flex items-center">
+                    <Checkbox 
+                      id="multiple-choice" 
+                      checked={questionTypes.includes("multiple_choice")}
+                      onCheckedChange={() => handleQuestionTypeChange("multiple_choice")}
+                    />
+                    <label htmlFor="multiple-choice" className="ml-2 text-sm">
+                      Multiple Choice
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox 
+                      id="fill-in" 
+                      checked={questionTypes.includes("fill_in")}
+                      onCheckedChange={() => handleQuestionTypeChange("fill_in")}
+                    />
+                    <label htmlFor="fill-in" className="ml-2 text-sm">
+                      Fill in the Blank
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">
+                    Number of Questions: {questionCount}
+                  </label>
+                </div>
+                <Slider 
+                  min={3} 
+                  max={20} 
+                  step={1} 
+                  value={[questionCount]} 
+                  onValueChange={(value) => setQuestionCount(value[0])}
+                  className="my-4"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>3</span>
+                  <span>10</span>
+                  <span>20</span>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -616,7 +702,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
+                    <FileText className="mr-2 h-4 w-4" />
                     Export
                   </Button>
                 </DialogTrigger>
