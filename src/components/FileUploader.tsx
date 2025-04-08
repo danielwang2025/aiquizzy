@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { processFileWithRAG } from "@/utils/ragService";
 import LoadingSpinner from "./LoadingSpinner";
 import * as pdfjsLib from "pdfjs-dist";
+
+// Need to set the worker source for PDF.js
+const pdfWorkerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
@@ -13,6 +17,11 @@ interface FileUploaderProps {
 const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize PDF.js worker when component mounts
+  useEffect(() => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,17 +50,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
   };
 
   const extractTextFromPdf = async (file: File): Promise<string> => {
-    const pdfData = new Uint8Array(await file.arrayBuffer());
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    try {
+      const pdfData = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
 
-    let text = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(" ") + "\n";
+      let text = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(" ") + "\n";
+      }
+
+      return text;
+    } catch (error) {
+      console.error("Error extracting text from PDF:", error);
+      throw new Error("Failed to extract text from PDF");
     }
-
-    return text;
   };
 
   const extractTextFromFile = async () => {
