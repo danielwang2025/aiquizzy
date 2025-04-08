@@ -3,6 +3,7 @@ import React from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Separator } from "@/components/ui/separator";
+import { Link } from "react-router-dom";
 
 const Terms = () => {
   return (
