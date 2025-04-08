@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { registerUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { validateStrongPassword, escapeHtml } from "@/utils/securityUtils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, UserPlus, Mail, User, Key } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface RegisterFormProps {
   onSuccess: () => void;
@@ -19,6 +21,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordStrength, setPasswordStrength] = useState<number>(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Update password strength
   useEffect(() => {
@@ -83,15 +87,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   };
   
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create Account</h1>
+        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
+          Create Account
+        </h1>
         <p className="text-muted-foreground">Enter your information to create an account</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary" />
             Email <span className="text-red-500">*</span>
           </label>
           <Input
@@ -101,11 +113,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             value={email}
             onChange={handleInputChange(setEmail)}
             required
+            className="pl-3 pr-3 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
           />
         </div>
         
         <div className="space-y-2">
-          <label htmlFor="displayName" className="text-sm font-medium">
+          <label htmlFor="displayName" className="text-sm font-medium flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />
             Display Name (Optional)
           </label>
           <Input
@@ -114,27 +128,40 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             placeholder="Your name"
             value={displayName}
             onChange={handleInputChange(setDisplayName)}
+            className="pl-3 pr-3 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
           />
         </div>
         
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+            <Key className="h-4 w-4 text-primary" />
             Password <span className="text-red-500">*</span>
           </label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={handleInputChange(setPassword)}
-            required
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={handleInputChange(setPassword)}
+              required
+              className="pl-3 pr-10 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           
           {/* Password Strength Indicator */}
           <div className="mt-1">
             <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
               <div 
-                className={`h-full ${
+                className={`h-full transition-all duration-300 ${
                   passwordStrength === 0 ? 'w-0' :
                   passwordStrength === 1 ? 'w-1/5 bg-red-500' :
                   passwordStrength === 2 ? 'w-2/5 bg-orange-500' :
@@ -147,8 +174,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             
             {passwordError && (
               <div className="text-xs text-red-500 flex items-center mt-1">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {passwordError}
+                <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span>{passwordError}</span>
               </div>
             )}
             
@@ -161,41 +188,63 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         </div>
         
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium">
+          <label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
+            <Key className="h-4 w-4 text-primary" />
             Confirm Password <span className="text-red-500">*</span>
           </label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={handleInputChange(setConfirmPassword)}
-            required
-          />
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={handleInputChange(setConfirmPassword)}
+              required
+              className="pl-3 pr-10 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              tabIndex={-1}
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         
         <Button
           type="submit"
-          className="w-full"
+          className="w-full h-11 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-600 transition-all shadow-md hover:shadow-lg hover:shadow-primary/20"
           disabled={isLoading || !!passwordError}
         >
+          <UserPlus className="mr-2 h-4 w-4" />
           {isLoading ? "Creating account..." : "Register"}
         </Button>
       </form>
       
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <button
-            type="button"
-            className="text-primary hover:underline"
-            onClick={onLoginClick}
-          >
-            Login
-          </button>
-        </p>
+      <div className="relative py-3">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-muted"></div>
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-background px-2 text-muted-foreground">
+            Already have an account?
+          </span>
+        </div>
       </div>
-    </div>
+      
+      <div className="text-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onLoginClick}
+          className="w-full neo-card border-white/20 hover:shadow-md"
+        >
+          Login to your account
+        </Button>
+      </div>
+    </motion.div>
   );
 };
 

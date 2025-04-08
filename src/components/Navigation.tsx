@@ -51,7 +51,7 @@ const Navigation: React.FC = () => {
         isHomePage ? (
           scrolled 
             ? "bg-white/90 dark:bg-background/90 backdrop-blur-lg shadow-sm" 
-            : "bg-white/10 backdrop-blur-md border-b border-white/10"
+            : "bg-white/40 backdrop-blur-md border-b border-white/20 shadow-sm"
         ) : (
           scrolled 
             ? "bg-background/80 backdrop-blur-lg shadow-sm" 
@@ -65,7 +65,7 @@ const Navigation: React.FC = () => {
             <Link to="/" className="flex-shrink-0 flex items-center">
               <span className={cn(
                 "text-xl font-bold",
-                isHomePage && !scrolled ? "text-white" : "gradient-text"
+                isHomePage && !scrolled ? "text-white drop-shadow-md" : "gradient-text"
               )}>
                 AI Quizzy
               </span>
@@ -82,10 +82,10 @@ const Navigation: React.FC = () => {
                     "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
                     location.pathname === item.path
                       ? isHomePage && !scrolled 
-                        ? "bg-white/20 text-white" 
+                        ? "bg-white/30 text-white shadow-sm backdrop-blur-sm" 
                         : "bg-primary/10 text-primary"
                       : isHomePage && !scrolled
-                        ? "text-white/90 hover:bg-white/10 hover:text-white"
+                        ? "text-white hover:bg-white/20 hover:text-white"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   )}
                 >
@@ -130,7 +130,7 @@ const Navigation: React.FC = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="glass-effect border-t border-border/50 overflow-hidden"
+            className="glass-effect border-t border-border/50 overflow-hidden shadow-lg"
           >
             <div className="px-2 pt-2 pb-4 space-y-1">
               {navItems.map((item) => (

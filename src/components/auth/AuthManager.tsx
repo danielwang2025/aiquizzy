@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User as UserType } from "@/types/quiz";
+import { motion } from "framer-motion";
 
 const AuthManager: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
@@ -90,34 +92,51 @@ const AuthManager: React.FC = () => {
   };
   
   if (loading) {
-    return <div className="flex items-center gap-2 opacity-50">Loading...</div>;
+    return (
+      <Button variant="ghost" size="sm" disabled className="animate-pulse">
+        <UserCircle className="h-5 w-5 mr-2 opacity-70" />
+        <span className="opacity-70">Loading...</span>
+      </Button>
+    );
   }
   
   return (
     <div>
       {isAuth ? (
-        <div className="flex items-center gap-2">
-          <div className="text-sm">
-            <span className="font-medium">{currentUser?.displayName || currentUser?.email}</span>
+        <motion.div 
+          className="flex items-center gap-2"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <div className="text-sm hidden sm:block">
+            <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
+              {currentUser?.displayName || currentUser?.email?.split('@')[0]}
+            </span>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleLogout}
+            className="glass-effect border-white/20"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </Button>
-        </div>
+        </motion.div>
       ) : (
         <Sheet open={showAuthSheet} onOpenChange={setShowAuthSheet}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300"
+            >
               <User className="h-4 w-4 mr-2" />
               Login / Register
             </Button>
           </SheetTrigger>
-          <SheetContent>
+          <SheetContent className="glass-effect border-l border-white/20">
             {showRegister ? (
               <RegisterForm
                 onSuccess={handleAuthSuccess}
