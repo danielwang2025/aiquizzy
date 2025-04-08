@@ -1,9 +1,9 @@
 
 import React, { useState } from "react";
-import { Upload, X, FileText, Database } from "lucide-react";
+import { Upload, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { processFileWithRAG, getVectorDBStatus } from "@/utils/ragService";
+import { processFileWithRAG } from "@/utils/ragService";
 
 interface FileUploaderProps {
   onTextExtracted: (text: string) => void;
@@ -12,7 +12,6 @@ interface FileUploaderProps {
 const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [dbStatus, setDbStatus] = useState<string | null>(null);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -53,11 +52,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         const text = await file.text();
         
         // Process with RAG
-        const processedResult = processFileWithRAG(text, file.name);
-        onTextExtracted(processedResult);
-        
-        // Update DB status
-        setDbStatus(getVectorDBStatus());
+        const processedText = processFileWithRAG(text, file.name);
+        onTextExtracted(processedText);
         
         toast.success("Text extracted and processed with RAG!");
       } else {
@@ -67,32 +63,18 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         reader.onload = async (event) => {
           try {
             // Simulate text extraction from binary files
-            // In a real implementation, you would use a PDF parser or similar
             const simulatedText = `
               ${file.name} content:
               This is extracted content from your learning material.
               Key concepts:
               - Topic 1: Definition and examples
               - Topic 2: Best practices and methodologies
-              - Topic 3: Advanced techniques and applications
-              
-              Detailed explanations:
-              Topic 1 refers to the fundamental principles that define how the concept works.
-              This includes basic terminology, core functions, and entry-level implementation details.
-              
-              Topic 2 covers established patterns and methods used in practice by professionals.
-              This includes optimization techniques, standard workflows, and quality assurance procedures.
-              
-              Topic 3 explores advanced usage scenarios and cutting-edge applications.
-              This includes integration patterns, performance optimizations, and innovative use cases.
+              - Topic 3: Advanced techniques
             `;
             
             // Process with RAG
-            const processedResult = processFileWithRAG(simulatedText, file.name);
-            onTextExtracted(processedResult);
-            
-            // Update DB status
-            setDbStatus(getVectorDBStatus());
+            const processedText = processFileWithRAG(simulatedText, file.name);
+            onTextExtracted(processedText);
             
             toast.success("Content extracted and processed with RAG!");
           } catch (error) {
@@ -113,7 +95,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
     } catch (error) {
       console.error("Error extracting text:", error);
       toast.error("Failed to extract text from file");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -175,16 +156,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
           >
             {isLoading ? "Processing with RAG..." : "Extract Content for Quiz"}
           </Button>
-        </div>
-      )}
-      
-      {dbStatus && (
-        <div className="mt-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
-          <div className="flex items-center mb-2">
-            <Database className="h-4 w-4 mr-2" />
-            <span className="font-medium">Vector Database Status</span>
-          </div>
-          <pre className="text-xs whitespace-pre-wrap">{dbStatus}</pre>
         </div>
       )}
     </div>

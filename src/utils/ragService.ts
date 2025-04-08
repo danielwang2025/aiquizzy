@@ -1,10 +1,11 @@
 
-// Implementation of RAG using LangChain and FAISS
-// This simulates the functionality since we can't install the actual packages in this environment
-// In a real application, you would install:
+// This is a simulated implementation of RAG using LangChain and FAISS
+// In a real application, you would need to add LangChain and FAISS dependencies
+// and implement the actual vector database functionality
+// To implement this fully you would need:
 // - LangChain: npm install langchain
 // - FAISS: npm install @langchain/community or @langchain/faiss
-// - Text embeddings model integration
+// - A text embedding model like OpenAI's text-embedding-ada-002 or a local alternative
 
 export interface Document {
   id: string;
@@ -15,36 +16,73 @@ export interface Document {
   };
 }
 
+// Below is an example of how you would implement RAG with LangChain and FAISS:
+/*
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { FAISS } from "@langchain/community/vectorstores/faiss";
+
+// Initialize OpenAI embeddings (requires API Key)
+const embeddings = new OpenAIEmbeddings({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+});
+
+// Initialize FAISS vector database
+let vectorDB;
+
+// Initialize the vector database
+export const initVectorDB = async (documents = []) => {
+  if (documents.length > 0) {
+    const texts = documents.map(doc => doc.content);
+    const metadatas = documents.map(doc => doc.metadata);
+    vectorDB = await FAISS.fromTexts(texts, metadatas, embeddings);
+    console.log("Vector database initialized with documents");
+  } else {
+    // Initialize empty DB
+    vectorDB = await FAISS.fromTexts(
+      ["Initialize empty vector database"],
+      [{ source: "init" }],
+      embeddings
+    );
+    console.log("Empty vector database initialized");
+  }
+  return vectorDB;
+};
+
+// Save the vector database to disk
+export const saveVectorDB = async (directory = "./vector_db") => {
+  if (vectorDB) {
+    await vectorDB.save(directory);
+    console.log(`Vector database saved to ${directory}`);
+  }
+};
+
+// Load the vector database from disk
+export const loadVectorDB = async (directory = "./vector_db") => {
+  try {
+    vectorDB = await FAISS.load(directory, embeddings);
+    console.log(`Vector database loaded from ${directory}`);
+    return vectorDB;
+  } catch (error) {
+    console.error("Error loading vector database:", error);
+    return null;
+  }
+};
+*/
+
+// For simulation purposes only - the below code does not use actual vector embeddings
+
 // Simulated vector database
 let vectorDatabase: Document[] = [];
 
 // Simulate document chunking for RAG
 export const chunkDocument = (text: string, source: string): Document[] => {
   // In a real implementation, this would use proper text chunking algorithms
-  // For this simulation, we'll split by paragraphs and create ~500 token chunks
+  // For this simulation, we'll just split by paragraphs
   const paragraphs = text
     .split('\n')
     .filter(p => p.trim().length > 0);
   
-  // Group paragraphs into chunks of approximately 500 tokens
-  const chunks: string[] = [];
-  let currentChunk = '';
-  
-  for (const paragraph of paragraphs) {
-    // Rough estimation: 1 token ≈ 4 characters
-    if ((currentChunk.length + paragraph.length) > 2000) {
-      chunks.push(currentChunk);
-      currentChunk = paragraph;
-    } else {
-      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
-    }
-  }
-  
-  if (currentChunk) {
-    chunks.push(currentChunk);
-  }
-  
-  return chunks.map((content, index) => ({
+  return paragraphs.map((content, index) => ({
     id: `${source}-${index}`,
     content,
     metadata: {
@@ -54,9 +92,9 @@ export const chunkDocument = (text: string, source: string): Document[] => {
   }));
 };
 
-// Add documents to vector database
+// Simulate adding documents to vector database
 export const addDocumentsToVectorDB = (documents: Document[]): void => {
-  // In a real implementation with LangChain and FAISS:
+  // In a real implementation with LangChain and FAISS, you would use:
   /*
   const texts = documents.map(doc => doc.content);
   const metadatas = documents.map(doc => doc.metadata);
@@ -64,18 +102,12 @@ export const addDocumentsToVectorDB = (documents: Document[]): void => {
   */
   
   vectorDatabase = [...vectorDatabase, ...documents];
-  console.log(`Added ${documents.length} chunks to vector database. Total documents: ${vectorDatabase.length}`);
-};
-
-// Clear vector database (useful for testing)
-export const clearVectorDB = (): void => {
-  vectorDatabase = [];
-  console.log("Vector database cleared");
+  console.log(`Added ${documents.length} chunks to vector database`);
 };
 
 // Simulate vector similarity search
 export const searchSimilarDocuments = (query: string, topK: number = 3): Document[] => {
-  // In a real implementation with LangChain and FAISS:
+  // In a real implementation with LangChain and FAISS, you would use:
   /*
   const results = await vectorDB.similaritySearch(query, topK);
   return results.map(result => ({
@@ -85,34 +117,18 @@ export const searchSimilarDocuments = (query: string, topK: number = 3): Documen
   }));
   */
   
-  if (vectorDatabase.length === 0) {
-    console.log("Vector database is empty. No documents to search.");
-    return [];
-  }
-  
-  // For simulation, we'll implement a basic keyword-based relevance scoring
-  // In a real implementation, this would use vector embeddings and cosine similarity
+  // For simulation, we'll do a simple keyword match
   const keywords = query.toLowerCase().split(' ');
   
   const scoredDocuments = vectorDatabase.map(doc => {
     const content = doc.content.toLowerCase();
     let score = 0;
     
-    // Calculate relevance score based on keyword matches
     keywords.forEach(keyword => {
-      if (keyword.length < 3) return; // Skip very short words
       if (content.includes(keyword)) {
-        // Count occurrences for better scoring
-        const regex = new RegExp(keyword, 'gi');
-        const matches = content.match(regex) || [];
-        score += matches.length;
+        score += 1;
       }
     });
-    
-    // Boost score for exact phrase matches
-    if (content.includes(query.toLowerCase())) {
-      score += 5;
-    }
     
     return { doc, score };
   });
@@ -132,7 +148,7 @@ export const processFileWithRAG = (fileContent: string, source: string): string 
   // 2. Add to vector database
   addDocumentsToVectorDB(chunks);
   
-  // 3. Return a summary of the process
+  // 3. For demonstration, return a summary of the process
   return `
     Processed ${chunks.length} chunks from ${source}.
     Content indexed and ready for quiz generation.
@@ -141,46 +157,15 @@ export const processFileWithRAG = (fileContent: string, source: string): string 
 };
 
 // Get relevant context for quiz generation
-export const getRelevantContext = (topic: string, maxLength: number = 3000): string => {
-  const relevantDocs = searchSimilarDocuments(topic, 5);
+export const getRelevantContext = (topic: string): string => {
+  const relevantDocs = searchSimilarDocuments(topic);
   
   if (relevantDocs.length === 0) {
     return "No relevant information found in the uploaded documents.";
   }
   
   // Combine the content from relevant documents
-  let combinedContext = relevantDocs
-    .map(doc => `[From ${doc.metadata.source}${doc.metadata.page ? `, Page ${doc.metadata.page}` : ''}]:\n${doc.content}`)
+  return relevantDocs
+    .map(doc => doc.content)
     .join('\n\n');
-  
-  // Trim if too long
-  if (combinedContext.length > maxLength) {
-    combinedContext = combinedContext.substring(0, maxLength) + "...";
-  }
-  
-  return combinedContext;
-};
-
-// Get a summary of the vector database status
-export const getVectorDBStatus = (): string => {
-  if (vectorDatabase.length === 0) {
-    return "No documents have been uploaded to the vector database.";
-  }
-  
-  // Group documents by source
-  const sourceGroups: Record<string, number> = {};
-  vectorDatabase.forEach(doc => {
-    const source = doc.metadata.source;
-    sourceGroups[source] = (sourceGroups[source] || 0) + 1;
-  });
-  
-  // Generate summary
-  const sourceList = Object.entries(sourceGroups)
-    .map(([source, count]) => `- ${source}: ${count} chunks`)
-    .join('\n');
-  
-  return `Vector Database Status:
-  Total chunks: ${vectorDatabase.length}
-  Documents:
-  ${sourceList}`;
 };
