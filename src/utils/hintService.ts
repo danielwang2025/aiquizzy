@@ -12,7 +12,7 @@ export async function generateHint(question: QuizQuestion): Promise<string> {
   
   try {
     // For simple questions, return a generic hint to avoid unnecessary API calls
-    if (question.difficulty === "easy") {
+    if (question.bloomLevel === "remember") {
       if (question.type === "multiple_choice") {
         return "Try eliminating options that are clearly incorrect first. Look for keywords in the question that match with specific options.";
       } else {

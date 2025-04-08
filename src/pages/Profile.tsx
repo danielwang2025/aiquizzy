@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { loadQuizHistory, saveQuizHistory } from "@/utils/historyService";
@@ -15,7 +16,8 @@ import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "luci
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [preferences, setPreferences] = useState<LearningPreferences>({
-    preferredDifficulty: "medium",
+    preferredDifficulty: "understand", // Changed from "medium" to "understand"
+    preferredBloomLevel: "understand",
     preferredQuestionTypes: ["multiple_choice", "fill_in"],
     topicsOfInterest: [],
     dailyGoal: 10,
@@ -212,21 +214,25 @@ const Profile: React.FC = () => {
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="difficulty">Preferred Difficulty</Label>
+                  <Label htmlFor="difficulty">Preferred Difficulty (Bloom's Level)</Label>
                   <Select
                     value={preferences.preferredDifficulty}
                     onValueChange={(value) => setPreferences(prev => ({
                       ...prev,
-                      preferredDifficulty: value as 'easy' | 'medium' | 'hard'
+                      preferredDifficulty: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create',
+                      preferredBloomLevel: value as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create'
                     }))}
                   >
                     <SelectTrigger id="difficulty">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
+                      <SelectItem value="remember">Remember (Basic)</SelectItem>
+                      <SelectItem value="understand">Understand</SelectItem>
+                      <SelectItem value="apply">Apply</SelectItem>
+                      <SelectItem value="analyze">Analyze</SelectItem>
+                      <SelectItem value="evaluate">Evaluate</SelectItem>
+                      <SelectItem value="create">Create (Advanced)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
