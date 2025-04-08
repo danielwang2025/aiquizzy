@@ -34,6 +34,12 @@
     --ring: 215 20% 65%;
 
     --radius: 0.75rem;
+
+    /* Glassmorphism values */
+    --glass-background: 210 40% 98% / 0.7;
+    --glass-border: 210 40% 98% / 0.2;
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    --glass-blur: 8px;
   }
 
   .dark {
@@ -64,6 +70,12 @@
     --border: 217 33% 18%;
     --input: 217 33% 18%;
     --ring: 212 27% 84%;
+
+    /* Glassmorphism values for dark mode */
+    --glass-background: 222 47% 11% / 0.7;
+    --glass-border: 222 47% 11% / 0.2;
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --glass-blur: 10px;
   }
 }
 
@@ -120,6 +132,7 @@
   }
 }
 
+/* 玻璃态效果 Glassmorphism */
 .glass-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -127,6 +140,58 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
+.glass-effect {
+  @apply bg-opacity-70 backdrop-filter backdrop-blur-md bg-white border border-white/20 shadow-lg;
+}
+
+.glass-card-dark {
+  background: rgba(30, 30, 30, 0.2);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+.neo-card {
+  background: #f0f4f8;
+  box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff;
+  border-radius: 16px;
+}
+
+.dark .neo-card {
+  background: #1a1d2b;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2), -5px -5px 10px rgba(40, 45, 60, 0.2);
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+}
+
+.gradient-bg-primary {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600;
+}
+
+.gradient-bg-secondary {
+  @apply bg-gradient-to-r from-purple-600 to-indigo-500;
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(to right, #3b82f6, #6366f1);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Animation classes */
 .question-enter {
   opacity: 0;
   transform: translateY(20px);
@@ -148,6 +213,7 @@
   transition: opacity 500ms, transform 500ms;
 }
 
+/* 优化空间和布局 */
 @layer utilities {
   /* Button hover effects */
   .btn-scale {
@@ -165,6 +231,19 @@
     @apply shadow-card-hover -translate-y-1;
   }
 
+  /* 改进的空间系统 */
+  .space-section {
+    @apply py-12 md:py-20;
+  }
+  
+  .space-content {
+    @apply max-w-3xl mx-auto px-4 md:px-0;
+  }
+  
+  .space-between-components {
+    @apply my-8 md:my-12;
+  }
+  
   /* Gradient backgrounds */
   .bg-gradient-primary {
     @apply bg-gradient-to-r from-blue-600 to-blue-500;
@@ -185,5 +264,27 @@
   /* Text gradients */
   .text-gradient-primary {
     @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+  }
+  
+  /* 3D 按钮效果 */
+  .btn-3d {
+    @apply shadow-md transition-all duration-200;
+  }
+  
+  .btn-3d:hover {
+    @apply shadow-xl transform -translate-y-0.5;
+  }
+  
+  .btn-3d:active {
+    @apply shadow-sm transform translate-y-0.5;
+  }
+  
+  /* 响应式间距工具类 */
+  .section-pad {
+    @apply py-8 md:py-16;
+  }
+  
+  .section-margin {
+    @apply my-8 md:my-16;
   }
 }
