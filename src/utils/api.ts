@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/securityUtils";
 import { getApiKey } from "@/utils/envVars";
 import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
-import { getRelevantContext } from "@/utils/ragService";
 
 export async function generateQuestions(
   learningObjectives: string,
@@ -17,14 +16,14 @@ export async function generateQuestions(
   try {
     // Check for prompt injection or harmful content
     if (detectPromptInjection(learningObjectives)) {
-      toast.error("Potential prompt injection detected. Please rephrase your request.");
+      toast.error("检测到潜在的提示注入。请重新表述您的请求。");
       throw new Error("Prompt injection attempt detected");
     }
 
     // Wait for the moderation result
     const moderationResult = await moderateContent(learningObjectives);
     if (moderationResult.flagged) {
-      toast.error("Your input contains potentially harmful content that cannot be processed.");
+      toast.error("您的输入包含潜在有害内容，无法处理。");
       throw new Error("Content moderation failed");
     }
     
@@ -49,38 +48,19 @@ export async function generateQuestions(
     console.log("Generating quiz for learning objectives:", learningObjectives);
     console.log("Options:", { count, difficulty, questionTypes, multipleChoiceCount, fillInCount });
     
-    toast.loading("Generating quiz questions...");
+    toast.loading("AI 正在生成练习题...");
 
     // Get the DeepSeek API key from our environment variables
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
-    // Get relevant context from uploaded documents using RAG
-    const relevantContext = getRelevantContext(learningObjectives);
-    console.log("RAG context retrieved:", relevantContext ? "Content found" : "No relevant content");
-    
-    // Customize the system prompt based on options and include RAG context
-    const systemPrompt = `You are an educational quiz generator. Generate ${count} quiz questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) at ${difficulty} difficulty level based on the learning objectives and the provided context from learning materials.
-
-Using the information from the uploaded documents is CRITICAL. Base your questions primarily on this content. If the context doesn't contain sufficient information for the learning objectives, you may supplement with general knowledge.
-
-Return your response in JSON format:
-{"questions": [
-  {"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "difficulty": "${difficulty}"},
-  {"id": "q2", "type": "fill_in", "question": "Question with blank ________.", "correctAnswer": "answer", "explanation": "Explanation", "difficulty": "${difficulty}"}
-]}`;
+    // Customize the system prompt based on options
+    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
     
     // Add CSRF token to headers
     const headers = addCsrfToHeaders({
       "Content-Type": "application/json",
       "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
     });
-    
-    let userContent = `Learning objectives: ${learningObjectives}`;
-    
-    // Add RAG context if available
-    if (relevantContext && relevantContext !== "No relevant information found in the uploaded documents.") {
-      userContent += `\n\nContext from uploaded learning materials:\n${relevantContext}`;
-    }
     
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -94,7 +74,7 @@ Return your response in JSON format:
           },
           {
             role: "user",
-            content: userContent
+            content: `根据这些学习目标创建测试：${learningObjectives}`
           }
         ],
         temperature: 0.7,
@@ -166,11 +146,11 @@ Return your response in JSON format:
       return questions;
     } catch (error) {
       console.error("Error parsing DeepSeek response:", error);
-      throw new Error("Failed to parse DeepSeek API response");
+      throw new Error("解析 DeepSeek API 响应中的问题失败");
     }
   } catch (error) {
     console.error("Error generating quiz:", error);
-    toast.error("Failed to generate quiz. Please try again.");
+    toast.error("生成测试失败。请重试。");
     throw new Error("Failed to generate quiz");
   }
 }

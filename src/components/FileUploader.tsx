@@ -52,10 +52,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         const text = await file.text();
         
         // Process with RAG
-        const processResult = processFileWithRAG(text, file.name);
-        onTextExtracted(text);
+        const processedText = processFileWithRAG(text, file.name);
+        onTextExtracted(processedText);
         
-        toast.success("Document processed with RAG for enhanced quiz generation!");
+        toast.success("Text extracted and processed with RAG!");
       } else {
         // For PDF and other document types
         const reader = new FileReader();
@@ -63,7 +63,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
         reader.onload = async (event) => {
           try {
             // Simulate text extraction from binary files
-            // In a production app, you would use a PDF parsing library here
             const simulatedText = `
               ${file.name} content:
               This is extracted content from your learning material.
@@ -74,10 +73,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
             `;
             
             // Process with RAG
-            const processResult = processFileWithRAG(simulatedText, file.name);
-            onTextExtracted(simulatedText);
+            const processedText = processFileWithRAG(simulatedText, file.name);
+            onTextExtracted(processedText);
             
-            toast.success("Document indexed with RAG for enhanced quiz generation!");
+            toast.success("Content extracted and processed with RAG!");
           } catch (error) {
             console.error("Error processing file:", error);
             toast.error("Failed to process file content");
@@ -96,7 +95,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
     } catch (error) {
       console.error("Error extracting text:", error);
       toast.error("Failed to extract text from file");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -156,7 +154,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onTextExtracted }) => {
             disabled={isLoading}
             onClick={extractTextFromFile}
           >
-            {isLoading ? "Processing with RAG..." : "Extract & Index Content"}
+            {isLoading ? "Processing with RAG..." : "Extract Content for Quiz"}
           </Button>
         </div>
       )}
