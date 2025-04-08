@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/securityUtils";
 import { getApiKey } from "@/utils/envVars";
 import { moderateContent, detectPromptInjection } from "@/utils/moderationService";
-import { getRelevantContext } from "@/utils/ragService";
 
 export async function generateQuestions(
   learningObjectives: string,
@@ -51,18 +50,11 @@ export async function generateQuestions(
     
     toast.loading("AI 正在生成练习题...");
 
-    // Get relevant context from uploaded documents using RAG
-    const relevantContext = await getRelevantContext(learningObjectives);
-    console.log("Retrieved relevant context:", relevantContext.substring(0, 200) + "...");
-
     // Get the DeepSeek API key from our environment variables
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
-    // Customize the system prompt based on options and include the relevant context
+    // Customize the system prompt based on options
     const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。难度级别应为 ${difficulty}。
-
-参考以下相关内容作为知识基础：
-${relevantContext}
 
 使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "difficulty": "${difficulty}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "difficulty": "${difficulty}"}]}`;
     

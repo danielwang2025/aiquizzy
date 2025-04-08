@@ -1,4 +1,3 @@
-
 import React, { useState, useReducer, useEffect } from "react";
 import { QuizState, QuizQuestion, QuizResult, QuizAttempt, QuizHistory as QuizHistoryType, DisputedQuestion } from "@/types/quiz";
 import { generateQuestions } from "@/utils/api";
@@ -30,7 +29,6 @@ import ReviewList from "./ReviewList";
 import DisputedQuestions from "./DisputedQuestions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
-import FileUploader from "./FileUploader";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/utils/authService";
 
@@ -138,7 +136,6 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState(initialTopic);
-  const [extractedText, setExtractedText] = useState("");
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -209,12 +206,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      // If we have extracted text, include it in the API call
-      const promptWithContext = extractedText 
-        ? `Learning objectives: ${objectives}\n\nContext from uploaded document: ${extractedText}`
-        : objectives;
-      
-      const questions = await generateQuestions(promptWithContext, {
+      const questions = await generateQuestions(objectives, {
         difficulty,
         count: questionCount,
         questionTypes
@@ -238,11 +230,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       });
       toast.error("Failed to generate quiz. Please check the console for details.");
     }
-  };
-
-  const handleFileTextExtracted = (text: string) => {
-    setExtractedText(text);
-    toast.success("Text extracted and will be used to enhance quiz questions");
   };
 
   // Handle question type selection
@@ -502,8 +489,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
               onChange={(e) => setObjectives(e.target.value)}
             />
           </div>
-          
-          <FileUploader onTextExtracted={handleFileTextExtracted} />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
