@@ -1,269 +1,278 @@
 
 import React, { useState } from "react";
-import { loginUser, requestPasswordReset } from "@/utils/authService";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { loginUser, sendMagicLink, requestPasswordReset } from "@/utils/authService";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { escapeHtml } from "@/utils/securityUtils";
-import { Eye, EyeOff, LogIn, Mail, Key, HelpCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Mail, KeyRound, MoveRight, Loader2 } from "lucide-react";
 
 interface LoginFormProps {
-  onSuccess: () => void;
-  onRegisterClick: () => void;
+  onSuccess?: () => void;
+  onRegisterClick?: () => void;
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  "Invalid login credentials": "邮箱或密码不正确，请重试",
-  "Email not confirmed": "请先验证您的邮箱，然后再登录",
-  "Invalid email": "请输入有效的邮箱地址",
-};
+// 为登录表单创建模式验证
+const loginSchema = z.object({
+  email: z.string().email("请输入有效的邮箱地址"),
+  password: z.string().min(6, "密码至少为6个字符"),
+});
+
+// 为魔术链接创建模式验证
+const magicLinkSchema = z.object({
+  email: z.string().email("请输入有效的邮箱地址"),
+});
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetLoading, setResetLoading] = useState(false);
-  
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Apply HTML escaping to prevent XSS attacks
-      const sanitizedValue = escapeHtml(e.target.value);
-      setter(sanitizedValue);
-      setError(null); // Clear error when input changes
-    };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      setError("请填写所有必填字段");
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+
+  // 登录表单初始化
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // 魔术链接表单初始化
+  const magicLinkForm = useForm<z.infer<typeof magicLinkSchema>>({
+    resolver: zodResolver(magicLinkSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  // 处理常规登录提交
+  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      console.log("提交登录表单，邮箱:", email);
-      await loginUser(email, password);
-      console.log("登录成功");
-      onSuccess();
-    } catch (error) {
-      console.error("登录失败:", error);
-      
-      // 提供更友好的错误信息
-      let errorMessage = error instanceof Error ? error.message : "登录失败";
-      
-      // 映射已知错误消息到中文提示
-      const friendlyMessage = ERROR_MESSAGES[errorMessage] || errorMessage;
-      setError(friendlyMessage);
-      toast.error(friendlyMessage);
+      setIsLoggingIn(true);
+      console.log("尝试登录...", values.email);
+      await loginUser(values.email, values.password);
+      console.log("登录成功!");
+      onSuccess?.();
+    } catch (error: any) {
+      console.error("登录失败:", error.message);
+      toast.error(error.message || "登录失败，请稍后再试");
     } finally {
-      setIsLoading(false);
+      setIsLoggingIn(false);
     }
   };
-  
-  const handleForgotPassword = async () => {
-    if (!resetEmail) {
-      toast.error("请输入您的邮箱地址");
-      return;
-    }
-    
-    setResetLoading(true);
+
+  // 处理魔术链接登录
+  const onMagicLinkSubmit = async (values: z.infer<typeof magicLinkSchema>) => {
     try {
-      await requestPasswordReset(resetEmail);
-      toast.success("重置密码链接已发送至您的邮箱");
-      setShowForgotPassword(false);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "发送重置链接失败";
-      toast.error(errorMessage);
+      setIsSendingMagicLink(true);
+      await sendMagicLink(values.email);
+      toast.success("登录链接已发送到您的邮箱，请查收");
+    } catch (error: any) {
+      toast.error(error.message || "发送登录链接失败，请稍后再试");
     } finally {
-      setResetLoading(false);
+      setIsSendingMagicLink(false);
     }
   };
-  
+
+  // 处理密码重置
+  const onResetPasswordSubmit = async (values: z.infer<typeof magicLinkSchema>) => {
+    try {
+      setIsSendingReset(true);
+      await requestPasswordReset(values.email);
+      toast.success("密码重置链接已发送到您的邮箱，请查收");
+      setForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || "发送重置链接失败，请稍后再试");
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   return (
-    <motion.div 
-      className="space-y-6"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          欢迎回来
-        </h1>
-        <p className="text-muted-foreground">请输入您的凭据登录账号</p>
-      </div>
-      
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-            <Mail className="h-4 w-4 text-primary" />
-            邮箱
-          </label>
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={handleInputChange(setEmail)}
-              required
-              className="pl-3 pr-3 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
-            />
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
-            <Key className="h-4 w-4 text-primary" />
-            密码
-          </label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={handleInputChange(setPassword)}
-              required
-              className="pl-3 pr-10 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowPassword(!showPassword)}
-              tabIndex={-1}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-        
-        <div className="text-right">
-          <Button 
-            type="button" 
-            variant="link" 
-            size="sm" 
-            className="text-primary p-0 h-auto text-xs"
-            onClick={() => setShowForgotPassword(true)}
-          >
-            忘记密码?
-          </Button>
-        </div>
-        
-        <Button
-          type="submit"
-          className="w-full h-11 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-600 transition-all shadow-md hover:shadow-lg hover:shadow-primary/20"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <LoadingSpinner size="sm" color="white" className="mr-2" />
-              登录中...
-            </>
-          ) : (
-            <>
-              <LogIn className="mr-2 h-4 w-4" />
-              登录
-            </>
-          )}
-        </Button>
-      </form>
-      
-      <div className="relative py-3">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-muted"></div>
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-background px-2 text-muted-foreground">
-            还没有账号？
-          </span>
-        </div>
-      </div>
-      
-      <div className="text-center">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onRegisterClick}
-          className="w-full neo-card border-white/20 hover:shadow-md"
-        >
-          创建新账号
-        </Button>
-      </div>
-      
-      {/* 忘记密码对话框 */}
-      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>重置密码</DialogTitle>
-            <DialogDescription>
-              请输入您的邮箱地址，我们将发送重置密码的链接给您
-            </DialogDescription>
-          </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-center text-2xl font-bold">欢迎回来</DialogTitle>
+      </DialogHeader>
+
+      {forgotPassword ? (
+        <div className="animate-fade-in">
+          <p className="text-center text-muted-foreground mb-6">
+            请输入您的邮箱地址，我们将发送密码重置链接
+          </p>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="reset-email" className="text-sm font-medium">
-                邮箱地址
-              </label>
-              <Input
-                id="reset-email"
-                type="email"
-                placeholder="your@email.com"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
+          <Form {...magicLinkForm}>
+            <form onSubmit={magicLinkForm.handleSubmit(onResetPasswordSubmit)} className="space-y-4">
+              <FormField
+                control={magicLinkForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>邮箱</FormLabel>
+                    <FormControl>
+                      <Input placeholder="your@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
+
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSendingReset}
+              >
+                {isSendingReset ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    发送中...
+                  </>
+                ) : (
+                  "发送重置链接"
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full mt-2"
+                onClick={() => setForgotPassword(false)}
+              >
+                返回登录
+              </Button>
+            </form>
+          </Form>
+        </div>
+      ) : (
+        <Tabs defaultValue="password" className="w-full mt-4">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="password">密码登录</TabsTrigger>
+            <TabsTrigger value="magic-link">魔术链接</TabsTrigger>
+          </TabsList>
           
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowForgotPassword(false)}
-              disabled={resetLoading}
-            >
-              取消
-            </Button>
-            <Button 
-              onClick={handleForgotPassword}
-              disabled={resetLoading || !resetEmail}
-            >
-              {resetLoading ? (
-                <>
-                  <LoadingSpinner size="sm" color="white" className="mr-2" />
-                  发送中...
-                </>
-              ) : (
-                "发送重置链接"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+          <TabsContent value="password" className="animate-fade-in">
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                <FormField
+                  control={loginForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>邮箱</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>密码</FormLabel>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto text-xs"
+                          type="button"
+                          onClick={() => setForgotPassword(true)}
+                        >
+                          忘记密码?
+                        </Button>
+                      </div>
+                      <FormControl>
+                        <Input type="password" placeholder="******" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoggingIn}
+                >
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      登录中...
+                    </>
+                  ) : (
+                    <>
+                      登录
+                      <KeyRound className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
+          
+          <TabsContent value="magic-link" className="animate-fade-in">
+            <Form {...magicLinkForm}>
+              <form onSubmit={magicLinkForm.handleSubmit(onMagicLinkSubmit)} className="space-y-4">
+                <FormField
+                  control={magicLinkForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>邮箱</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSendingMagicLink}
+                >
+                  {isSendingMagicLink ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      发送中...
+                    </>
+                  ) : (
+                    <>
+                      发送登录链接
+                      <Mail className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
+      )}
+
+      <div className="mt-6">
+        <Separator />
+        <p className="text-center text-sm text-muted-foreground mt-4">
+          还没有账号?{" "}
+          <Button
+            variant="link"
+            className="p-0 h-auto"
+            onClick={onRegisterClick}
+          >
+            立即注册
+            <MoveRight className="ml-1 h-4 w-4" />
+          </Button>
+        </p>
+      </div>
+    </>
   );
 };
 

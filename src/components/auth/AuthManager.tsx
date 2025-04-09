@@ -6,7 +6,7 @@ import { getCurrentUser, logoutUser } from "@/utils/authService";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User as UserType } from "@/types/quiz";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,6 +25,7 @@ const AuthManager: React.FC = () => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,6 +54,10 @@ const AuthManager: React.FC = () => {
             console.log("onAuthStateChange - Current user data:", userData);
             setUser(userData);
             toast.success("登录成功");
+            // Redirect to home page on successful login
+            navigate('/');
+            // Close auth modal if open
+            setIsAuthModalOpen(false);
           } catch (error) {
             console.error("Error fetching user after sign in:", error);
             toast.error("获取用户信息失败");
@@ -74,14 +79,37 @@ const AuthManager: React.FC = () => {
             console.error("Error fetching updated user:", error);
           }
         }, 0);
+      } else if (event === 'MAGIC_LINK_EMAIL_SENT') {
+        toast.success("魔术链接已发送至您的邮箱，请查收");
       }
     });
+    
+    // Check for current session on mount or route change
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log("Existing session found");
+          const userData = await getCurrentUser();
+          setUser(userData);
+        } else {
+          console.log("No active session found");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Session check failed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
     
     // Clean up subscription when component unmounts
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
   
   const handleLoginClick = () => {
     setIsLoginView(true);
@@ -95,10 +123,13 @@ const AuthManager: React.FC = () => {
   
   const handleLogout = async () => {
     try {
+      setIsLoading(true); // Show loading state during logout
       await logoutUser();
     } catch (error) {
       console.error("登出失败:", error);
       toast.error("退出登录失败，请稍后再试");
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -107,10 +138,15 @@ const AuthManager: React.FC = () => {
       <Button 
         variant="outline" 
         size="sm"
-        className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300"
-        disabled
+        className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 animate-pulse"
       >
-        <span className="animate-pulse">加载中...</span>
+        <span className="flex items-center">
+          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          加载中...
+        </span>
       </Button>
     );
   }
@@ -132,7 +168,7 @@ const AuthManager: React.FC = () => {
             <span className="max-w-[100px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 animate-fade-in">
           <DropdownMenuLabel>我的账户</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
@@ -141,9 +177,21 @@ const AuthManager: React.FC = () => {
               个人资料
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            退出登录
+          <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <svg className="animate-spin mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                退出中...
+              </>
+            ) : (
+              <>
+                <LogOut className="mr-2 h-4 w-4" />
+                退出登录
+              </>
+            )}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -164,7 +212,7 @@ const AuthManager: React.FC = () => {
       </Button>
       
       <Dialog open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md animate-scale-in">
           {isLoginView ? (
             <LoginForm
               onSuccess={handleAuthSuccess}

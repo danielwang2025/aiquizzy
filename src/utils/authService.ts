@@ -8,16 +8,45 @@ const ERROR_MAPPINGS: Record<string, string> = {
   "Invalid login credentials": "邮箱或密码错误",
   "User already registered": "此邮箱已被注册",
   "Password should be at least 6 characters": "密码长度至少需要6个字符",
+  "For security purposes, you can only request this once every 60 seconds": "出于安全考虑，您每60秒只能请求一次",
+  "Error sending magic link": "发送魔术链接时出错，请稍后再试",
 };
 
 // 处理并返回用户友好的错误消息
 const handleAuthError = (error: any): Error => {
-  console.error("Auth error:", error);
+  console.error("Auth error details:", error);
   
   const errorMessage = error?.message || "操作失败";
   const friendlyMessage = ERROR_MAPPINGS[errorMessage] || errorMessage;
   
   return new Error(friendlyMessage);
+};
+
+// Send Magic Link for passwordless login
+export const sendMagicLink = async (email?: string): Promise<void> => {
+  if (!email) {
+    throw new Error("邮箱地址必填");
+  }
+  
+  try {
+    console.log("Sending magic link to:", email);
+    
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
+    });
+    
+    if (error) {
+      console.error("Magic link error:", error);
+      throw handleAuthError(error);
+    }
+    
+    console.log("Magic link sent successfully");
+  } catch (error) {
+    throw handleAuthError(error);
+  }
 };
 
 // Send OTP code via SMS for phone authentication
@@ -103,7 +132,8 @@ export const registerUser = async (email?: string, password?: string, displayNam
       options: {
         data: {
           display_name: displayName || email.split('@')[0]
-        }
+        },
+        emailRedirectTo: window.location.origin
       }
     });
     
@@ -144,11 +174,13 @@ export const loginUser = async (email?: string, password?: string): Promise<User
     });
     
     if (error) {
+      console.error("登录失败详情:", error);
       throw handleAuthError(error);
     }
     
     if (!data || !data.user) {
-      throw new Error("登录失败");
+      console.error("登录数据不完整");
+      throw new Error("登录失败，请稍后再试");
     }
     
     console.log("登录成功:", data.user);
