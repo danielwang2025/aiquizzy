@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserSubscription, SubscriptionTier } from "@/types/subscription";
 import { toast } from "sonner";
@@ -45,9 +44,9 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
       questionCount: data.question_count,
       subscriptionEndDate: data.subscription_end_date,
       isActive: data.is_active,
-      // Use optional chaining to safely access potentially missing fields
-      stripeCustomerId: data.stripe_customer_id,
-      stripeSubscriptionId: data.stripe_subscription_id
+      // Properly handle optional fields after database migration
+      stripeCustomerId: data.stripe_customer_id || undefined,
+      stripeSubscriptionId: data.stripe_subscription_id || undefined
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
