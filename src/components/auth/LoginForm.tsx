@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { loginUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     e.preventDefault();
     
     if (!email || !password) {
-      setError("请填写所有必填字段");
+      setError("Please fill in all required fields");
       return;
     }
     
@@ -41,10 +40,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     
     try {
       await loginUser(email, password);
-      toast.success("登录成功");
+      toast.success("Login successful");
       onSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "登录失败";
+      const errorMessage = error instanceof Error ? error.message : "Login failed";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -61,9 +60,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          欢迎回来
+          Welcome Back
         </h1>
-        <p className="text-muted-foreground">请输入您的凭据以访问您的帐户</p>
+        <p className="text-muted-foreground">Please enter your credentials to access your account</p>
       </div>
       
       {error && (
@@ -76,7 +75,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
-            电子邮箱
+            Email
           </label>
           <div className="relative">
             <Input
@@ -94,7 +93,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            密码
+            Password
           </label>
           <div className="relative">
             <Input
@@ -123,7 +122,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           disabled={isLoading}
         >
           <LogIn className="mr-2 h-4 w-4" />
-          {isLoading ? "登录中..." : "登录"}
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
       
@@ -133,7 +132,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         </div>
         <div className="relative flex justify-center text-xs">
           <span className="bg-background px-2 text-muted-foreground">
-            没有账户?
+            Don't have an account?
           </span>
         </div>
       </div>
@@ -145,7 +144,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           onClick={onRegisterClick}
           className="w-full neo-card border-white/20 hover:shadow-md"
         >
-          创建新账户
+          Create a new account
         </Button>
       </div>
     </motion.div>
