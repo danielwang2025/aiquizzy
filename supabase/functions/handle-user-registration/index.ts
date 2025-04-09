@@ -36,6 +36,7 @@ serve(async (req) => {
       .getUserById(record.id);
 
     if (userError) {
+      console.error("Error fetching user data:", userError);
       throw userError;
     }
 
@@ -51,6 +52,7 @@ serve(async (req) => {
       });
 
     if (profileError) {
+      console.error("Error creating user profile:", profileError);
       throw profileError;
     }
 
@@ -67,11 +69,14 @@ serve(async (req) => {
       });
 
     if (subscriptionError) {
+      console.error("Error creating user subscription:", subscriptionError);
       throw subscriptionError;
     }
 
+    console.log("User registration successfully processed:", record.id);
+
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, userId: record.id }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

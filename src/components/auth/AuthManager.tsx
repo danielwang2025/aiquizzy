@@ -22,13 +22,15 @@ const AuthManager: React.FC = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Set up authentication state change listener
+    // Set up authentication state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event, session);
+        
+        // Update auth state synchronously
+        setIsAuth(!!session);
+        
         if (session) {
-          setIsAuth(true);
-          
           // Use setTimeout to prevent deadlocks with supabase auth
           setTimeout(async () => {
             try {
@@ -45,7 +47,6 @@ const AuthManager: React.FC = () => {
             }
           }, 0);
         } else {
-          setIsAuth(false);
           setCurrentUser(null);
           localStorage.removeItem('current_user');
           setLoading(false);
@@ -93,6 +94,8 @@ const AuthManager: React.FC = () => {
       await logoutUser();
       toast.success("成功登出");
       localStorage.removeItem('current_user');
+      // Redirect to home page after logout
+      navigate("/");
     } catch (error) {
       toast.error("登出失败");
       console.error("Logout error:", error);

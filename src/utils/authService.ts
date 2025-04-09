@@ -208,7 +208,7 @@ export const logoutUser = async (): Promise<void> => {
 };
 
 // 更新用户资料
-export const updateUserProfile = async (displayName: string): Promise<void> => {
+export const updateUserProfile = async (displayName: string): Promise<User> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -216,7 +216,17 @@ export const updateUserProfile = async (displayName: string): Promise<void> => {
       throw new Error("用户未登录");
     }
 
-    const { error } = await supabase
+    // 更新 auth 元数据
+    const { error: authUpdateError } = await supabase.auth.updateUser({
+      data: { display_name: displayName }
+    });
+
+    if (authUpdateError) {
+      throw authUpdateError;
+    }
+
+    // 更新公共资料表
+    const { error: profileError } = await supabase
       .from('profiles')
       .update({ 
         display_name: displayName,
@@ -224,11 +234,56 @@ export const updateUserProfile = async (displayName: string): Promise<void> => {
       })
       .eq('id', user.id);
 
+    if (profileError) {
+      throw profileError;
+    }
+    
+    // 返回更新后的用户数据
+    return {
+      id: user.id,
+      email: user.email || "",
+      displayName: displayName,
+      createdAt: user.created_at || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("更新用户资料错误:", error);
+    throw error;
+  }
+};
+
+// 重置密码请求
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password',
+    });
+    
     if (error) {
       throw error;
     }
   } catch (error) {
-    console.error("更新用户资料错误:", error);
+    console.error("重置密码请求错误:", error);
+    throw error;
+  }
+};
+
+// 更新密码
+export const updateUserPassword = async (newPassword: string): Promise<void> => {
+  try {
+    const passwordValidation = validateStrongPassword(newPassword);
+    if (!passwordValidation.isValid) {
+      throw new Error(passwordValidation.message);
+    }
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("更新密码错误:", error);
     throw error;
   }
 };

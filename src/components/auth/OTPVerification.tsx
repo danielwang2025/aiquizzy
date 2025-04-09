@@ -1,12 +1,12 @@
 
-import React, { useState } from "react";
-import { verifyOTP } from "@/utils/authService";
+import React, { useState, useEffect } from "react";
+import { verifyOTP, sendEmailOTP } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { motion } from "framer-motion";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, RefreshCcw } from "lucide-react";
 
 interface OTPVerificationProps {
   email: string;
@@ -18,6 +18,21 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
   const [otpValue, setOtpValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCooldown]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +51,25 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
       onSuccess();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "验证失败";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await sendEmailOTP(email);
+      toast.success("验证码已重新发送");
+      setResendCooldown(60); // Start 60-second cooldown
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "发送验证码失败";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -124,9 +158,17 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             type="button"
             variant="link"
             className="p-0 h-auto font-normal underline"
-            onClick={() => toast.info("已重新发送验证码")}
+            onClick={handleResendOTP}
+            disabled={resendCooldown > 0 || isLoading}
           >
-            重新发送
+            {resendCooldown > 0 ? (
+              <span>{resendCooldown}秒后重新发送</span>
+            ) : (
+              <>
+                <RefreshCcw className="mr-1 h-3 w-3 inline" />
+                重新发送
+              </>
+            )}
           </Button>
         </p>
       </div>
@@ -135,4 +177,3 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
 };
 
 export default OTPVerification;
-
