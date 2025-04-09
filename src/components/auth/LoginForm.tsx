@@ -18,30 +18,35 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
       // Apply HTML escaping to prevent XSS attacks
       const sanitizedValue = escapeHtml(e.target.value);
       setter(sanitizedValue);
+      setError(null); // Clear error when input changes
     };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("Please fill in all fields");
+      setError("请填写所有必填字段");
       return;
     }
     
     setIsLoading(true);
+    setError(null);
     
     try {
       await loginUser(email, password);
-      toast.success("Login successful");
+      toast.success("登录成功");
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Login failed");
+      const errorMessage = error instanceof Error ? error.message : "登录失败";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -56,16 +61,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          Welcome Back
+          欢迎回来
         </h1>
-        <p className="text-muted-foreground">Enter your credentials to access your account</p>
+        <p className="text-muted-foreground">请输入您的凭据以访问您的帐户</p>
       </div>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
+          {error}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
-            Email
+            电子邮箱
           </label>
           <div className="relative">
             <Input
@@ -83,7 +94,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            Password
+            密码
           </label>
           <div className="relative">
             <Input
@@ -112,7 +123,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           disabled={isLoading}
         >
           <LogIn className="mr-2 h-4 w-4" />
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? "登录中..." : "登录"}
         </Button>
       </form>
       
@@ -122,7 +133,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         </div>
         <div className="relative flex justify-center text-xs">
           <span className="bg-background px-2 text-muted-foreground">
-            Don't have an account?
+            没有账户?
           </span>
         </div>
       </div>
@@ -134,7 +145,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
           onClick={onRegisterClick}
           className="w-full neo-card border-white/20 hover:shadow-md"
         >
-          Create a new account
+          创建新账户
         </Button>
       </div>
     </motion.div>

@@ -23,6 +23,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const [passwordStrength, setPasswordStrength] = useState<number>(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Update password strength
   useEffect(() => {
@@ -52,35 +53,39 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
       // Sanitize HTML to prevent XSS attacks
       const sanitizedValue = escapeHtml(e.target.value);
       setter(sanitizedValue);
+      setError(null); // Clear error when input changes
     };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password || !confirmPassword) {
-      toast.error("Please fill in all required fields");
+      setError("请填写所有必填字段");
       return;
     }
     
     const passwordValidation = validateStrongPassword(password);
     if (!passwordValidation.isValid) {
-      toast.error(passwordValidation.message);
+      setError(passwordValidation.message);
       return;
     }
     
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      setError("两次输入的密码不匹配");
       return;
     }
     
     setIsLoading(true);
+    setError(null);
     
     try {
       await registerUser(email, password, displayName);
-      toast.success("Registration successful");
+      toast.success("注册成功");
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Registration failed");
+      const errorMessage = error instanceof Error ? error.message : "注册失败";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -95,16 +100,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          Create Account
+          创建账户
         </h1>
-        <p className="text-muted-foreground">Enter your information to create an account</p>
+        <p className="text-muted-foreground">输入您的信息以创建新账户</p>
       </div>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-md p-3 text-sm">
+          {error}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
-            Email <span className="text-red-500">*</span>
+            电子邮箱 <span className="text-red-500">*</span>
           </label>
           <Input
             id="email"
@@ -120,12 +131,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="displayName" className="text-sm font-medium flex items-center gap-2">
             <User className="h-4 w-4 text-primary" />
-            Display Name (Optional)
+            显示名称 (可选)
           </label>
           <Input
             id="displayName"
             type="text"
-            placeholder="Your name"
+            placeholder="您的昵称"
             value={displayName}
             onChange={handleInputChange(setDisplayName)}
             className="pl-3 pr-3 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
@@ -135,7 +146,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            Password <span className="text-red-500">*</span>
+            密码 <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -181,7 +192,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             
             {!passwordError && password && (
               <div className="text-xs text-muted-foreground mt-1">
-                Password must be 8–12 characters and include uppercase, lowercase, number, and special characters.
+                密码必须包含8-12个字符，并包含大写字母、小写字母、数字和特殊字符。
               </div>
             )}
           </div>
@@ -190,7 +201,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            Confirm Password <span className="text-red-500">*</span>
+            确认密码 <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -219,7 +230,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           disabled={isLoading || !!passwordError}
         >
           <UserPlus className="mr-2 h-4 w-4" />
-          {isLoading ? "Creating account..." : "Register"}
+          {isLoading ? "创建账户中..." : "注册"}
         </Button>
       </form>
       
@@ -229,7 +240,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         </div>
         <div className="relative flex justify-center text-xs">
           <span className="bg-background px-2 text-muted-foreground">
-            Already have an account?
+            已有账户?
           </span>
         </div>
       </div>
@@ -241,7 +252,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           onClick={onLoginClick}
           className="w-full neo-card border-white/20 hover:shadow-md"
         >
-          Login to your account
+          登录到您的账户
         </Button>
       </div>
     </motion.div>

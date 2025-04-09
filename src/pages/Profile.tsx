@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -14,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { BookOpen, User as UserIcon, Settings, Clock, Target, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -101,12 +101,29 @@ const Profile: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
         <Navigation />
         
-        <main className="py-20 px-4 max-w-screen-xl mx-auto">
-          <div className="max-w-md mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-6 text-gradient-primary">Your Profile</h1>
-            <p className="text-muted-foreground mb-8">
-              Please log in to view and update your profile.
-            </p>
+        <main className="py-20 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-16"
+            >
+              <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Profile</span>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">Your Profile</h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Please log in to view and update your profile
+              </p>
+            </motion.div>
+            
+            <div className="max-w-md mx-auto text-center">
+              <Button 
+                asChild
+                className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg"
+              >
+                <Link to="/">Go Back Home</Link>
+              </Button>
+            </div>
           </div>
         </main>
         <Footer />
@@ -118,8 +135,8 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
       
-      <main className="py-20 px-4 max-w-screen-xl mx-auto">
-        <div className="max-w-4xl mx-auto">
+      <main className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

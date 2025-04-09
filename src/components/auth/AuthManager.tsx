@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User as UserType } from "@/types/quiz";
 import { motion } from "framer-motion";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useNavigate } from "react-router-dom";
 
 const AuthManager: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
@@ -18,9 +19,10 @@ const AuthManager: React.FC = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [showAuthSheet, setShowAuthSheet] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
   useEffect(() => {
-    // 设置身份验证状态变化监听器
+    // Set up authentication state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setLoading(true);
@@ -45,7 +47,7 @@ const AuthManager: React.FC = () => {
       }
     );
 
-    // 初始检查身份验证状态
+    // Initial authentication status check
     const checkAuth = async () => {
       try {
         const isAuthResult = await isAuthenticated();
@@ -67,7 +69,7 @@ const AuthManager: React.FC = () => {
     
     checkAuth();
     
-    // 清理订阅
+    // Clean up subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -76,6 +78,7 @@ const AuthManager: React.FC = () => {
   const handleAuthSuccess = () => {
     setShowAuthSheet(false);
     setShowRegister(false);
+    toast.success("登录成功");
   };
   
   const handleLogout = async () => {
@@ -95,8 +98,12 @@ const AuthManager: React.FC = () => {
   const toggleRegisterLogin = () => {
     setShowRegister(!showRegister);
   };
+
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
   
-  // 显示加载状态，但确保按钮可见
+  // Show loading state, but ensure button is visible
   if (loading) {
     return (
       <Button variant="outline" size="sm" className="flex items-center glass-effect border-white/20 shadow-sm">
@@ -120,6 +127,15 @@ const AuthManager: React.FC = () => {
               {currentUser?.displayName || currentUser?.email?.split('@')[0]}
             </span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleProfileClick}
+            className="glass-effect border-white/20 mr-2"
+          >
+            <UserCircle className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">个人资料</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"

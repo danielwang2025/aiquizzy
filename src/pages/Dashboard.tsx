@@ -206,25 +206,41 @@ const Dashboard: React.FC = () => {
   
   if (!stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
         <Navigation />
         
-        <main className="py-8 px-4 max-w-screen-xl mx-auto">
-          <motion.div 
-            className="max-w-3xl mx-auto text-center"
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-          >
-            <h1 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Your Learning Dashboard</h1>
-            <p className="text-muted-foreground mb-8">
-              You haven't completed any quizzes yet. Take a quiz to see your progress here!
-            </p>
-            <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg">
-              <Link to="/customize">Create Your First Quiz</Link>
-            </Button>
-          </motion.div>
+        <main className="py-20 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-16"
+            >
+              <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Your Dashboard</span>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">Personal Dashboard</h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Track your progress and manage your learning journey
+              </p>
+            </motion.div>
+            
+            <motion.div 
+              className="max-w-3xl mx-auto text-center"
+              initial="hidden"
+              animate="visible"
+              variants={fadeIn}
+            >
+              <p className="text-muted-foreground mb-8">
+                You haven't completed any quizzes yet. Take a quiz to see your progress here!
+              </p>
+              <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-lg hover:shadow-blue-500/20 transition-all duration-300 rounded-lg">
+                <Link to="/customize">Create Your First Quiz</Link>
+              </Button>
+            </motion.div>
+          </div>
         </main>
+        
+        <Footer />
       </div>
     );
   }
@@ -625,6 +641,7 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };
