@@ -13,5 +13,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true, // 启用自动令牌刷新
     persistSession: true, // 保持会话持久化
     detectSessionInUrl: true, // 从URL检测会话
+    flowType: 'pkce' // 使用PKCE流程，更安全且避免某些验证码问题
   },
 });
