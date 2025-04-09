@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,22 +41,22 @@ const ContactUs: React.FC = () => {
     
     // Basic form validation
     if (!formData.name.trim()) {
-      toast.error("请输入您的姓名");
+      toast.error("Please enter your name");
       return;
     }
     
     if (!validateEmail(formData.email)) {
-      toast.error("请输入有效的电子邮件地址");
+      toast.error("Please enter a valid email address");
       return;
     }
     
     if (!formData.subject.trim()) {
-      toast.error("请输入主题");
+      toast.error("Please enter a subject");
       return;
     }
     
     if (!formData.message.trim() || formData.message.length < 10) {
-      toast.error("请输入至少10个字符的消息");
+      toast.error("Please enter a message with at least 10 characters");
       return;
     }
     
@@ -66,7 +65,7 @@ const ContactUs: React.FC = () => {
     try {
       // Check for prompt injection or harmful content in the message
       if (detectPromptInjection(formData.message)) {
-        toast.error("您的消息包含潜在有害内容。请重新表述。");
+        toast.error("Your message contains potentially harmful content. Please rephrase.");
         setIsSubmitting(false);
         return;
       }
@@ -86,11 +85,11 @@ const ContactUs: React.FC = () => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "发送消息失败" }));
+        const errorData = await response.json().catch(() => ({ error: "Failed to send message" }));
         throw new Error(errorData.error || "Failed to send message");
       }
       
-      toast.success("消息发送成功！");
+      toast.success("Message sent successfully!");
       
       // Reset form
       setFormData({
@@ -101,7 +100,7 @@ const ContactUs: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to send message:", error);
-      toast.error("发送消息失败。请稍后再试。");
+      toast.error("Failed to send message. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -126,8 +125,8 @@ const ContactUs: React.FC = () => {
             
             <div className="flex items-center mb-4">
               <Mail className="h-5 w-5 mr-3 text-primary" />
-              <a href="mailto:dickbussiness@163.com" className="text-primary hover:underline">
-                dickbussiness@163.com
+              <a href="mailto:dickbusiness@163.com" className="text-primary hover:underline">
+                dickbusiness@163.com
               </a>
             </div>
             
