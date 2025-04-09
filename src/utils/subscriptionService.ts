@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserSubscription, SubscriptionTier } from "@/types/subscription";
 import { toast } from "sonner";
@@ -39,14 +40,16 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
     }
 
     // Map the database field names to our interface field names
+    // Use type assertion to tell TypeScript about the fields we know exist
+    const subscription = data as any;
     return {
-      tier: data.tier as SubscriptionTier,
-      questionCount: data.question_count,
-      subscriptionEndDate: data.subscription_end_date,
-      isActive: data.is_active,
+      tier: subscription.tier as SubscriptionTier,
+      questionCount: subscription.question_count,
+      subscriptionEndDate: subscription.subscription_end_date,
+      isActive: subscription.is_active,
       // Properly handle optional fields after database migration
-      stripeCustomerId: data.stripe_customer_id || undefined,
-      stripeSubscriptionId: data.stripe_subscription_id || undefined
+      stripeCustomerId: subscription.stripe_customer_id || undefined,
+      stripeSubscriptionId: subscription.stripe_subscription_id || undefined
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
