@@ -78,7 +78,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             render={({ slots }) => (
               <InputOTPGroup>
                 {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} className="w-12 h-12" />
+                  <InputOTPSlot key={index} index={index} {...slot} className="w-12 h-12" />
                 ))}
               </InputOTPGroup>
             )}
@@ -135,3 +135,4 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
 };
 
 export default OTPVerification;
+
