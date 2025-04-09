@@ -30,6 +30,7 @@ const AuthManager: React.FC = () => {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser();
+        console.log("fetchUser - Current user data:", userData);
         setUser(userData);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -42,13 +43,21 @@ const AuthManager: React.FC = () => {
     
     // Set up Supabase auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session ? "User logged in" : "User logged out");
+      
       if (event === 'SIGNED_IN' && session?.user) {
         // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(async () => {
-          const userData = await getCurrentUser();
-          setUser(userData);
+          try {
+            const userData = await getCurrentUser();
+            console.log("onAuthStateChange - Current user data:", userData);
+            setUser(userData);
+          } catch (error) {
+            console.error("Error fetching user after sign in:", error);
+          }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, clearing user state");
         setUser(null);
       }
     });
@@ -65,6 +74,7 @@ const AuthManager: React.FC = () => {
   };
   
   const handleAuthSuccess = () => {
+    console.log("Authentication successful, closing modal");
     setIsAuthModalOpen(false);
   };
   

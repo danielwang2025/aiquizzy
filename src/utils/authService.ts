@@ -64,6 +64,8 @@ export const registerUser = async (email?: string, password?: string, displayNam
     throw new Error("邮箱和密码必填");
   }
   
+  console.log("Attempting to register user:", email);
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -83,6 +85,7 @@ export const registerUser = async (email?: string, password?: string, displayNam
     throw new Error("注册失败");
   }
   
+  console.log("Registration successful:", data.user);
   return mapSupabaseUser(data.user);
 };
 
@@ -92,21 +95,32 @@ export const loginUser = async (email?: string, password?: string): Promise<User
     throw new Error("邮箱和密码必填");
   }
   
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  console.log("Attempting to log in user:", email);
   
-  if (error) {
-    console.error("Login error:", error);
-    throw new Error(error.message);
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) {
+      console.error("Login error:", error);
+      throw new Error(error.message);
+    }
+    
+    if (!data || !data.user) {
+      throw new Error("登录失败");
+    }
+    
+    console.log("Login successful:", data.user);
+    return mapSupabaseUser(data.user);
+  } catch (error) {
+    console.error("Login exception:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("登录过程中发生错误");
   }
-  
-  if (!data.user) {
-    throw new Error("登录失败");
-  }
-  
-  return mapSupabaseUser(data.user);
 };
 
 // Get current user

@@ -41,10 +41,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     setError(null);
     
     try {
+      console.log("提交登录表单，邮箱:", email);
       await loginUser(email, password);
+      console.log("登录成功");
       toast.success("登录成功");
       onSuccess();
     } catch (error) {
+      console.error("登录失败:", error);
       const errorMessage = error instanceof Error ? error.message : "登录失败";
       setError(errorMessage);
       toast.error(errorMessage);
