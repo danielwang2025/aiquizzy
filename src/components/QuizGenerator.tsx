@@ -55,6 +55,8 @@ import {
 
 interface QuizGeneratorProps {
   initialTopic?: string;
+  isAuthenticated?: boolean;
+  userId?: string;
 }
 
 type QuizAction =
@@ -150,13 +152,13 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
   }
 }
 
-const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
+const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "", isAuthenticated = false, userId }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState(initialTopic);
   const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({ attempts: [], reviewList: [], disputedQuestions: [] });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   const navigate = useNavigate();
-  const isAuth = isAuthenticated();
+  const isAuth = isAuthenticated;
   
   const [bloomLevel, setBloomLevel] = useState<"remember" | "understand" | "apply" | "analyze" | "evaluate" | "create">("understand");
   const [questionCount, setQuestionCount] = useState<number>(5);

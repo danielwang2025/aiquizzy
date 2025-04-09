@@ -20,7 +20,7 @@ import { UserSubscription } from "@/types/subscription";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
-  const isAuth = isAuthenticated();
+  const [isAuth, setIsAuth] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const topicFromUrl = searchParams.get("topic") || "";
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
@@ -31,7 +31,10 @@ const QuizCustomizer = () => {
   useEffect(() => {
     const loadSubscriptionData = async () => {
       try {
-        if (isAuth) {
+        const authStatus = await isAuthenticated();
+        setIsAuth(authStatus);
+        
+        if (authStatus) {
           const user = await getCurrentUser();
           setCurrentUser(user);
           
@@ -72,7 +75,7 @@ const QuizCustomizer = () => {
     };
     
     loadSubscriptionData();
-  }, [isAuth]);
+  }, []);
 
   const handleLoginClick = () => {
     // This will open the auth sheet from the Navigation component
