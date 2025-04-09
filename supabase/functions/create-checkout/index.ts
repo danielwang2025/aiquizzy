@@ -71,13 +71,9 @@ serve(async (req) => {
       customerId = customer.id;
 
       // Store the customer ID in the database
-      await supabaseClient.from("user_subscriptions").upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        tier: 'free',
-        question_count: 0,
-        is_active: true,
-      });
+      await supabaseClient.from("user_subscriptions").update({
+        stripe_customer_id: customerId
+      }).eq("user_id", user.id);
     }
 
     // Create a checkout session

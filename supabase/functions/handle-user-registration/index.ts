@@ -59,7 +59,7 @@ serve(async (req) => {
     // Create default subscription
     const { error: subscriptionError } = await supabase
       .from("user_subscriptions")
-      .insert({
+      .upsert({
         user_id: record.id,
         tier: "free",
         question_count: 0,

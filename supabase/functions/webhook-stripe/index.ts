@@ -71,13 +71,12 @@ serve(async (req) => {
         const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
         
         // Update the subscription in the database
-        await supabaseClient.from("user_subscriptions").upsert({
-          user_id: userId,
+        await supabaseClient.from("user_subscriptions").update({
           tier: isActive ? "premium" : "free",
           is_active: isActive,
           stripe_subscription_id: subscription.id,
           subscription_end_date: currentPeriodEnd,
-        });
+        }).eq("user_id", userId);
         
         break;
       }
