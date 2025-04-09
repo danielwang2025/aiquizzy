@@ -6,6 +6,8 @@ import { Crown, HelpCircle } from "lucide-react";
 import { UserSubscription } from "@/types/subscription";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubscriptionBannerProps {
   subscription: UserSubscription | null;
@@ -16,6 +18,8 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
   subscription, 
   remainingQuestions 
 }) => {
+  const isMobile = useIsMobile();
+  
   if (!subscription) return null;
   
   const isPremium = subscription.tier === 'premium';
@@ -25,7 +29,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
   
   return (
     <div className={`p-4 rounded-lg mb-6 ${isPremium ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
         <div className="flex items-center">
           {isPremium ? (
             <Crown className="h-5 w-5 text-amber-600 mr-2" />
@@ -37,7 +41,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
           </div>
         </div>
         
-        {!isPremium && (
+        {!isPremium && !isMobile && (
           <Link to="/pricing">
             <Button variant="outline" size="sm" className="bg-white hover:bg-amber-50 border-amber-200 text-amber-800">
               <Crown className="h-4 w-4 mr-1" />
@@ -51,7 +55,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <span className={`text-sm ${isPremium ? 'text-amber-700' : 'text-blue-700'}`}>
-              Question Credits Remaining:
+              Question Credits:
             </span>
             <TooltipProvider>
               <Tooltip>
@@ -76,9 +80,22 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
         
         <Progress 
           value={usagePercentage} 
-          className={`h-1.5 ${isPremium ? 'bg-amber-100' : 'bg-blue-100'}`}
-          indicatorClassName={`${isPremium ? 'bg-amber-500' : 'bg-blue-500'}`}
+          className={cn(
+            "h-1.5",
+            isPremium ? "bg-amber-100" : "bg-blue-100"
+          )}
         />
+        
+        {!isPremium && isMobile && (
+          <div className="mt-3 flex justify-end">
+            <Link to="/pricing">
+              <Button variant="outline" size="sm" className="bg-white hover:bg-amber-50 border-amber-200 text-amber-800 w-full">
+                <Crown className="h-4 w-4 mr-1" />
+                Upgrade to Premium
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
