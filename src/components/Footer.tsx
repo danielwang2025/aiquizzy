@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +15,7 @@ const Footer = () => {
           <div>
             <h3 className="font-extrabold text-2xl mb-4 gradient-text">AI Quizzy</h3>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              先进的AI测验生成平台，适用于教育和专业发展。
+              Advanced AI quiz generation platform for education and professional development.
             </p>
             <div className="flex space-x-3">
               {[{ icon: Twitter, href: "https://twitter.com", label: "Twitter" },
@@ -47,30 +46,30 @@ const Footer = () => {
           {/* Navigation Columns */}
           {[
             {
-              title: "平台",
+              title: "Platform",
               links: [
-                { to: "/", label: "首页" },
-                { to: "/customize", label: "创建测验" },
-                { to: "/review", label: "复习中心" },
-                { to: "/pricing", label: "价格方案" },
+                { to: "/", label: "Home" },
+                { to: "/customize", label: "Create Quiz" },
+                { to: "/review", label: "Review Hub" },
+                { to: "/pricing", label: "Pricing" },
               ],
             },
             {
-              title: "资源",
+              title: "Resources",
               links: [
-                { to: "/dashboard", label: "个人中心" },
-                { to: "/profile", label: "用户资料" },
-                { href: "#", label: "博客" },
-                { href: "#", label: "帮助中心" },
+                { to: "/dashboard", label: "Dashboard" },
+                { to: "/profile", label: "Profile" },
+                { href: "#", label: "Blog" },
+                { href: "#", label: "Help Center" },
               ],
             },
             {
-              title: "法律条款",
+              title: "Legal",
               links: [
-                { to: "/terms", label: "服务条款" },
-                { to: "/privacy", label: "隐私政策" },
-                { href: "#", label: "Cookie政策" },
-                { to: "/contact", label: "联系我们" },
+                { to: "/terms", label: "Terms of Service" },
+                { to: "/privacy", label: "Privacy Policy" },
+                { href: "#", label: "Cookie Policy" },
+                { to: "/contact", label: "Contact Us" },
               ],
             },
           ].map((section, idx) => (
@@ -107,15 +106,15 @@ const Footer = () => {
 
         <div className="flex flex-col md:flex-row items-center justify-between">
           <p className="text-muted-foreground flex items-center">
-            © {currentYear} AI Quizzy. 保留所有权利。由我们的团队用
-            <Heart className="h-4 w-4 mx-1 text-red-500" /> 创建。
+            © {currentYear} AI Quizzy. All rights reserved. Made with
+            <Heart className="h-4 w-4 mx-1 text-red-500" /> by our team.
           </p>
           <div className="flex gap-6 mt-6 md:mt-0">
             <Link to="/terms" className="hover:text-primary transition-colors">
-              条款
+              Terms
             </Link>
             <Link to="/privacy" className="hover:text-primary transition-colors">
-              隐私
+              Privacy
             </Link>
             <a href="#" className="hover:text-primary transition-colors">
               Cookies

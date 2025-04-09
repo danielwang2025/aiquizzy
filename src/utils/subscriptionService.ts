@@ -5,9 +5,8 @@ import { toast } from "sonner";
 
 // Default subscription limits
 const LIMITS = {
-  free: 50,      // 50 questions per month for free registered users
-  premium: 5000, // 5000 questions per month for premium users
-  unregistered: 5 // 5 questions for unregistered users (per IP/browser)
+  free: 50,
+  premium: 5000
 };
 
 /**
@@ -15,24 +14,9 @@ const LIMITS = {
  */
 export const getUserSubscription = async (userId?: string): Promise<UserSubscription> => {
   if (!userId) {
-    // For unregistered users, check localStorage for usage
-    const demoUsage = localStorage.getItem("demoQuizUsage");
-    const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-    
-    // Check if we need to reset (for a new day)
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    if (Date.now() - usage.timestamp > oneDayMs) {
-      localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
-      return {
-        tier: 'free',
-        questionCount: 0,
-        isActive: true
-      };
-    }
-    
     return {
       tier: 'free',
-      questionCount: usage.count,
+      questionCount: 0,
       isActive: true
     };
   }
@@ -74,21 +58,9 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
  * Check if user can generate more questions
  */
 export const canGenerateQuestions = async (userId?: string, count = 1): Promise<boolean> => {
+  if (!userId) return true; // For demo mode, allow without restrictions
+  
   try {
-    if (!userId) {
-      // For unregistered users, check localStorage for usage
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      // Check if we need to reset (for a new day)
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
-        return true; // Allow if it's a new day
-      }
-      
-      return usage.count + count <= LIMITS.unregistered;
-    }
-    
     const subscription = await getUserSubscription(userId);
     const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
     
@@ -102,28 +74,8 @@ export const canGenerateQuestions = async (userId?: string, count = 1): Promise<
 /**
  * Increment the user's question count
  */
-export const incrementQuestionCount = async (userId?: string, count: number = 1): Promise<void> => {
+export const incrementQuestionCount = async (userId: string, count: number): Promise<void> => {
   try {
-    // For unregistered users, update localStorage
-    if (!userId) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      // Check if we need to reset (for a new day)
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
-        localStorage.setItem("demoQuizUsage", JSON.stringify({ count, timestamp: Date.now() }));
-      } else {
-        const newCount = usage.count + count;
-        localStorage.setItem("demoQuizUsage", JSON.stringify({ 
-          count: newCount, 
-          timestamp: usage.timestamp 
-        }));
-      }
-      return;
-    }
-    
-    // For registered users, update in database
     // First check if subscription record exists
     const { data } = await supabase
       .from('user_subscriptions')
@@ -210,21 +162,9 @@ export const getSubscriptionPlans = () => {
  * Get remaining questions for the user
  */
 export const getRemainingQuestions = async (userId?: string): Promise<number> => {
+  if (!userId) return LIMITS.free; // For demo mode
+  
   try {
-    if (!userId) {
-      // For unregistered users, check localStorage
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      // Check if we need to reset (for a new day)
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      if (Date.now() - usage.timestamp > oneDayMs) {
-        return LIMITS.unregistered;
-      }
-      
-      return Math.max(0, LIMITS.unregistered - usage.count);
-    }
-    
     const subscription = await getUserSubscription(userId);
     const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
     
@@ -233,21 +173,4 @@ export const getRemainingQuestions = async (userId?: string): Promise<number> =>
     console.error("Error calculating remaining questions:", error);
     return 0;
   }
-};
-
-/**
- * Check if user is within their unregistered usage limit
- */
-export const checkUnregisteredLimit = (): boolean => {
-  const demoUsage = localStorage.getItem("demoQuizUsage");
-  const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-  
-  // Check if we need to reset (for a new day)
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  if (Date.now() - usage.timestamp > oneDayMs) {
-    localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
-    return true;
-  }
-  
-  return usage.count < LIMITS.unregistered;
 };

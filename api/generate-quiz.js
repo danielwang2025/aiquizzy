@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { learningObjectives, options = {}, userId } = req.body;
+    const { learningObjectives, options = {} } = req.body;
     
     if (!learningObjectives || learningObjectives.trim() === "") {
       return res.status(400).json({ error: "Learning objectives cannot be empty" });
