@@ -5,25 +5,15 @@
 import { User } from "@/types/quiz";
 
 // Return empty authentication state
-export const sendPhoneOTP = async (): Promise<void> => {
+export const sendPhoneOTP = async (phone?: string): Promise<void> => {
   console.warn("Authentication functionality has been removed");
 };
 
-export const sendEmailOTP = async (): Promise<void> => {
+export const sendEmailOTP = async (email?: string): Promise<void> => {
   console.warn("Authentication functionality has been removed");
 };
 
-export const verifyOTP = async (): Promise<User> => {
-  console.warn("Authentication functionality has been removed");
-  return {
-    id: "",
-    email: "",
-    displayName: "Guest User",
-    createdAt: new Date().toISOString()
-  };
-};
-
-export const registerUser = async (): Promise<User> => {
+export const verifyOTP = async (email?: string, otpCode?: string): Promise<User> => {
   console.warn("Authentication functionality has been removed");
   return {
     id: "",
@@ -33,7 +23,17 @@ export const registerUser = async (): Promise<User> => {
   };
 };
 
-export const loginUser = async (): Promise<User> => {
+export const registerUser = async (email?: string, password?: string, displayName?: string): Promise<User> => {
+  console.warn("Authentication functionality has been removed");
+  return {
+    id: "",
+    email: "",
+    displayName: "Guest User",
+    createdAt: new Date().toISOString()
+  };
+};
+
+export const loginUser = async (email?: string, password?: string): Promise<User> => {
   console.warn("Authentication functionality has been removed");
   return {
     id: "",
@@ -55,7 +55,7 @@ export const logoutUser = async (): Promise<void> => {
   console.warn("Authentication functionality has been removed");
 };
 
-export const updateUserProfile = async (): Promise<User> => {
+export const updateUserProfile = async (userData?: any): Promise<User> => {
   console.warn("Authentication functionality has been removed");
   return {
     id: "",
@@ -65,10 +65,10 @@ export const updateUserProfile = async (): Promise<User> => {
   };
 };
 
-export const requestPasswordReset = async (): Promise<void> => {
+export const requestPasswordReset = async (email?: string): Promise<void> => {
   console.warn("Authentication functionality has been removed");
 };
 
-export const updateUserPassword = async (): Promise<void> => {
+export const updateUserPassword = async (password?: string): Promise<void> => {
   console.warn("Authentication functionality has been removed");
 };

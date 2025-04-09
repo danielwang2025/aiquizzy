@@ -1,7 +1,6 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { UserSubscription, SubscriptionTier } from "@/types/subscription";
 import { toast } from "sonner";
+import { UserSubscription, SubscriptionTier } from "@/types/subscription";
 
 // Default subscription limits
 const LIMITS = {
@@ -23,33 +22,12 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
   }
 
   try {
-    // Using 'from' method with type assertion to address the TypeScript error
-    const { data, error } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error || !data) {
-      // If no subscription record exists, return registered tier
-      return {
-        tier: 'free',
-        questionCount: 0,
-        isActive: true
-      };
-    }
-
-    // Map the database field names to our interface field names
-    // Use type assertion to tell TypeScript about the fields we know exist
-    const subscription = data as any;
+    // No database connection - return mock data
     return {
-      tier: subscription.tier as SubscriptionTier,
-      questionCount: subscription.question_count,
-      subscriptionEndDate: subscription.subscription_end_date,
-      isActive: subscription.is_active,
-      // Properly handle optional fields after database migration
-      stripeCustomerId: subscription.stripe_customer_id || undefined,
-      stripeSubscriptionId: subscription.stripe_subscription_id || undefined
+      tier: 'free',
+      questionCount: 0,
+      isActive: true,
+      subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days in the future
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
@@ -89,32 +67,8 @@ export const canGenerateQuestions = async (userId?: string, count = 1): Promise<
  */
 export const incrementQuestionCount = async (userId: string, count: number): Promise<void> => {
   try {
-    // First check if subscription record exists
-    const { data } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-      
-    if (!data) {
-      // Create new subscription record if it doesn't exist
-      await supabase
-        .from('user_subscriptions')
-        .insert({
-          user_id: userId,
-          tier: 'free',
-          question_count: count,
-          is_active: true
-        } as any); // Using type assertion to bypass TypeScript error
-    } else {
-      // Update existing record
-      await supabase
-        .from('user_subscriptions')
-        .update({
-          question_count: data.question_count + count
-        } as any) // Using type assertion to bypass TypeScript error
-        .eq('user_id', userId);
-    }
+    // No database connection - log action only
+    console.log(`Mock: Incrementing question count by ${count} for user ${userId}`);
   } catch (error) {
     console.error("Error incrementing question count:", error);
     toast.error("Failed to update question usage");
@@ -126,10 +80,8 @@ export const incrementQuestionCount = async (userId: string, count: number): Pro
  */
 export const resetQuestionCount = async (userId: string): Promise<void> => {
   try {
-    await supabase
-      .from('user_subscriptions')
-      .update({ question_count: 0 } as any) // Using type assertion to bypass TypeScript error
-      .eq('user_id', userId);
+    // No database connection - log action only
+    console.log(`Mock: Resetting question count for user ${userId}`);
   } catch (error) {
     console.error("Error resetting question count:", error);
   }
@@ -212,17 +164,9 @@ export const getRemainingQuestions = async (userId?: string): Promise<number> =>
  */
 export const createCheckoutSession = async (userId: string, priceId: string): Promise<string | null> => {
   try {
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { priceId }
-    });
-    
-    if (error) {
-      console.error("Checkout error:", error);
-      toast.error("Failed to create checkout session");
-      return null;
-    }
-    
-    return data.url;
+    // No database connection - return mock URL
+    console.log(`Mock: Creating checkout session for user ${userId} with price ${priceId}`);
+    return "https://example.com/checkout-session-mock";
   } catch (error) {
     console.error("Checkout error:", error);
     toast.error("Failed to create checkout session");
