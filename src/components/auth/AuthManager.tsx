@@ -52,13 +52,28 @@ const AuthManager: React.FC = () => {
             const userData = await getCurrentUser();
             console.log("onAuthStateChange - Current user data:", userData);
             setUser(userData);
+            toast.success("登录成功");
           } catch (error) {
             console.error("Error fetching user after sign in:", error);
+            toast.error("获取用户信息失败");
           }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out, clearing user state");
         setUser(null);
+        toast.success("已退出登录");
+      } else if (event === 'PASSWORD_RECOVERY') {
+        toast.info("请按照邮件指引重置密码");
+      } else if (event === 'USER_UPDATED') {
+        toast.success("用户信息已更新");
+        setTimeout(async () => {
+          try {
+            const userData = await getCurrentUser();
+            setUser(userData);
+          } catch (error) {
+            console.error("Error fetching updated user:", error);
+          }
+        }, 0);
       }
     });
     
@@ -81,10 +96,9 @@ const AuthManager: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      toast.success("退出登录成功");
-      setUser(null);
     } catch (error) {
-      toast.error("退出登录失败");
+      console.error("登出失败:", error);
+      toast.error("退出登录失败，请稍后再试");
     }
   };
   

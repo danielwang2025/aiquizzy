@@ -2,19 +2,40 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/quiz";
 
+// 常见错误消息映射表
+const ERROR_MAPPINGS: Record<string, string> = {
+  "Email not confirmed": "邮箱未验证，请检查您的邮箱并完成验证",
+  "Invalid login credentials": "邮箱或密码错误",
+  "User already registered": "此邮箱已被注册",
+  "Password should be at least 6 characters": "密码长度至少需要6个字符",
+};
+
+// 处理并返回用户友好的错误消息
+const handleAuthError = (error: any): Error => {
+  console.error("Auth error:", error);
+  
+  const errorMessage = error?.message || "操作失败";
+  const friendlyMessage = ERROR_MAPPINGS[errorMessage] || errorMessage;
+  
+  return new Error(friendlyMessage);
+};
+
 // Send OTP code via SMS for phone authentication
 export const sendPhoneOTP = async (phone?: string): Promise<void> => {
   if (!phone) {
     throw new Error("手机号码必填");
   }
   
-  const { error } = await supabase.auth.signInWithOtp({
-    phone: phone
-  });
-  
-  if (error) {
-    console.error("Phone OTP error:", error);
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: phone
+    });
+    
+    if (error) {
+      throw handleAuthError(error);
+    }
+  } catch (error) {
+    throw handleAuthError(error);
   }
 };
 
@@ -24,17 +45,19 @@ export const sendEmailOTP = async (email?: string): Promise<void> => {
     throw new Error("邮箱地址必填");
   }
   
-  const { error } = await supabase.auth.signInWithOtp({
-  email: email,
-  options: {
-    emailRedirectTo: "http://localhost:3000/auth/callback"  // or your own redirect page
-  }
-});
-
-  
-  if (error) {
-    console.error("Email OTP error:", error);
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        emailRedirectTo: window.location.origin + "/auth/callback" 
+      }
+    });
+    
+    if (error) {
+      throw handleAuthError(error);
+    }
+  } catch (error) {
+    throw handleAuthError(error);
   }
 };
 
@@ -44,22 +67,25 @@ export const verifyOTP = async (email?: string, otpCode?: string): Promise<User>
     throw new Error("邮箱和验证码必填");
   }
   
-  const { data, error } = await supabase.auth.verifyOtp({
-    email,
-    token: otpCode,
-    type: 'email'
-  });
-  
-  if (error) {
-    console.error("OTP verification error:", error);
-    throw new Error(error.message);
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: 'email'
+    });
+    
+    if (error) {
+      throw handleAuthError(error);
+    }
+    
+    if (!data.user) {
+      throw new Error("验证失败");
+    }
+    
+    return mapSupabaseUser(data.user);
+  } catch (error) {
+    throw handleAuthError(error);
   }
-  
-  if (!data.user) {
-    throw new Error("验证失败");
-  }
-  
-  return mapSupabaseUser(data.user);
 };
 
 // Register new user
@@ -68,29 +94,39 @@ export const registerUser = async (email?: string, password?: string, displayNam
     throw new Error("邮箱和密码必填");
   }
   
-  console.log("Attempting to register user:", email);
+  console.log("注册用户:", email);
   
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        display_name: displayName || email.split('@')[0]
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName || email.split('@')[0]
+        }
       }
+    });
+    
+    if (error) {
+      throw handleAuthError(error);
     }
-  });
-  
-  if (error) {
-    console.error("Registration error:", error);
-    throw new Error(error.message);
+    
+    if (!data.user) {
+      throw new Error("注册失败");
+    }
+    
+    console.log("注册成功:", data.user);
+    
+    // 检查是否需要验证邮箱
+    if (data.session === null) {
+      console.log("需要验证邮箱，请检查邮箱完成注册");
+      throw new Error("请检查您的邮箱并点击验证链接以完成注册");
+    }
+    
+    return mapSupabaseUser(data.user);
+  } catch (error) {
+    throw handleAuthError(error);
   }
-  
-  if (!data.user) {
-    throw new Error("注册失败");
-  }
-  
-  console.log("Registration successful:", data.user);
-  return mapSupabaseUser(data.user);
 };
 
 // Login user
@@ -99,7 +135,7 @@ export const loginUser = async (email?: string, password?: string): Promise<User
     throw new Error("邮箱和密码必填");
   }
   
-  console.log("Attempting to log in user:", email);
+  console.log("尝试登录:", email);
   
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -108,52 +144,57 @@ export const loginUser = async (email?: string, password?: string): Promise<User
     });
     
     if (error) {
-      console.error("Login error:", error);
-      throw new Error(error.message);
+      throw handleAuthError(error);
     }
     
     if (!data || !data.user) {
       throw new Error("登录失败");
     }
     
-    console.log("Login successful:", data.user);
+    console.log("登录成功:", data.user);
     return mapSupabaseUser(data.user);
   } catch (error) {
-    console.error("Login exception:", error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error("登录过程中发生错误");
+    throw handleAuthError(error);
   }
 };
 
 // Get current user
 export const getCurrentUser = async (): Promise<User | null> => {
-  const { data } = await supabase.auth.getUser();
-  
-  if (!data.user) {
-    return null;
-  }
-  
   try {
-    // Get profile data
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
+    const { data } = await supabase.auth.getUser();
     
-    return mapSupabaseUser(data.user, profileData);
+    if (!data.user) {
+      return null;
+    }
+    
+    try {
+      // Get profile data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      return mapSupabaseUser(data.user, profileData);
+    } catch (error) {
+      console.error("获取个人资料失败:", error);
+      return mapSupabaseUser(data.user);
+    }
   } catch (error) {
-    console.error("Error fetching profile:", error);
-    return mapSupabaseUser(data.user);
+    console.error("获取当前用户失败:", error);
+    return null;
   }
 };
 
 // Check if user is authenticated
 export const isAuthenticated = async (): Promise<boolean> => {
-  const { data } = await supabase.auth.getSession();
-  return !!data.session;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return !!data.session;
+  } catch (error) {
+    console.error("身份验证检查失败:", error);
+    return false;
+  }
 };
 
 // Logout user
@@ -161,8 +202,7 @@ export const logoutUser = async (): Promise<void> => {
   const { error } = await supabase.auth.signOut();
   
   if (error) {
-    console.error("Logout error:", error);
-    throw new Error(error.message);
+    throw handleAuthError(error);
   }
 };
 
@@ -172,15 +212,24 @@ export const updateUserProfile = async (displayName?: string): Promise<User> => 
     throw new Error("显示名称必填");
   }
   
-  // Get current user
-  const { data: userData } = await supabase.auth.getUser();
-  
-  if (!userData?.user) {
-    throw new Error("未登录");
-  }
-  
   try {
-    // Update profile
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData?.user) {
+      throw new Error("未登录");
+    }
+    
+    // 更新 Supabase Auth 中的用户元数据
+    const { error: authUpdateError } = await supabase.auth.updateUser({
+      data: { display_name: displayName }
+    });
+    
+    if (authUpdateError) {
+      throw handleAuthError(authUpdateError);
+    }
+    
+    // 更新 profiles 表中的信息
     const { error } = await supabase
       .from('profiles')
       .update({ 
@@ -190,11 +239,10 @@ export const updateUserProfile = async (displayName?: string): Promise<User> => 
       .eq('id', userData.user.id);
     
     if (error) {
-      console.error("Profile update error:", error);
-      throw new Error(error.message);
+      throw handleAuthError(error);
     }
     
-    // Get updated profile data
+    // 获取更新后的用户资料
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -203,8 +251,7 @@ export const updateUserProfile = async (displayName?: string): Promise<User> => 
     
     return mapSupabaseUser(userData.user, profileData);
   } catch (error) {
-    console.error("Error updating profile:", error);
-    throw new Error("更新个人资料失败");
+    throw handleAuthError(error);
   }
 };
 
@@ -214,11 +261,17 @@ export const requestPasswordReset = async (email?: string): Promise<void> => {
     throw new Error("邮箱地址必填");
   }
   
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
-  
-  if (error) {
-    console.error("Password reset request error:", error);
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email,
+      { redirectTo: window.location.origin + "/reset-password" }
+    );
+    
+    if (error) {
+      throw handleAuthError(error);
+    }
+  } catch (error) {
+    throw handleAuthError(error);
   }
 };
 
@@ -228,13 +281,16 @@ export const updateUserPassword = async (password?: string): Promise<void> => {
     throw new Error("新密码必填");
   }
   
-  const { error } = await supabase.auth.updateUser({
-    password: password
-  });
-  
-  if (error) {
-    console.error("Password update error:", error);
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: password
+    });
+    
+    if (error) {
+      throw handleAuthError(error);
+    }
+  } catch (error) {
+    throw handleAuthError(error);
   }
 };
 
