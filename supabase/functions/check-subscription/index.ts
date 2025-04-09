@@ -43,7 +43,9 @@ serve(async (req) => {
           subscription: {
             tier: "free",
             isActive: true,
-            questionLimit: 5
+            questionLimit: 5,
+            questionCount: 0,
+            remainingQuestions: 5
           }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
@@ -65,7 +67,8 @@ serve(async (req) => {
             tier: "free",
             isActive: true,
             questionCount: 0,
-            questionLimit: 50  // Registered users get 50
+            questionLimit: 50,  // Registered users get 50
+            remainingQuestions: 50
           }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
@@ -83,6 +86,7 @@ serve(async (req) => {
 
     // Get the appropriate question limit
     const questionLimit = subscription.tier === "premium" ? 1000 : 50;
+    const remainingQuestions = Math.max(0, questionLimit - subscription.question_count);
 
     return new Response(
       JSON.stringify({
@@ -91,6 +95,7 @@ serve(async (req) => {
           isActive,
           questionCount: subscription.question_count,
           questionLimit,
+          remainingQuestions,
           subscriptionEndDate: subscription.subscription_end_date
         }
       }),

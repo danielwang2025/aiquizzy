@@ -2,8 +2,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Crown } from "lucide-react";
+import { Crown, HelpCircle } from "lucide-react";
 import { UserSubscription } from "@/types/subscription";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface SubscriptionBannerProps {
   subscription: UserSubscription | null;
@@ -17,10 +19,13 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
   if (!subscription) return null;
   
   const isPremium = subscription.tier === 'premium';
+  const limit = isPremium ? 1000 : subscription ? 50 : 5;
+  const usedQuestions = limit - remainingQuestions;
+  const usagePercentage = (usedQuestions / limit) * 100;
   
   return (
     <div className={`p-4 rounded-lg mb-6 ${isPremium ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center">
           {isPremium ? (
             <Crown className="h-5 w-5 text-amber-600 mr-2" />
@@ -29,9 +34,6 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
             <h3 className={`font-medium ${isPremium ? 'text-amber-800' : 'text-blue-800'}`}>
               {isPremium ? 'Premium Plan' : 'Free Plan'}
             </h3>
-            <p className={`text-sm ${isPremium ? 'text-amber-700' : 'text-blue-700'}`}>
-              {remainingQuestions} questions remaining this month
-            </p>
           </div>
         </div>
         
@@ -43,6 +45,40 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
             </Button>
           </Link>
         )}
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <span className={`text-sm ${isPremium ? 'text-amber-700' : 'text-blue-700'}`}>
+              Question Credits Remaining:
+            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <HelpCircle className="h-3.5 w-3.5 ml-1 opacity-70" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="w-[200px] text-xs">
+                    Each time you generate questions, your credits will decrease. 
+                    {isPremium ? " Premium users get 1,000 questions per month." : " Free users get 50 questions per month."}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <span className={`font-medium text-sm ${isPremium ? 'text-amber-800' : 'text-blue-800'}`}>
+            {remainingQuestions} / {limit}
+          </span>
+        </div>
+        
+        <Progress 
+          value={usagePercentage} 
+          className={`h-1.5 ${isPremium ? 'bg-amber-100' : 'bg-blue-100'}`}
+          indicatorClassName={`${isPremium ? 'bg-amber-500' : 'bg-blue-500'}`}
+        />
       </div>
     </div>
   );
