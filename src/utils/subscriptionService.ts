@@ -39,11 +39,13 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
       };
     }
 
+    // Map the database field names to our interface field names
     return {
       tier: data.tier as SubscriptionTier,
       questionCount: data.question_count,
       subscriptionEndDate: data.subscription_end_date,
       isActive: data.is_active,
+      // Use optional chaining to safely access potentially missing fields
       stripeCustomerId: data.stripe_customer_id,
       stripeSubscriptionId: data.stripe_subscription_id
     };
