@@ -25,8 +25,12 @@ export const sendEmailOTP = async (email?: string): Promise<void> => {
   }
   
   const { error } = await supabase.auth.signInWithOtp({
-    email: email
-  });
+  email: email,
+  options: {
+    emailRedirectTo: "http://localhost:3000/auth/callback"  // or your own redirect page
+  }
+});
+
   
   if (error) {
     console.error("Email OTP error:", error);
