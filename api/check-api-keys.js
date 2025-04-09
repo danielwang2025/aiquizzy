@@ -16,37 +16,14 @@ export default async function handler(req, res) {
   // 检查必需的 API 密钥是否设置
   const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  
-  const missingKeys = [];
-  
-  if (!DEEPSEEK_API_KEY) {
-    missingKeys.push('DEEPSEEK_API_KEY');
-  }
-  
-  if (!BREVO_API_KEY) {
-    missingKeys.push('BREVO_API_KEY');
-  }
-  
-  // 也可以检查可选的 API 密钥
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  const optionalMissingKeys = [];
   
-  if (!OPENAI_API_KEY) {
-    optionalMissingKeys.push('OPENAI_API_KEY');
-  }
-  
-  // 如果有任何必需的密钥缺失，返回错误
-  if (missingKeys.length > 0) {
-    return res.status(400).json({ 
-      error: 'API key not configured', 
-      missingKeys,
-      optionalMissingKeys
-    });
-  }
-  
-  // 所有必需的密钥都已配置
   return res.status(200).json({ 
     success: true,
-    optionalMissingKeys: optionalMissingKeys.length > 0 ? optionalMissingKeys : undefined
+    apiKeysStatus: {
+      DEEPSEEK_API_KEY: !!DEEPSEEK_API_KEY,
+      BREVO_API_KEY: !!BREVO_API_KEY,
+      OPENAI_API_KEY: !!OPENAI_API_KEY
+    }
   });
 }

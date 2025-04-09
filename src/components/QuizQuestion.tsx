@@ -6,7 +6,7 @@ import { isQuestionDisputed } from "@/utils/historyService";
 import { CheckCircle, HelpCircle, Lightbulb } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { getBasicHint } from "@/utils/hintService";
+import { generateHint, getBasicHint } from "@/utils/hintService";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -61,13 +61,25 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     }
   };
 
-  const toggleHint = () => {
+  const toggleHint = async () => {
     setShowHint(!showHint);
     
     // Generate hint if not already available
     if (!hint && !showHint) {
       // Use the basic hint for immediate feedback
       setHint(getBasicHint(question));
+      
+      // Then try to get a better hint from the API
+      setIsLoadingHint(true);
+      try {
+        const apiHint = await generateHint(question);
+        setHint(apiHint);
+      } catch (error) {
+        console.error("Error fetching hint:", error);
+        // Keep the basic hint if API fails
+      } finally {
+        setIsLoadingHint(false);
+      }
     }
   };
 

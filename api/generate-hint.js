@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     
     if (!DEEPSEEK_API_KEY) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: 'API key not configured in environment variables' });
     }
 
     // 对于简单问题，返回一个通用提示以避免不必要的 API 调用
