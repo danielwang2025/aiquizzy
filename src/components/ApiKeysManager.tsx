@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Drawer,
@@ -43,7 +42,7 @@ const ApiKeysManager = () => {
     };
     setApiKeys(storedKeys);
     
-    // 检查是否在生产环境中
+    // Check if in production environment
     checkEnvironment();
   }, []);
   
@@ -64,7 +63,7 @@ const ApiKeysManager = () => {
         }
       }
     } catch (error) {
-      // 如果无法到达 API，可能是在本地开发环境中
+      // If API is unreachable, likely in local development environment
       setIsProduction(false);
     }
   };
@@ -85,8 +84,8 @@ const ApiKeysManager = () => {
       }
     });
     
-    toast.success("API 密钥已保存到本地存储");
-    toast.info("这只适用于本地开发。在生产环境中，请使用 Vercel 环境变量。", {
+    toast.success("API keys saved to local storage");
+    toast.info("This is only for local development. In production, please use Vercel environment variables.", {
       duration: 5000,
     });
   };
@@ -94,23 +93,23 @@ const ApiKeysManager = () => {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button variant="outline" size="icon" className="ml-2" title="API 密钥设置">
+        <Button variant="outline" size="icon" className="ml-2" title="API Key Settings">
           <Settings className="h-4 w-4" />
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
-            <DrawerTitle>API 密钥配置</DrawerTitle>
+            <DrawerTitle>API Key Configuration</DrawerTitle>
             <DrawerDescription>
-              配置应用程序正常运行所需的 API 密钥。
+              Configure the API keys required for the application to function properly.
             </DrawerDescription>
           </DrawerHeader>
           
           <Tabs defaultValue={isProduction ? "production" : "development"} className="w-full px-4">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="development">本地开发</TabsTrigger>
-              <TabsTrigger value="production">生产环境</TabsTrigger>
+              <TabsTrigger value="development">Local Development</TabsTrigger>
+              <TabsTrigger value="production">Production</TabsTrigger>
             </TabsList>
             
             <TabsContent value="development">
@@ -118,7 +117,7 @@ const ApiKeysManager = () => {
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    此表单仅用于本地开发。对于生产部署，请在 Vercel 仪表板中设置这些密钥为环境变量。
+                    This form is only for local development. For production deployments, please set these keys as environment variables in the Vercel dashboard.
                   </AlertDescription>
                 </Alert>
                 
@@ -127,7 +126,7 @@ const ApiKeysManager = () => {
                     <div className="flex items-center">
                       <Key className="mr-2 h-4 w-4" />
                       <label htmlFor="DEEPSEEK_API_KEY" className="text-sm font-medium">
-                        DeepSeek API 密钥
+                        DeepSeek API Key
                       </label>
                     </div>
                     <Input
@@ -136,7 +135,7 @@ const ApiKeysManager = () => {
                       type="password"
                       value={apiKeys.DEEPSEEK_API_KEY}
                       onChange={handleChange}
-                      placeholder="输入 DeepSeek API 密钥"
+                      placeholder="Enter DeepSeek API Key"
                     />
                   </div>
                   
@@ -144,7 +143,7 @@ const ApiKeysManager = () => {
                     <div className="flex items-center">
                       <Key className="mr-2 h-4 w-4" />
                       <label htmlFor="BREVO_API_KEY" className="text-sm font-medium">
-                        Brevo API 密钥
+                        Brevo API Key
                       </label>
                     </div>
                     <Input
@@ -153,7 +152,7 @@ const ApiKeysManager = () => {
                       type="password"
                       value={apiKeys.BREVO_API_KEY}
                       onChange={handleChange}
-                      placeholder="输入 Brevo API 密钥"
+                      placeholder="Enter Brevo API Key"
                     />
                   </div>
                   
@@ -161,7 +160,7 @@ const ApiKeysManager = () => {
                     <div className="flex items-center">
                       <Key className="mr-2 h-4 w-4" />
                       <label htmlFor="OPENAI_API_KEY" className="text-sm font-medium">
-                        OpenAI API 密钥 (用于内容审核)
+                        OpenAI API Key (for content moderation)
                       </label>
                     </div>
                     <Input
@@ -170,14 +169,14 @@ const ApiKeysManager = () => {
                       type="password"
                       value={apiKeys.OPENAI_API_KEY}
                       onChange={handleChange}
-                      placeholder="输入 OpenAI API 密钥"
+                      placeholder="Enter OpenAI API Key"
                     />
                   </div>
                 </div>
                 
                 <Button onClick={handleSave} className="mt-6 w-full">
                   <Save className="mr-2 h-4 w-4" />
-                  保存 API 密钥
+                  Save API Keys
                 </Button>
               </div>
             </TabsContent>
@@ -187,7 +186,7 @@ const ApiKeysManager = () => {
                 <Alert className="mb-4">
                   <Server className="h-4 w-4" />
                   <AlertDescription>
-                    在生产环境中，API 密钥应通过 Vercel 环境变量设置，而不是通过此界面。
+                    In production, API keys should be set via Vercel environment variables, not through this interface.
                   </AlertDescription>
                 </Alert>
                 
@@ -196,44 +195,44 @@ const ApiKeysManager = () => {
                     <>
                       {missingProductionKeys.length > 0 ? (
                         <div className="p-4 border border-red-200 bg-red-50 rounded-md">
-                          <h3 className="text-sm font-medium text-red-800">缺少以下环境变量：</h3>
+                          <h3 className="text-sm font-medium text-red-800">The following environment variables are missing:</h3>
                           <ul className="mt-2 list-disc list-inside text-red-700 text-sm">
                             {missingProductionKeys.map(key => (
                               <li key={key}>{key}</li>
                             ))}
                           </ul>
                           <p className="mt-2 text-sm text-red-700">
-                            请在 Vercel 仪表板中设置这些环境变量。
+                            Please set these environment variables in the Vercel dashboard.
                           </p>
                         </div>
                       ) : (
                         <div className="p-4 border border-green-200 bg-green-50 rounded-md">
-                          <h3 className="text-sm font-medium text-green-800">所有必需的 API 密钥已配置！</h3>
+                          <h3 className="text-sm font-medium text-green-800">All required API keys are configured!</h3>
                           <p className="mt-2 text-sm text-green-700">
-                            您的应用程序已准备好在生产环境中运行。
+                            Your application is ready to run in production.
                           </p>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="p-4 border border-amber-200 bg-amber-50 rounded-md">
-                      <h3 className="text-sm font-medium text-amber-800">无法检查服务器环境变量</h3>
+                      <h3 className="text-sm font-medium text-amber-800">Cannot check server environment variables</h3>
                       <p className="mt-2 text-sm text-amber-700">
-                        如果您正在本地开发环境中运行，这是正常的。部署到 Vercel 时，请确保设置所有必需的环境变量。
+                        This is normal if you are running in a local development environment. When deploying to Vercel, make sure to set all required environment variables.
                       </p>
                     </div>
                   )}
                   
                   <div className="mt-6">
-                    <h3 className="text-sm font-medium mb-2">必需的环境变量：</h3>
+                    <h3 className="text-sm font-medium mb-2">Required environment variables:</h3>
                     <ul className="list-disc list-inside text-sm text-gray-600">
-                      <li>DEEPSEEK_API_KEY - 用于 AI 生成功能</li>
-                      <li>BREVO_API_KEY - 用于发送电子邮件</li>
+                      <li>DEEPSEEK_API_KEY - for AI generation features</li>
+                      <li>BREVO_API_KEY - for sending emails</li>
                     </ul>
                     
-                    <h3 className="text-sm font-medium mt-4 mb-2">可选的环境变量：</h3>
+                    <h3 className="text-sm font-medium mt-4 mb-2">Optional environment variables:</h3>
                     <ul className="list-disc list-inside text-sm text-gray-600">
-                      <li>OPENAI_API_KEY - 用于增强内容审核</li>
+                      <li>OPENAI_API_KEY - for enhanced content moderation</li>
                     </ul>
                   </div>
                 </div>
@@ -245,7 +244,7 @@ const ApiKeysManager = () => {
             <DrawerClose asChild>
               <Button variant="outline">
                 <X className="mr-2 h-4 w-4" />
-                关闭
+                Close
               </Button>
             </DrawerClose>
           </DrawerFooter>
