@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, UserPlus, LogOut } from "lucide-react";
-import { getCurrentUser, logoutUser } from "@/utils/authService";
+import { getCurrentUser, logoutUser, sendMagicLink } from "@/utils/authService";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
@@ -79,7 +79,11 @@ const AuthManager: React.FC = () => {
             console.error("Error fetching updated user:", error);
           }
         }, 0);
-      } else if (event === 'MAGIC_LINK_EMAIL_SENT') {
+      }
+      
+      // Handle magic link email sent event through custom toast notification
+      // instead of direct event comparison since it's not in the type definition
+      if (event && event.toString().includes('MAGIC_LINK_EMAIL_SENT')) {
         toast.success("魔术链接已发送至您的邮箱，请查收");
       }
     });
