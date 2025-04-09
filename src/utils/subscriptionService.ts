@@ -5,24 +5,29 @@ import { toast } from "sonner";
 
 // Default subscription limits
 const LIMITS = {
+  unregistered: 5,
   free: 50,
   premium: 5000
 };
+
+// Local storage key for unregistered users
+const UNREGISTERED_COUNT_KEY = 'unregistered_question_count';
 
 /**
  * Get the current user's subscription data
  */
 export const getUserSubscription = async (userId?: string): Promise<UserSubscription> => {
   if (!userId) {
+    // For unregistered users, track usage in localStorage
+    const questionCount = getUnregisteredQuestionCount();
     return {
       tier: 'free',
-      questionCount: 0,
+      questionCount,
       isActive: true
     };
   }
 
   try {
-    // Using 'from' method with type assertion to address the TypeScript error
     const { data, error } = await supabase
       .from('user_subscriptions')
       .select('*')
@@ -58,9 +63,13 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
  * Check if user can generate more questions
  */
 export const canGenerateQuestions = async (userId?: string, count = 1): Promise<boolean> => {
-  if (!userId) return true; // For demo mode, allow without restrictions
-  
   try {
+    if (!userId) {
+      // For unregistered users, check localStorage limit
+      const currentCount = getUnregisteredQuestionCount();
+      return currentCount + count <= LIMITS.unregistered;
+    }
+    
     const subscription = await getUserSubscription(userId);
     const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
     
@@ -74,8 +83,15 @@ export const canGenerateQuestions = async (userId?: string, count = 1): Promise<
 /**
  * Increment the user's question count
  */
-export const incrementQuestionCount = async (userId: string, count: number): Promise<void> => {
+export const incrementQuestionCount = async (userId?: string, count: number = 1): Promise<void> => {
   try {
+    if (!userId) {
+      // For unregistered users, update localStorage
+      const currentCount = getUnregisteredQuestionCount();
+      localStorage.setItem(UNREGISTERED_COUNT_KEY, String(currentCount + count));
+      return;
+    }
+
     // First check if subscription record exists
     const { data } = await supabase
       .from('user_subscriptions')
@@ -133,7 +149,7 @@ export const getSubscriptionPlans = () => {
       description: "Basic access for casual users",
       price: 0,
       features: [
-        "Generate up to 50 questions per month",
+        `Generate up to ${LIMITS.free} questions per month`,
         "Basic question types",
         "Access to review hub"
       ],
@@ -146,7 +162,7 @@ export const getSubscriptionPlans = () => {
       description: "Full access for professionals and educators",
       price: 10,
       features: [
-        "Generate up to 5,000 questions per month",
+        `Generate up to ${LIMITS.premium} questions per month`,
         "All question types",
         "Advanced Bloom's taxonomy targeting",
         "Priority support",
@@ -162,9 +178,13 @@ export const getSubscriptionPlans = () => {
  * Get remaining questions for the user
  */
 export const getRemainingQuestions = async (userId?: string): Promise<number> => {
-  if (!userId) return LIMITS.free; // For demo mode
-  
   try {
+    if (!userId) {
+      // For unregistered users, check localStorage limit
+      const currentCount = getUnregisteredQuestionCount();
+      return LIMITS.unregistered - currentCount;
+    }
+    
     const subscription = await getUserSubscription(userId);
     const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
     
@@ -173,4 +193,19 @@ export const getRemainingQuestions = async (userId?: string): Promise<number> =>
     console.error("Error calculating remaining questions:", error);
     return 0;
   }
+};
+
+/**
+ * Get unregistered user question count from localStorage
+ */
+export const getUnregisteredQuestionCount = (): number => {
+  const count = localStorage.getItem(UNREGISTERED_COUNT_KEY);
+  return count ? parseInt(count, 10) : 0;
+};
+
+/**
+ * Reset unregistered user question count (for testing)
+ */
+export const resetUnregisteredQuestionCount = (): void => {
+  localStorage.removeItem(UNREGISTERED_COUNT_KEY);
 };

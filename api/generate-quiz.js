@@ -1,58 +1,74 @@
 
 // Vercel Serverless Function for quiz generation
+import { supabase } from "../src/integrations/supabase/client.js";
+import { 
+  canGenerateQuestions, 
+  incrementQuestionCount, 
+  getUnregisteredQuestionCount 
+} from "../src/utils/subscriptionService.js";
+
 export default async function handler(req, res) {
-  // 设置 CORS 头
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
-  // 处理 OPTIONS 请求
+  // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // 确保请求方法为 POST
+  // Ensure request method is POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { learningObjectives, options = {} } = req.body;
+    const { learningObjectives, options = {}, userId } = req.body;
     
     if (!learningObjectives || learningObjectives.trim() === "") {
       return res.status(400).json({ error: "Learning objectives cannot be empty" });
     }
+
+    // Check if user can generate questions
+    const count = options.count || 5;
+    const canGenerate = await canGenerateQuestions(userId, count);
     
-    // 从 Vercel 环境变量中获取 API 密钥
+    if (!canGenerate) {
+      return res.status(403).json({ 
+        error: "Question limit reached. Please upgrade your subscription for more questions." 
+      });
+    }
+    
+    // Get API key from environment
     const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
     
     if (!DEEPSEEK_API_KEY) {
       return res.status(500).json({ error: 'DeepSeek API key not configured in environment variables' });
     }
 
-    // 简单检查是否包含提示注入
+    // Simple check for prompt injection
     if (containsPromptInjection(learningObjectives)) {
       return res.status(400).json({ error: "Potential prompt injection detected" });
     }
     
-    // 设置布鲁姆分类级别描述
+    // Set Bloom's taxonomy level descriptions
     const bloomLevelDescriptions = {
-      remember: "基础记忆级别 - 考验学生对事实、术语、概念的记忆和识别能力。问题类型：定义术语、列出要点、识别正确陈述等。",
-      understand: "理解级别 - 考验学生对所学内容的理解并能用自己的话解释的能力。问题类型：解释概念、总结内容、分类、比较差异等。",
-      apply: "应用级别 - 考验学生在新情境中应用所学知识解决问题的能力。问题类型：应用公式、使用概念解决实际问题、展示使用方法等。",
-      analyze: "分析级别 - 考验学生将信息分解为各组成部分并理解其关系的能力。问题类型：分析原因和结果、找出模式、辨别主要观点和支持证据等。",
-      evaluate: "评估级别 - 考验学生基于标准和证据做出判断的能力。问题类型：评判方法有效性、辩护观点、批判性分析论点、作出决策并证明等。",
-      create: "创造级别 - 考验学生将各元素组合成新整体的能力。问题类型：设计解决方案、提出假设、创建模型、开发计划等。"
+      remember: "Basic memory level - Tests students' ability to recall and recognize facts, terms, and concepts. Question types: Define terms, list points, identify correct statements, etc.",
+      understand: "Comprehension level - Tests students' ability to understand and explain learned content in their own words. Question types: Explain concepts, summarize content, classify, compare differences, etc.",
+      apply: "Application level - Tests students' ability to apply knowledge to solve problems in new situations. Question types: Apply formulas, use concepts to solve practical problems, demonstrate methods, etc.",
+      analyze: "Analysis level - Tests students' ability to break information into parts and understand relationships. Question types: Analyze causes and effects, find patterns, distinguish main points and supporting evidence, etc.",
+      evaluate: "Evaluation level - Tests students' ability to make judgments based on criteria and evidence. Question types: Assess method effectiveness, defend viewpoints, critically analyze arguments, make decisions with justification, etc.",
+      create: "Creation level - Tests students' ability to combine elements into a new whole. Question types: Design solutions, propose hypotheses, create models, develop plans, etc."
     };
     
-    // 设置默认选项
-    const count = options.count || 5;
+    // Set default options
     const bloomLevel = options.bloomLevel || 'understand';
     const questionTypes = options.questionTypes || ['multiple_choice', 'fill_in'];
     
-    // 计算选择题和填空题的数量
+    // Calculate number of multiple choice and fill-in questions
     let multipleChoiceCount = count;
     let fillInCount = 0;
     
@@ -66,15 +82,15 @@ export default async function handler(req, res) {
     
     const bloomLevelDescription = bloomLevelDescriptions[bloomLevel];
     
-    // 自定义系统提示
-    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。
+    // Custom system prompt
+    const systemPrompt = `You are a quiz generator. Please create ${count} practice questions (${multipleChoiceCount} multiple choice and ${fillInCount} fill-in-the-blank) based on the learning objectives provided.
 
-问题应符合布鲁姆分类法中的"${bloomLevel}"认知层级：
+The questions should align with the "${bloomLevel}" cognitive level in Bloom's taxonomy:
 ${bloomLevelDescription}
 
-使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "bloomLevel": "${bloomLevel}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "bloomLevel": "${bloomLevel}"}]}`;
+Return your response in JSON format with the following structure: {"questions": [{"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "bloomLevel": "${bloomLevel}"}, {"id": "q2", "type": "fill_in", "question": "Question with blank ________.", "correctAnswer": "answer", "explanation": "Explanation", "bloomLevel": "${bloomLevel}"}]}`;
 
-    // 调用 DeepSeek API
+    // Call DeepSeek API
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -90,7 +106,7 @@ ${bloomLevelDescription}
           },
           {
             role: "user",
-            content: `根据这些学习目标创建测试：${learningObjectives}`
+            content: `Create a test based on these learning objectives: ${learningObjectives}`
           }
         ],
         temperature: 0.7,
@@ -114,9 +130,9 @@ ${bloomLevelDescription}
 
     const data = await response.json();
     
-    // 解析内容
+    // Parse content
     const content = data.choices[0].message.content;
-    // 有时 API 返回带有 ```json 块的 markdown，因此我们需要提取 JSON
+    // Sometimes the API returns markdown with ```json blocks, so we need to extract the JSON
     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```([\s\S]*?)```/);
     const jsonString = jsonMatch ? jsonMatch[1] : content;
     
@@ -134,15 +150,15 @@ ${bloomLevelDescription}
       return res.status(500).json({ error: "Invalid response format from DeepSeek API" });
     }
     
-    // 验证并转换问题
+    // Validate and transform questions
     const questions = parsedContent.questions.map((q, index) => {
-      // 确保每个问题都有有效的 ID
+      // Ensure each question has a valid ID
       const id = q.id || `q${index + 1}`;
       
-      // 对于 multiple_choice 问题，确保 correctAnswer 是一个数字
+      // For multiple_choice questions, ensure correctAnswer is a number
       let correctAnswer = q.correctAnswer;
       if (q.type === "multiple_choice" && typeof correctAnswer === "string") {
-        // 如果 correctAnswer 是像 "A"、"B" 这样的字符串，转换为索引
+        // If correctAnswer is a string like "A", "B", convert to index
         const optionIndex = q.options.findIndex((opt) => 
           opt.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
         );
@@ -158,7 +174,7 @@ ${bloomLevelDescription}
         }
       }
       
-      // 根据学习目标添加主题信息
+      // Add topic information based on learning objectives
       const topics = learningObjectives.split(',').map(t => t.trim());
       const topic = topics.length > 0 ? topics[0] : undefined;
       
@@ -171,6 +187,9 @@ ${bloomLevelDescription}
       };
     });
     
+    // Increment question count after successful generation
+    await incrementQuestionCount(userId, count);
+    
     return res.status(200).json({ questions });
   } catch (error) {
     console.error("Error generating quiz:", error);
@@ -178,11 +197,11 @@ ${bloomLevelDescription}
   }
 }
 
-// 简单检查是否包含提示注入
+// Simple check for prompt injection
 function containsPromptInjection(text) {
   const lowerInput = text.toLowerCase();
   
-  // 常见的提示注入模式
+  // Common prompt injection patterns
   const injectionPatterns = [
     "ignore previous instructions",
     "ignore all instructions",
