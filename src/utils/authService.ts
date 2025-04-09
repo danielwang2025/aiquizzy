@@ -117,43 +117,30 @@ export const verifyOTP = async (email?: string, otpCode?: string): Promise<User>
   }
 };
 
-// Register new user
-export const registerUser = async (email?: string, password?: string, displayName?: string): Promise<User> => {
-  if (!email || !password) {
-    throw new Error("邮箱和密码必填");
+// 使用邮箱 OTP 注册（Magic Link 登录）
+export const registerUser = async (email?: string, _password?: string, displayName?: string): Promise<void> => {
+  if (!email) {
+    throw new Error("邮箱必填");
   }
-  
-  console.log("注册用户:", email);
-  
+
+  console.log("发送 OTP 注册链接到邮箱:", email);
+
   try {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
-          display_name: displayName || email.split('@')[0]
+          display_name: displayName || email.split('@')[0],
         },
-        emailRedirectTo: window.location.origin
-      }
+      },
     });
-    
+
     if (error) {
       throw handleAuthError(error);
     }
-    
-    if (!data.user) {
-      throw new Error("注册失败");
-    }
-    
-    console.log("注册成功:", data.user);
-    
-    // 检查是否需要验证邮箱
-    if (data.session === null) {
-      console.log("需要验证邮箱，请检查邮箱完成注册");
-      throw new Error("请检查您的邮箱并点击验证链接以完成注册");
-    }
-    
-    return mapSupabaseUser(data.user);
+
+    console.log("注册链接已发送，请检查您的邮箱完成注册");
   } catch (error) {
     throw handleAuthError(error);
   }
