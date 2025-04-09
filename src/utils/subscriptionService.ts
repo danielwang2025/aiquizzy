@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { UserSubscription, SubscriptionTier } from "@/types/subscription";
+import { supabase } from "@/integrations/supabase/client";
 
 // Default subscription limits
 const LIMITS = {
@@ -22,12 +23,26 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
   }
 
   try {
-    // No database connection - return mock data
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching subscription:", error);
+      return {
+        tier: 'free',
+        questionCount: 0,
+        isActive: true
+      };
+    }
+    
     return {
-      tier: 'free',
-      questionCount: 0,
-      isActive: true,
-      subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days in the future
+      tier: data.tier as SubscriptionTier,
+      questionCount: data.question_count,
+      isActive: data.is_active,
+      subscriptionEndDate: data.subscription_end_date,
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
@@ -67,8 +82,26 @@ export const canGenerateQuestions = async (userId?: string, count = 1): Promise<
  */
 export const incrementQuestionCount = async (userId: string, count: number): Promise<void> => {
   try {
-    // No database connection - log action only
-    console.log(`Mock: Incrementing question count by ${count} for user ${userId}`);
+    const { data: userData } = await supabase
+      .from('user_subscriptions')
+      .select('question_count')
+      .eq('user_id', userId)
+      .single();
+    
+    const currentCount = userData?.question_count || 0;
+    
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .update({ 
+        question_count: currentCount + count,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error("Error incrementing question count:", error);
+      toast.error("Failed to update question usage");
+    }
   } catch (error) {
     console.error("Error incrementing question count:", error);
     toast.error("Failed to update question usage");
@@ -80,8 +113,17 @@ export const incrementQuestionCount = async (userId: string, count: number): Pro
  */
 export const resetQuestionCount = async (userId: string): Promise<void> => {
   try {
-    // No database connection - log action only
-    console.log(`Mock: Resetting question count for user ${userId}`);
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .update({ 
+        question_count: 0,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error("Error resetting question count:", error);
+    }
   } catch (error) {
     console.error("Error resetting question count:", error);
   }
@@ -164,9 +206,15 @@ export const getRemainingQuestions = async (userId?: string): Promise<number> =>
  */
 export const createCheckoutSession = async (userId: string, priceId: string): Promise<string | null> => {
   try {
-    // No database connection - return mock URL
-    console.log(`Mock: Creating checkout session for user ${userId} with price ${priceId}`);
-    return "https://example.com/checkout-session-mock";
+    const { data, error } = await supabase.functions.invoke('create-checkout', {
+      body: { priceId }
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.url;
   } catch (error) {
     console.error("Checkout error:", error);
     toast.error("Failed to create checkout session");

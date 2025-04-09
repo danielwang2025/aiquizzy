@@ -1,21 +1,158 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { User, UserPlus, LogOut } from "lucide-react";
+import { getCurrentUser, logoutUser } from "@/utils/authService";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import LoginForm from "./LoginForm";
+import RegisterForm from "./RegisterForm";
+import { Link } from "react-router-dom";
+import { User as UserType } from "@/types/quiz";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-// Simplified AuthManager that doesn't use Supabase
 const AuthManager: React.FC = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLoginView, setIsLoginView] = useState(true);
+  const [user, setUser] = useState<UserType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUser();
+    
+    // Set up Supabase auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Use setTimeout to avoid potential deadlocks with Supabase client
+        setTimeout(async () => {
+          const userData = await getCurrentUser();
+          setUser(userData);
+        }, 0);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+    
+    // Clean up subscription when component unmounts
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+  
+  const handleLoginClick = () => {
+    setIsLoginView(true);
+    setIsAuthModalOpen(true);
+  };
+  
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      toast.success("退出登录成功");
+      setUser(null);
+    } catch (error) {
+      toast.error("退出登录失败");
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <Button 
+        variant="outline" 
+        size="sm"
+        className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300"
+        disabled
+      >
+        <span className="animate-pulse">加载中...</span>
+      </Button>
+    );
+  }
+  
+  if (user) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 flex items-center"
+          >
+            <Avatar className="h-6 w-6 mr-2">
+              <AvatarFallback className="text-xs bg-primary/20">
+                {user.displayName?.substring(0, 2).toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="max-w-[100px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>我的账户</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              个人资料
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            退出登录
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+  
   return (
     <div>
       <Button 
         variant="outline" 
         size="sm"
         className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 flex items-center"
+        onClick={handleLoginClick}
         aria-label="Login / Register"
       >
         <User className="h-4 w-4 mr-2" />
-        <span>用户功能已禁用</span>
+        <span>登录 / 注册</span>
       </Button>
+      
+      <Dialog open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          {isLoginView ? (
+            <LoginForm
+              onSuccess={handleAuthSuccess}
+              onRegisterClick={() => setIsLoginView(false)}
+            />
+          ) : (
+            <RegisterForm
+              onSuccess={handleAuthSuccess}
+              onLoginClick={() => setIsLoginView(true)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
