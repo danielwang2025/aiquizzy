@@ -9,69 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          email: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          email: string
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          email?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_subscriptions: {
-        Row: {
-          created_at: string
-          id: string
-          is_active: boolean
-          question_count: number
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_end_date: string | null
-          tier: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          question_count?: number
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_end_date?: string | null
-          tier?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          question_count?: number
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_end_date?: string | null
-          tier?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
