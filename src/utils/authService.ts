@@ -117,14 +117,19 @@ export const getCurrentUser = async (): Promise<User | null> => {
     return null;
   }
   
-  // Get profile data
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
-  
-  return mapSupabaseUser(data.user, profileData);
+  try {
+    // Get profile data
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+    
+    return mapSupabaseUser(data.user, profileData);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    return mapSupabaseUser(data.user);
+  }
 };
 
 // Check if user is authenticated
@@ -152,32 +157,37 @@ export const updateUserProfile = async (displayName?: string): Promise<User> => 
   // Get current user
   const { data: userData } = await supabase.auth.getUser();
   
-  if (!userData.user) {
+  if (!userData?.user) {
     throw new Error("未登录");
   }
   
-  // Update profile
-  const { error } = await supabase
-    .from('profiles')
-    .update({ 
-      display_name: displayName,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', userData.user.id);
-  
-  if (error) {
-    console.error("Profile update error:", error);
-    throw new Error(error.message);
+  try {
+    // Update profile
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        display_name: displayName,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userData.user.id);
+    
+    if (error) {
+      console.error("Profile update error:", error);
+      throw new Error(error.message);
+    }
+    
+    // Get updated profile data
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userData.user.id)
+      .single();
+    
+    return mapSupabaseUser(userData.user, profileData);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw new Error("更新个人资料失败");
   }
-  
-  // Get updated profile data
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userData.user.id)
-    .single();
-  
-  return mapSupabaseUser(userData.user, profileData);
 };
 
 // Request password reset

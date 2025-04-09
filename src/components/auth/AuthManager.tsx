@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthManager: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

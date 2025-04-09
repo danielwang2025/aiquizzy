@@ -39,10 +39,10 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
     }
     
     return {
-      tier: data.tier as SubscriptionTier,
-      questionCount: data.question_count,
-      isActive: data.is_active,
-      subscriptionEndDate: data.subscription_end_date,
+      tier: data?.tier as SubscriptionTier || 'free',
+      questionCount: data?.question_count || 0,
+      isActive: data?.is_active || true,
+      subscriptionEndDate: data?.subscription_end_date,
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
