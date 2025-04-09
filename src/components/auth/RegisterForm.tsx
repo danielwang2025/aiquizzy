@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { registerUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     e.preventDefault();
     
     if (!email || !password || !confirmPassword) {
-      setError("请填写所有必填字段");
+      setError("Please fill in all required fields");
       return;
     }
     
@@ -71,7 +70,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     }
     
     if (password !== confirmPassword) {
-      setError("两次输入的密码不匹配");
+      setError("Passwords do not match");
       return;
     }
     
@@ -80,10 +79,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     
     try {
       await registerUser(email, password, displayName);
-      toast.success("注册成功");
+      toast.success("Registration successful");
       onSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "注册失败";
+      const errorMessage = error instanceof Error ? error.message : "Registration failed";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -100,9 +99,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          创建账户
+          Create Account
         </h1>
-        <p className="text-muted-foreground">输入您的信息以创建新账户</p>
+        <p className="text-muted-foreground">Enter your information to create a new account</p>
       </div>
       
       {error && (
@@ -115,7 +114,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
-            电子邮箱 <span className="text-red-500">*</span>
+            Email <span className="text-red-500">*</span>
           </label>
           <Input
             id="email"
@@ -131,12 +130,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="displayName" className="text-sm font-medium flex items-center gap-2">
             <User className="h-4 w-4 text-primary" />
-            显示名称 (可选)
+            Display Name (Optional)
           </label>
           <Input
             id="displayName"
             type="text"
-            placeholder="您的昵称"
+            placeholder="Your nickname"
             value={displayName}
             onChange={handleInputChange(setDisplayName)}
             className="pl-3 pr-3 py-2 h-11 bg-white dark:bg-black/20 backdrop-blur-sm border-muted"
@@ -146,7 +145,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            密码 <span className="text-red-500">*</span>
+            Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -192,7 +191,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
             
             {!passwordError && password && (
               <div className="text-xs text-muted-foreground mt-1">
-                密码必须包含8-12个字符，并包含大写字母、小写字母、数字和特殊字符。
+                Password must be 8-12 characters long and include uppercase letters, lowercase letters, numbers, and special characters.
               </div>
             )}
           </div>
@@ -201,7 +200,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="space-y-2">
           <label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            确认密码 <span className="text-red-500">*</span>
+            Confirm Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -230,7 +229,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           disabled={isLoading || !!passwordError}
         >
           <UserPlus className="mr-2 h-4 w-4" />
-          {isLoading ? "创建账户中..." : "注册"}
+          {isLoading ? "Creating account..." : "Register"}
         </Button>
       </form>
       
@@ -240,7 +239,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         </div>
         <div className="relative flex justify-center text-xs">
           <span className="bg-background px-2 text-muted-foreground">
-            已有账户?
+            Already have an account?
           </span>
         </div>
       </div>
@@ -252,7 +251,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
           onClick={onLoginClick}
           className="w-full neo-card border-white/20 hover:shadow-md"
         >
-          登录到您的账户
+          Log in to your account
         </Button>
       </div>
     </motion.div>
