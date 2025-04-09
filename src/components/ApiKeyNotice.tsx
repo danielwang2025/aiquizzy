@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
@@ -7,15 +6,15 @@ const ApiKeyNotice: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
   
   useEffect(() => {
-    // 检查本地存储中是否已经关闭了通知
+    // Check if the notice has already been dismissed in local storage
     const dismissed = localStorage.getItem('apiKeyNoticeDismissed');
     
-    // 尝试调用 API 端点以检查是否设置了环境变量
+    // Attempt to call the API endpoint to check if environment variables are set
     const checkApiKeys = async () => {
       try {
         const response = await fetch('/api/check-api-keys');
         
-        // 只有在响应状态为非200且错误相关API密钥时显示横幅
+        // Only show the banner if the response status is not 200 and the error is related to missing API keys
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
           
@@ -24,7 +23,7 @@ const ApiKeyNotice: React.FC = () => {
           }
         }
       } catch (error) {
-        // 如果 API 端点不可用，可能是因为应用正在本地开发中，或者服务器端尚未配置
+        // If the API endpoint is unavailable, it might be because the app is in local development or the server side is not configured yet
         if (!dismissed) {
           setShowBanner(true);
         }
@@ -51,19 +50,19 @@ const ApiKeyNotice: React.FC = () => {
         </div>
         <div className="ml-3">
           <p className="text-sm text-amber-700">
-            请在 Vercel 环境变量中配置需要的 API 密钥：
-            <strong>DEEPSEEK_API_KEY</strong>, <strong>BREVO_API_KEY</strong>, 以及可选的 <strong>OPENAI_API_KEY</strong>。
+            Please configure the required API keys in the Vercel environment variables:
+            <strong>DEEPSEEK_API_KEY</strong>, <strong>BREVO_API_KEY</strong>, and optionally <strong>OPENAI_API_KEY</strong>.
           </p>
           <div className="mt-2">
             <button
               onClick={() => {
-                // 复制提示到剪贴板
+                // Copy the hint to the clipboard
                 navigator.clipboard.writeText('DEEPSEEK_API_KEY, BREVO_API_KEY, OPENAI_API_KEY');
-                toast.success('已复制 API 密钥名称到剪贴板');
+                toast.success('API key names copied to clipboard');
               }}
               className="text-sm text-amber-700 hover:text-amber-600 font-medium underline"
             >
-              复制密钥名称
+              Copy key names
             </button>
           </div>
         </div>
