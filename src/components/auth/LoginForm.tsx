@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { loginUser, sendMagicLink, requestPasswordReset } from "@/utils/authService";
+import { loginUser, sendMagicLink, requestPasswordReset, sendEmailOTP, verifyOTP } from "@/utils/authService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,7 +11,9 @@ import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Mail, KeyRound, MoveRight, Loader2 } from "lucide-react";
+import { Mail, KeyRound, MoveRight, Loader2, Check, ArrowLeft, RefreshCcw } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import OTPVerification from "./OTPVerification";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -34,6 +36,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [emailForOTP, setEmailForOTP] = useState("");
 
   // 登录表单初始化
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -68,14 +72,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     }
   };
 
-  // 处理魔术链接登录
+  // 处理魔术链接登录 - 现在改为发送OTP
   const onMagicLinkSubmit = async (values: z.infer<typeof magicLinkSchema>) => {
     try {
       setIsSendingMagicLink(true);
-      await sendMagicLink(values.email);
-      toast.success("登录链接已发送到您的邮箱，请查收");
+      await sendEmailOTP(values.email);
+      setEmailForOTP(values.email);
+      toast.success("验证码已发送到您的邮箱，请查收");
+      setShowOTPVerification(true);
     } catch (error: any) {
-      toast.error(error.message || "发送登录链接失败，请稍后再试");
+      toast.error(error.message || "发送验证码失败，请稍后再试");
     } finally {
       setIsSendingMagicLink(false);
     }
@@ -94,6 +100,27 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       setIsSendingReset(false);
     }
   };
+
+  // 处理OTP验证成功
+  const handleOTPSuccess = () => {
+    toast.success("登录成功！");
+    onSuccess?.();
+  };
+
+  // 返回登录表单
+  const handleBackToLogin = () => {
+    setShowOTPVerification(false);
+  };
+
+  if (showOTPVerification) {
+    return (
+      <OTPVerification 
+        email={emailForOTP} 
+        onSuccess={handleOTPSuccess} 
+        onBack={handleBackToLogin} 
+      />
+    );
+  }
 
   return (
     <>
@@ -153,7 +180,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
         <Tabs defaultValue="password" className="w-full mt-4">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="password">密码登录</TabsTrigger>
-            <TabsTrigger value="magic-link">魔术链接</TabsTrigger>
+            <TabsTrigger value="magic-link">OTP登录</TabsTrigger>
           </TabsList>
           
           <TabsContent value="password" className="animate-fade-in">
@@ -247,7 +274,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                     </>
                   ) : (
                     <>
-                      发送登录链接
+                      发送验证码
                       <Mail className="ml-2 h-4 w-4" />
                     </>
                   )}

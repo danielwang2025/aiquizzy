@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/quiz";
 
@@ -10,6 +9,8 @@ const ERROR_MAPPINGS: Record<string, string> = {
   "Password should be at least 6 characters": "密码长度至少需要6个字符",
   "For security purposes, you can only request this once every 60 seconds": "出于安全考虑，您每60秒只能请求一次",
   "Error sending magic link": "发送魔术链接时出错，请稍后再试",
+  "Invalid OTP": "无效的验证码",
+  "Exceeded rate limit": "请求过于频繁，请稍后再试",
 };
 
 // 处理并返回用户友好的错误消息
@@ -75,16 +76,21 @@ export const sendEmailOTP = async (email?: string): Promise<void> => {
   }
   
   try {
+    console.log("Sending OTP to email:", email);
     const { error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
+        shouldCreateUser: true,
         emailRedirectTo: window.location.origin + "/auth/callback" 
       }
     });
     
     if (error) {
+      console.error("OTP error:", error);
       throw handleAuthError(error);
     }
+    
+    console.log("OTP sent successfully");
   } catch (error) {
     throw handleAuthError(error);
   }
@@ -97,6 +103,7 @@ export const verifyOTP = async (email?: string, otpCode?: string): Promise<User>
   }
   
   try {
+    console.log("Verifying OTP for:", email);
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: otpCode,
@@ -104,6 +111,7 @@ export const verifyOTP = async (email?: string, otpCode?: string): Promise<User>
     });
     
     if (error) {
+      console.error("OTP verification error:", error);
       throw handleAuthError(error);
     }
     
@@ -111,6 +119,7 @@ export const verifyOTP = async (email?: string, otpCode?: string): Promise<User>
       throw new Error("验证失败");
     }
     
+    console.log("OTP verification successful:", data.user);
     return mapSupabaseUser(data.user);
   } catch (error) {
     throw handleAuthError(error);
@@ -129,6 +138,7 @@ export const registerUser = async (email?: string, _password?: string, displayNa
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
+        shouldCreateUser: true,
         emailRedirectTo: window.location.origin,
         data: {
           display_name: displayName || email.split('@')[0],
@@ -140,7 +150,7 @@ export const registerUser = async (email?: string, _password?: string, displayNa
       throw handleAuthError(error);
     }
 
-    console.log("注册链接已发送，请检查您的邮箱完成注册");
+    console.log("验证码已发送，请检查您的邮箱完成注册");
   } catch (error) {
     throw handleAuthError(error);
   }
