@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
@@ -78,17 +77,17 @@ const AuthManager: React.FC = () => {
   const handleAuthSuccess = () => {
     setShowAuthSheet(false);
     setShowRegister(false);
-    toast.success("登录成功");
+    toast.success("Login successful");
   };
   
   const handleLogout = async () => {
     try {
       setLoading(true);
       await logoutUser();
-      toast.success("成功登出");
+      toast.success("Logged out successfully");
       localStorage.removeItem('current_user');
     } catch (error) {
-      toast.error("登出失败");
+      toast.error("Logout failed");
       console.error("Logout error:", error);
     } finally {
       setLoading(false);
@@ -108,7 +107,7 @@ const AuthManager: React.FC = () => {
     return (
       <Button variant="outline" size="sm" className="flex items-center glass-effect border-white/20 shadow-sm">
         <LoadingSpinner size="sm" className="mr-2" />
-        <span>加载中...</span>
+        <span>Loading...</span>
       </Button>
     );
   }
@@ -134,7 +133,7 @@ const AuthManager: React.FC = () => {
             className="glass-effect border-white/20 mr-2"
           >
             <UserCircle className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">个人资料</span>
+            <span className="hidden sm:inline">Profile</span>
           </Button>
           <Button
             variant="outline"
@@ -143,7 +142,7 @@ const AuthManager: React.FC = () => {
             className="glass-effect border-white/20"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">登出</span>
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </motion.div>
       ) : (
@@ -155,7 +154,7 @@ const AuthManager: React.FC = () => {
               className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 flex items-center"
             >
               <User className="h-4 w-4 mr-2" />
-              <span>登录 / 注册</span>
+              <span>Login / Register</span>
             </Button>
           </SheetTrigger>
           <SheetContent className="glass-effect border-l border-white/20">
