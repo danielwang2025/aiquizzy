@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { isAuthenticated, getCurrentUser, logoutUser } from "@/utils/authService";
 import LoginForm from "./LoginForm";
@@ -23,24 +24,30 @@ const AuthManager: React.FC = () => {
   useEffect(() => {
     // Set up authentication state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setLoading(true);
-        try {
-          if (session) {
-            setIsAuth(true);
-            const user = await getCurrentUser();
-            if (user) {
-              setCurrentUser(user);
-              localStorage.setItem('current_user', JSON.stringify(user));
+      (event, session) => {
+        console.log("Auth state changed:", event, session);
+        if (session) {
+          setIsAuth(true);
+          
+          // Use setTimeout to prevent deadlocks with supabase auth
+          setTimeout(async () => {
+            try {
+              const user = await getCurrentUser();
+              if (user) {
+                console.log("Current user:", user);
+                setCurrentUser(user);
+                localStorage.setItem('current_user', JSON.stringify(user));
+              }
+            } catch (error) {
+              console.error("Failed to fetch current user:", error);
+            } finally {
+              setLoading(false);
             }
-          } else {
-            setIsAuth(false);
-            setCurrentUser(null);
-            localStorage.removeItem('current_user');
-          }
-        } catch (error) {
-          console.error("Auth state change error:", error);
-        } finally {
+          }, 0);
+        } else {
+          setIsAuth(false);
+          setCurrentUser(null);
+          localStorage.removeItem('current_user');
           setLoading(false);
         }
       }
@@ -49,10 +56,10 @@ const AuthManager: React.FC = () => {
     // Initial authentication status check
     const checkAuth = async () => {
       try {
-        const isAuthResult = await isAuthenticated();
-        setIsAuth(isAuthResult);
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuth(!!session);
         
-        if (isAuthResult) {
+        if (session?.user) {
           const user = await getCurrentUser();
           if (user) {
             setCurrentUser(user);
@@ -77,17 +84,17 @@ const AuthManager: React.FC = () => {
   const handleAuthSuccess = () => {
     setShowAuthSheet(false);
     setShowRegister(false);
-    toast.success("Login successful");
+    toast.success("认证成功");
   };
   
   const handleLogout = async () => {
     try {
       setLoading(true);
       await logoutUser();
-      toast.success("Logged out successfully");
+      toast.success("成功登出");
       localStorage.removeItem('current_user');
     } catch (error) {
-      toast.error("Logout failed");
+      toast.error("登出失败");
       console.error("Logout error:", error);
     } finally {
       setLoading(false);
@@ -107,7 +114,7 @@ const AuthManager: React.FC = () => {
     return (
       <Button variant="outline" size="sm" className="flex items-center glass-effect border-white/20 shadow-sm">
         <LoadingSpinner size="sm" className="mr-2" />
-        <span>Loading...</span>
+        <span>加载中...</span>
       </Button>
     );
   }
@@ -133,7 +140,7 @@ const AuthManager: React.FC = () => {
             className="glass-effect border-white/20 mr-2"
           >
             <UserCircle className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">个人资料</span>
           </Button>
           <Button
             variant="outline"
@@ -142,7 +149,7 @@ const AuthManager: React.FC = () => {
             className="glass-effect border-white/20"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Logout</span>
+            <span className="hidden sm:inline">退出登录</span>
           </Button>
         </motion.div>
       ) : (
@@ -152,9 +159,10 @@ const AuthManager: React.FC = () => {
               variant="outline" 
               size="sm"
               className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 flex items-center"
+              aria-label="Login / Register"
             >
               <User className="h-4 w-4 mr-2" />
-              <span>Login / Register</span>
+              <span>登录 / 注册</span>
             </Button>
           </SheetTrigger>
           <SheetContent className="glass-effect border-l border-white/20">

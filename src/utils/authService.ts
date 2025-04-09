@@ -3,6 +3,77 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/quiz";
 import { validateStrongPassword, escapeHtml } from "./securityUtils";
 
+// 发送手机验证码
+export const sendPhoneOTP = async (phone: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: phone
+    });
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("发送手机验证码错误:", error);
+    throw error;
+  }
+};
+
+// 发送邮箱验证码
+export const sendEmailOTP = async (email: string): Promise<void> => {
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email
+    });
+    
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("发送邮箱验证码错误:", error);
+    throw error;
+  }
+};
+
+// 验证OTP码
+export const verifyOTP = async (email: string, token: string): Promise<User> => {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data.user) {
+      throw new Error("验证失败，未返回用户数据");
+    }
+
+    // 获取用户资料
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    // 返回用户信息
+    const userData: User = {
+      id: data.user.id,
+      email: data.user.email || "",
+      displayName: profileData?.display_name || data.user.email?.split('@')[0] || "",
+      createdAt: data.user.created_at || new Date().toISOString()
+    };
+
+    return userData;
+  } catch (error) {
+    console.error("验证OTP错误:", error);
+    throw error;
+  }
+};
+
 // 用户注册
 export const registerUser = async (email: string, password: string, displayName?: string): Promise<User> => {
   try {
