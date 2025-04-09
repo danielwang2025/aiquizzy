@@ -5,8 +5,9 @@ import { toast } from "sonner";
 
 // Default subscription limits
 const LIMITS = {
-  free: 50,
-  premium: 5000
+  free: 5,        // Free (unregistered) users: 5 questions/month
+  registered: 50, // Registered users: 50 questions/month
+  premium: 1000   // Premium users: 1000 questions/month
 };
 
 /**
@@ -30,7 +31,7 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
       .single();
 
     if (error || !data) {
-      // If no subscription record exists, return free tier
+      // If no subscription record exists, return registered tier
       return {
         tier: 'free',
         questionCount: 0,
@@ -42,7 +43,9 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
       tier: data.tier as SubscriptionTier,
       questionCount: data.question_count,
       subscriptionEndDate: data.subscription_end_date,
-      isActive: data.is_active
+      isActive: data.is_active,
+      stripeCustomerId: data.stripe_customer_id,
+      stripeSubscriptionId: data.stripe_subscription_id
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
@@ -58,11 +61,17 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
  * Check if user can generate more questions
  */
 export const canGenerateQuestions = async (userId?: string, count = 1): Promise<boolean> => {
-  if (!userId) return true; // For demo mode, allow without restrictions
+  if (!userId) return count <= LIMITS.free; // For non-logged in users, limit to free tier
   
   try {
     const subscription = await getUserSubscription(userId);
-    const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
+    let limit;
+    
+    if (subscription.tier === 'premium') {
+      limit = LIMITS.premium;
+    } else {
+      limit = LIMITS.registered; // Registered users
+    }
     
     return subscription.questionCount + count <= limit;
   } catch (error) {
@@ -133,7 +142,7 @@ export const getSubscriptionPlans = () => {
       description: "Basic access for casual users",
       price: 0,
       features: [
-        "Generate up to 50 questions per month",
+        "Generate up to 5 questions per month",
         "Basic question types",
         "Access to review hub"
       ],
@@ -141,12 +150,25 @@ export const getSubscriptionPlans = () => {
       tier: 'free' as SubscriptionTier
     },
     {
+      id: "registered-tier",
+      name: "Registered",
+      description: "Standard access for registered users",
+      price: 0,
+      features: [
+        "Generate up to 50 questions per month",
+        "All question types",
+        "Save question history"
+      ],
+      questionLimit: LIMITS.registered,
+      tier: 'free' as SubscriptionTier
+    },
+    {
       id: "premium-tier",
       name: "Premium",
       description: "Full access for professionals and educators",
-      price: 10,
+      price: 9.99,
       features: [
-        "Generate up to 5,000 questions per month",
+        "Generate up to 1,000 questions per month",
         "All question types",
         "Advanced Bloom's taxonomy targeting",
         "Priority support",
@@ -162,15 +184,44 @@ export const getSubscriptionPlans = () => {
  * Get remaining questions for the user
  */
 export const getRemainingQuestions = async (userId?: string): Promise<number> => {
-  if (!userId) return LIMITS.free; // For demo mode
+  if (!userId) return LIMITS.free; // For non-logged in users
   
   try {
     const subscription = await getUserSubscription(userId);
-    const limit = subscription.tier === 'premium' ? LIMITS.premium : LIMITS.free;
+    let limit;
+    
+    if (subscription.tier === 'premium') {
+      limit = LIMITS.premium;
+    } else {
+      limit = LIMITS.registered;
+    }
     
     return Math.max(0, limit - subscription.questionCount);
   } catch (error) {
     console.error("Error calculating remaining questions:", error);
     return 0;
+  }
+};
+
+/**
+ * Create a Stripe checkout session for subscription
+ */
+export const createCheckoutSession = async (userId: string, priceId: string): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-checkout', {
+      body: { priceId }
+    });
+    
+    if (error) {
+      console.error("Checkout error:", error);
+      toast.error("Failed to create checkout session");
+      return null;
+    }
+    
+    return data.url;
+  } catch (error) {
+    console.error("Checkout error:", error);
+    toast.error("Failed to create checkout session");
+    return null;
   }
 };

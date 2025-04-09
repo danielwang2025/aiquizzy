@@ -16,4 +16,6 @@ export interface UserSubscription {
   questionCount: number;
   subscriptionEndDate?: string;
   isActive: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
 }

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,9 +14,9 @@ import Contact from "./pages/Contact";
 import Pricing from "./pages/Pricing";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import ApiKeyNotice from "./components/ApiKeyNotice"; // 新添加的组件
+import ApiKeyNotice from "./components/ApiKeyNotice";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
-// Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,13 +27,12 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  // BrowserRouter must be the outermost wrapper for components using router hooks
   <BrowserRouter>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ApiKeyNotice /> {/* 在这里添加提示组件 */}
+        <ApiKeyNotice />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/customize" element={<QuizCustomizer />} />
@@ -46,6 +44,7 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>

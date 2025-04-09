@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -6,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
-import { getSubscriptionPlans } from "@/utils/subscriptionService";
-import { isAuthenticated } from "@/utils/authService";
+import { getSubscriptionPlans, createCheckoutSession } from "@/utils/subscriptionService";
+import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -30,19 +31,35 @@ const Pricing = () => {
       return;
     }
 
-    if (planId === "free-tier") {
-      toast.success("You are already on the Free plan!");
+    if (planId === "free-tier" || planId === "registered-tier") {
+      toast.success(`You are already on the ${planId === "free-tier" ? "Free" : "Registered"} plan!`);
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      toast.info("This would redirect to payment processing. Feature coming soon!");
-      setTimeout(() => {
+      const user = await getCurrentUser();
+      
+      if (!user) {
+        toast.error("Authentication error. Please sign in again.");
         setIsProcessing(false);
-        toast.success("Subscription demo: You now have Premium access!");
-      }, 1500);
+        return;
+      }
+      
+      // Use a fixed price ID for the premium plan
+      // In production, you would fetch this from your Stripe dashboard
+      const stripePriceId = "price_premium"; // Replace with your actual Stripe price ID
+      
+      const checkoutUrl = await createCheckoutSession(user.id, stripePriceId);
+      
+      if (checkoutUrl) {
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutUrl;
+      } else {
+        setIsProcessing(false);
+        toast.error("Failed to create checkout session. Please try again.");
+      }
     } catch (error) {
       console.error("Subscription error:", error);
       setIsProcessing(false);
@@ -69,7 +86,7 @@ const Pricing = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plans.map((plan) => (
               <motion.div
                 key={plan.id}
@@ -110,7 +127,10 @@ const Pricing = () => {
                         onClick={() => handleSubscribe(plan.id)}
                         disabled={isProcessing}
                       >
-                        {plan.tier === 'free' ? 'Current Plan' : 'Subscribe'}
+                        {isProcessing ? 'Processing...' : 
+                          plan.id === "free-tier" ? 'Current Plan' : 
+                          plan.id === "registered-tier" ? 'Registered Plan' :
+                          'Subscribe'}
                       </Button>
                     </CardFooter>
                   </div>
@@ -132,7 +152,9 @@ const Pricing = () => {
                     How does the question limit work?
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Your question limit resets every month. The count is based on the number of questions you generate. Unused questions don't roll over to the next month.
+                    Your question limit resets every month. The count is based on the number of questions you generate. 
+                    Free users can generate 5 questions per month, registered users can generate 50 questions, 
+                    and premium subscribers can generate up to 1000 questions per month. Unused questions don't roll over.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-2" className="border-b border-slate-200 dark:border-slate-700">
@@ -140,7 +162,8 @@ const Pricing = () => {
                     Can I upgrade or downgrade my plan?
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Yes, you can change your plan at any time. Changes to your subscription will take effect at the start of your next billing cycle. There's no penalty for changing plans.
+                    Yes, you can change your plan at any time. Changes to your subscription will take effect at the start of your next billing cycle. 
+                    There's no penalty for changing plans.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3" className="border-b border-slate-200 dark:border-slate-700">
@@ -148,7 +171,8 @@ const Pricing = () => {
                     Is there a refund policy?
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    We offer a 7-day money-back guarantee for all new subscriptions. If you're not satisfied with our service, please contact our support team within 7 days of your purchase for a full refund.
+                    We offer a 7-day money-back guarantee for all new subscriptions. If you're not satisfied with our service, 
+                    please contact our support team within 7 days of your purchase for a full refund.
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-4" className="border-b border-slate-200 dark:border-slate-700">
@@ -164,7 +188,8 @@ const Pricing = () => {
                     Is my payment information secure?
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Yes, all payment processing is handled by our secure payment processors. We never store your full credit card details on our servers.
+                    Yes, all payment processing is handled by Stripe, one of the most secure payment processors in the world.
+                    We never store your full credit card details on our servers.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
