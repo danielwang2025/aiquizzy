@@ -52,6 +52,10 @@ import {
   FileCheck, 
   FilePlus 
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { UserSubscription } from "@/types/subscription";
+import { getUserSubscription, getRemainingQuestions, incrementQuestionCount } from "@/utils/subscriptionService";
+import SubscriptionBanner from "@/components/SubscriptionBanner";
 
 interface QuizGeneratorProps {
   initialTopic?: string;
