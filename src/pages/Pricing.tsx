@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Loader2 } from "lucide-react";
@@ -72,7 +71,7 @@ const Pricing = () => {
   
   const isCurrentPlan = (planTier: string): boolean => {
     if (!currentSubscription) return false;
-    return currentSubscription.tier === planTier;
+    return currentSubscription.tier === planTier as 'premium' | 'free';
   };
 
   return (
