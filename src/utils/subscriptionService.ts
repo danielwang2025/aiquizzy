@@ -43,6 +43,8 @@ export const getUserSubscription = async (userId?: string): Promise<UserSubscrip
       questionCount: data?.question_count || 0,
       isActive: data?.is_active || true,
       subscriptionEndDate: data?.subscription_end_date,
+      stripeCustomerId: data?.stripe_customer_id,
+      stripeSubscriptionId: data?.stripe_subscription_id,
     };
   } catch (error) {
     console.error("Error fetching subscription:", error);
@@ -82,15 +84,23 @@ export const canGenerateQuestions = async (userId?: string, count = 1): Promise<
  */
 export const incrementQuestionCount = async (userId: string, count: number): Promise<void> => {
   try {
-    const { data: userData } = await supabase
+    // First get current count
+    const { data: userData, error: fetchError } = await supabase
       .from('user_subscriptions')
       .select('question_count')
       .eq('user_id', userId)
       .single();
     
+    if (fetchError) {
+      console.error("Error fetching question count:", fetchError);
+      toast.error("无法更新问题使用量");
+      return;
+    }
+    
     const currentCount = userData?.question_count || 0;
     
-    const { error } = await supabase
+    // Update count
+    const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({ 
         question_count: currentCount + count,
@@ -98,13 +108,15 @@ export const incrementQuestionCount = async (userId: string, count: number): Pro
       })
       .eq('user_id', userId);
     
-    if (error) {
-      console.error("Error incrementing question count:", error);
-      toast.error("Failed to update question usage");
+    if (updateError) {
+      console.error("Error incrementing question count:", updateError);
+      toast.error("无法更新问题使用量");
+    } else {
+      console.log(`Incremented question count for user ${userId} by ${count}`);
     }
   } catch (error) {
     console.error("Error incrementing question count:", error);
-    toast.error("Failed to update question usage");
+    toast.error("无法更新问题使用量");
   }
 };
 
@@ -136,41 +148,41 @@ export const getSubscriptionPlans = () => {
   return [
     {
       id: "free-tier",
-      name: "Free",
-      description: "Basic access for casual users",
+      name: "免费版",
+      description: "适合休闲用户的基本访问权限",
       price: 0,
       features: [
-        "Generate up to 5 questions per month",
-        "Basic question types",
-        "Access to review hub"
+        "每月生成最多5个问题",
+        "基本题型",
+        "访问复习中心"
       ],
       questionLimit: LIMITS.free,
       tier: 'free' as SubscriptionTier
     },
     {
       id: "registered-tier",
-      name: "Registered",
-      description: "Standard access for registered users",
+      name: "注册用户",
+      description: "注册用户的标准访问权限",
       price: 0,
       features: [
-        "Generate up to 50 questions per month",
-        "All question types",
-        "Save question history"
+        "每月生成最多50个问题",
+        "所有题型",
+        "保存问题历史"
       ],
       questionLimit: LIMITS.registered,
       tier: 'free' as SubscriptionTier
     },
     {
       id: "premium-tier",
-      name: "Premium",
-      description: "Full access for professionals and educators",
+      name: "高级会员",
+      description: "专业人士和教育工作者的完整访问权限",
       price: 9.99,
       features: [
-        "Generate up to 1,000 questions per month",
-        "All question types",
-        "Advanced Bloom's taxonomy targeting",
-        "Priority support",
-        "Export to Word with custom formatting"
+        "每月生成最多1,000个问题",
+        "所有题型",
+        "高级布鲁姆分类学目标设置",
+        "优先支持",
+        "导出到Word并自定义格式"
       ],
       questionLimit: LIMITS.premium,
       tier: 'premium' as SubscriptionTier
@@ -207,7 +219,10 @@ export const getRemainingQuestions = async (userId?: string): Promise<number> =>
 export const createCheckoutSession = async (userId: string, priceId: string): Promise<string | null> => {
   try {
     const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { priceId }
+      body: { 
+        priceId,
+        userId // Pass the userId to be stored in customer metadata
+      }
     });
     
     if (error) {
@@ -217,7 +232,7 @@ export const createCheckoutSession = async (userId: string, priceId: string): Pr
     return data.url;
   } catch (error) {
     console.error("Checkout error:", error);
-    toast.error("Failed to create checkout session");
+    toast.error("创建结账会话失败");
     return null;
   }
 };

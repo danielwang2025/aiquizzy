@@ -51,6 +51,8 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Webhook received: ${event.type}`);
+
     // Handle the event
     switch (event.type) {
       case "customer.subscription.created":
@@ -59,7 +61,7 @@ serve(async (req) => {
         
         // Get customer details
         const customer = await stripe.customers.retrieve(subscription.customer as string);
-        const userId = customer.metadata.user_id;
+        const userId = customer.metadata?.user_id;
         
         if (!userId) {
           console.error("No user ID found in customer metadata");
@@ -71,33 +73,70 @@ serve(async (req) => {
         const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
         
         // Update the subscription in the database
-        await supabaseClient.from("user_subscriptions").update({
-          tier: isActive ? "premium" : "free",
-          is_active: isActive,
-          stripe_subscription_id: subscription.id,
-          subscription_end_date: currentPeriodEnd,
-        }).eq("user_id", userId);
+        const { error } = await supabaseClient
+          .from("user_subscriptions")
+          .update({
+            tier: isActive ? "premium" : "free",
+            is_active: isActive,
+            stripe_subscription_id: subscription.id,
+            stripe_customer_id: subscription.customer as string,
+            subscription_end_date: currentPeriodEnd,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", userId);
+        
+        if (error) {
+          console.error("Error updating subscription:", error);
+        } else {
+          console.log(`Subscription updated for user: ${userId}`);
+        }
         
         break;
       }
       case "customer.subscription.deleted": {
         const subscription = event.data.object;
         
-        // Get customer details
-        const customer = await stripe.customers.retrieve(subscription.customer as string);
-        const userId = customer.metadata.user_id;
+        // When subscription is deleted, find by stripe_subscription_id
+        const { error } = await supabaseClient
+          .from("user_subscriptions")
+          .update({
+            tier: "free",
+            is_active: false,
+            subscription_end_date: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq("stripe_subscription_id", subscription.id);
         
-        if (!userId) {
-          console.error("No user ID found in customer metadata");
-          break;
+        if (error) {
+          console.error("Error downgrading subscription:", error);
+        } else {
+          console.log(`Subscription downgraded for subscription ID: ${subscription.id}`);
         }
         
-        // Downgrade the user to free
-        await supabaseClient.from("user_subscriptions").update({
-          tier: "free",
-          is_active: false,
-          subscription_end_date: new Date().toISOString(),
-        }).eq("stripe_subscription_id", subscription.id);
+        break;
+      }
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        
+        // For one-time payments or initial subscription setup
+        if (session.customer && session.client_reference_id) {
+          const userId = session.client_reference_id;
+          
+          // Update customer ID in database if it exists
+          const { error } = await supabaseClient
+            .from("user_subscriptions")
+            .update({
+              stripe_customer_id: session.customer as string,
+              updated_at: new Date().toISOString()
+            })
+            .eq("user_id", userId);
+          
+          if (error) {
+            console.error("Error updating customer ID:", error);
+          } else {
+            console.log(`Customer ID updated for user: ${userId}`);
+          }
+        }
         
         break;
       }

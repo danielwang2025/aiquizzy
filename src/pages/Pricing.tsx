@@ -1,204 +1,170 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
-import { motion } from "framer-motion";
-import { getSubscriptionPlans, createCheckoutSession } from "@/utils/subscriptionService";
-import { isAuthenticated, getCurrentUser } from "@/utils/authService";
+import { Check, Crown, Loader2 } from "lucide-react";
+import { getSubscriptionPlans, createCheckoutSession, getUserSubscription } from "@/utils/subscriptionService";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "@/utils/authService";
 import { toast } from "sonner";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
+import { UserSubscription } from "@/types/subscription";
 
 const Pricing = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Get subscription plans
   const plans = getSubscriptionPlans();
-  const isAuth = isAuthenticated();
-
-  const handleSubscribe = async (planId: string) => {
-    if (!isAuth) {
-      toast.info("Please sign in to subscribe", {
-        action: {
-          label: "Sign In",
-          onClick: () => {
-            document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
-          },
-        },
-      });
+  
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      if (isAuthenticated()) {
+        try {
+          const session = await supabase.auth.getSession();
+          if (session.data.session?.user) {
+            const subscription = await getUserSubscription(session.data.session.user.id);
+            setCurrentSubscription(subscription);
+          }
+        } catch (error) {
+          console.error("Error fetching user subscription:", error);
+        }
+      }
+    };
+    
+    fetchUserSubscription();
+  }, []);
+  
+  const handleSubscribe = async (planId: string, priceId: string) => {
+    if (!isAuthenticated()) {
+      toast.error("请先登录");
+      navigate("/");
       return;
     }
-
-    if (planId === "free-tier" || planId === "registered-tier") {
-      toast.success(`You are already on the ${planId === "free-tier" ? "Free" : "Registered"} plan!`);
-      return;
-    }
-
-    setIsProcessing(true);
-
+    
+    setProcessingPlanId(planId);
+    setIsLoading(true);
+    
     try {
-      const user = await getCurrentUser();
-      
-      if (!user) {
-        toast.error("Authentication error. Please sign in again.");
-        setIsProcessing(false);
+      const session = await supabase.auth.getSession();
+      if (!session.data.session?.user) {
+        toast.error("未找到用户会话");
         return;
       }
       
-      // Use a fixed price ID for the premium plan
-      // In production, you would fetch this from your Stripe dashboard
-      const stripePriceId = "price_premium"; // Replace with your actual Stripe price ID
-      
-      const checkoutUrl = await createCheckoutSession(user.id, stripePriceId);
+      const userId = session.data.session.user.id;
+      const checkoutUrl = await createCheckoutSession(userId, priceId);
       
       if (checkoutUrl) {
-        // Redirect to Stripe Checkout
         window.location.href = checkoutUrl;
       } else {
-        setIsProcessing(false);
-        toast.error("Failed to create checkout session. Please try again.");
+        toast.error("创建结账会话失败");
       }
     } catch (error) {
       console.error("Subscription error:", error);
-      setIsProcessing(false);
-      toast.error("Failed to process subscription. Please try again.");
+      toast.error("订阅处理时出错");
+    } finally {
+      setIsLoading(false);
+      setProcessingPlanId(null);
     }
+  };
+  
+  const isCurrentPlan = (planTier: string): boolean => {
+    if (!currentSubscription) return false;
+    return currentSubscription.tier === planTier;
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-
-      <main className="flex-grow py-20 px-4">
-        <div className="max-w-6xl mx-auto space-y-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Pricing Plans</span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">Choose Your Plan</h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Select the plan that best suits your quiz generation needs
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {plans.map((plan) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: plan.tier === 'premium' ? 0.2 : 0 }}
-                whileHover={{ y: -5 }}
-              >
-                <Card className={`overflow-hidden neo-card h-full flex flex-col justify-between ${plan.tier === 'premium' ? 'gradient-border shadow-lg' : ''}`}>
-                  {plan.tier === 'premium' && (
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2 text-sm font-medium">
-                      RECOMMENDED
-                    </div>
-                  )}
-                  <div className="flex flex-col flex-grow">
-                    <CardHeader className="space-y-4 pb-8">
-                      <CardTitle className="text-2xl md:text-3xl">{plan.name}</CardTitle>
-                      <CardDescription className="text-base opacity-90">{plan.description}</CardDescription>
-                      <div className="mt-4 pt-2">
-                        <span className="text-4xl md:text-5xl font-bold">${plan.price}</span>
-                        {plan.price > 0 && <span className="text-muted-foreground ml-2">/month</span>}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <ul className="space-y-4">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
-                            <span className="opacity-90">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                    <CardFooter className="pt-8">
-                      <Button
-                        className={`w-full py-6 text-base font-medium btn-3d ${plan.tier === 'premium' ? 'bg-gradient-primary' : ''}`}
-                        variant={plan.tier === 'free' ? "outline" : "default"}
-                        onClick={() => handleSubscribe(plan.id)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? 'Processing...' : 
-                          plan.id === "free-tier" ? 'Current Plan' : 
-                          plan.id === "registered-tier" ? 'Registered Plan' :
-                          'Subscribe'}
-                      </Button>
-                    </CardFooter>
+    <div className="container max-w-6xl py-12">
+      <div className="text-center mb-12">
+        <h1 className="text-3xl font-bold mb-2">选择适合您的计划</h1>
+        <p className="text-muted-foreground">
+          根据您的需求选择合适的套餐，获取更多题目生成额度
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {plans.map((plan) => {
+          const isCurrent = isCurrentPlan(plan.tier);
+          
+          return (
+            <div 
+              key={plan.id}
+              className={`rounded-xl border bg-card p-6 shadow-sm transition-all ${
+                plan.tier === 'premium' 
+                  ? 'border-amber-200 shadow-amber-100' 
+                  : 'hover:border-primary/20 hover:shadow-md'
+              }`}
+            >
+              {plan.tier === 'premium' && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                  <Crown className="h-3 w-3 mr-1" /> 推荐
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">{plan.name}</h2>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex items-baseline">
+                  <span className="text-3xl font-bold">¥{plan.price}</span>
+                  {plan.price > 0 && <span className="text-sm text-muted-foreground ml-1">/ 月</span>}
+                </div>
+              </div>
+              
+              <div className="space-y-2 mb-6">
+                {plan.features.map((feature, i) => (
+                  <div key={i} className="flex items-center">
+                    <Check className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
                   </div>
-                </Card>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+              
+              <Button
+                onClick={() => handleSubscribe(plan.id, plan.tier === 'premium' ? 'price_1OP4etKfkkTK3nF4QH29LwXp' : '')}
+                className="w-full"
+                disabled={isLoading || isCurrent || plan.tier === 'free' || plan.tier === 'registered'}
+                variant={plan.tier === 'premium' ? 'default' : 'outline'}
+              >
+                {isLoading && processingPlanId === plan.id ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    处理中...
+                  </>
+                ) : isCurrent ? (
+                  '当前方案'
+                ) : plan.tier === 'premium' ? (
+                  '订阅'
+                ) : (
+                  '免费'
+                )}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="mt-12 text-center">
+        <h3 className="text-xl font-semibold mb-4">常见问题</h3>
+        <div className="max-w-3xl mx-auto space-y-4">
+          <div className="bg-secondary/50 p-4 rounded-lg text-left">
+            <h4 className="font-medium mb-1">我可以随时取消订阅吗？</h4>
+            <p className="text-sm text-muted-foreground">是的，您可以随时取消订阅。取消后，您可以继续使用当前订阅周期内的服务，直到订阅到期。</p>
           </div>
-
-          <div className="mt-24 max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <span className="px-4 py-1.5 text-sm font-medium bg-purple-100 text-purple-700 rounded-full inline-block mb-4">Questions</span>
-              <h2 className="text-2xl md:text-3xl font-semibold mb-6 tracking-tight">Frequently Asked Questions</h2>
-            </div>
-
-            <div className="glass-effect rounded-2xl overflow-hidden">
-              <Accordion type="single" collapsible className="border-none">
-                <AccordionItem value="item-1" className="border-b border-slate-200 dark:border-slate-700">
-                  <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-secondary/50 text-lg">
-                    How does the question limit work?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Your question limit resets every month. The count is based on the number of questions you generate. 
-                    Free users can generate 5 questions per month, registered users can generate 50 questions, 
-                    and premium subscribers can generate up to 1000 questions per month. Unused questions don't roll over.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2" className="border-b border-slate-200 dark:border-slate-700">
-                  <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-secondary/50 text-lg">
-                    Can I upgrade or downgrade my plan?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Yes, you can change your plan at any time. Changes to your subscription will take effect at the start of your next billing cycle. 
-                    There's no penalty for changing plans.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3" className="border-b border-slate-200 dark:border-slate-700">
-                  <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-secondary/50 text-lg">
-                    Is there a refund policy?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    We offer a 7-day money-back guarantee for all new subscriptions. If you're not satisfied with our service, 
-                    please contact our support team within 7 days of your purchase for a full refund.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-4" className="border-b border-slate-200 dark:border-slate-700">
-                  <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-secondary/50 text-lg">
-                    What payment methods do you accept?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    We accept all major credit cards, including Visa, Mastercard, and American Express. We also support PayPal for your convenience.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-5" className="border-b border-slate-200 dark:border-slate-700">
-                  <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-secondary/50 text-lg">
-                    Is my payment information secure?
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-5 text-muted-foreground text-base leading-relaxed">
-                    Yes, all payment processing is handled by Stripe, one of the most secure payment processors in the world.
-                    We never store your full credit card details on our servers.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
+          <div className="bg-secondary/50 p-4 rounded-lg text-left">
+            <h4 className="font-medium mb-1">如何更改我的订阅？</h4>
+            <p className="text-sm text-muted-foreground">您可以在个人资料页面管理您的订阅。如果您想升级或降级，系统将自动计算剩余时间的价格差异。</p>
+          </div>
+          <div className="bg-secondary/50 p-4 rounded-lg text-left">
+            <h4 className="font-medium mb-1">题目生成额度会重置吗？</h4>
+            <p className="text-sm text-muted-foreground">是的，每个月的额度会在您的订阅日期自动重置。例如，如果您在5月10日订阅，那么每个月的10日额度都会重置。</p>
           </div>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 };
