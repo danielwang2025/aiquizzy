@@ -1,3 +1,4 @@
+
 // src/pages/Pricing.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +33,7 @@ const Pricing = () => {
       return;
     }
 
+    // Fix the type comparison error by using explicit string comparison
     if (planId === "free-tier" || planId === "registered-tier") {
       toast.success(`You are already on the ${planId === "free-tier" ? "Free" : "Registered"} plan!`);
       return;

@@ -15,7 +15,7 @@ const Navigation: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isHomePage = location.pathname === "/";
   
-  // 监听滚动事件，控制导航栏样式
+  // Listen for scroll events to control navigation bar style
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -122,7 +122,7 @@ const Navigation: React.FC = () => {
         </div>
       </div>
       
-      {/* 移动端弹出导航 - 玻璃态设计 */}
+      {/* Mobile dropdown navigation - Glass effect design */}
       <AnimatePresence>
         {isMobile && mobileMenuOpen && (
           <motion.div
@@ -156,7 +156,7 @@ const Navigation: React.FC = () => {
         )}
       </AnimatePresence>
       
-      {/* 移动端底部导航 */}
+      {/* Mobile bottom navigation */}
       {isMobile && !mobileMenuOpen && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border shadow-lg z-50">
           <div className="grid grid-cols-5 h-16">
