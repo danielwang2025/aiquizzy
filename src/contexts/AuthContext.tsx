@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;  // Updated return type to match implementation
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
