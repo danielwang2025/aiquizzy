@@ -15,49 +15,43 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Get the authorization header from the request
+    const authHeader = req.headers.get('Authorization')!;
+    
+    // Create a Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    );
+    
+    // Get the current user
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser();
 
-    // Verify user authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!user) {
       return new Response(
-        JSON.stringify({ error: "未授权访问" }),
+        JSON.stringify({ error: "User not authenticated" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !userData.user) {
-      return new Response(
-        JSON.stringify({ error: "无效的身份验证令牌" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-
-    const user = userData.user;
-    
-    // Parse request body
-    const { priceId, userId } = await req.json();
-
-    // Validate request
-    if (!priceId) {
-      return new Response(
-        JSON.stringify({ error: "Missing required parameter: priceId" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
+    // Parse the request body
+    const { priceId } = await req.json();
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2022-11-15",
     });
 
-    // Check if user already has a Stripe customer ID
+    // Get user subscription details
     const { data: subscriptionData } = await supabaseClient
       .from("user_subscriptions")
       .select("stripe_customer_id")
@@ -66,7 +60,7 @@ serve(async (req) => {
 
     let customerId = subscriptionData?.stripe_customer_id;
 
-    // If no customer ID found, create a new customer
+    // If no customer ID exists, create a new customer
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -76,43 +70,36 @@ serve(async (req) => {
       });
       customerId = customer.id;
 
-      // Save the customer ID to the database
-      await supabaseClient
-        .from("user_subscriptions")
-        .update({ stripe_customer_id: customerId })
-        .eq("user_id", user.id);
+      // Store the customer ID in the database
+      await supabaseClient.from("user_subscriptions").update({
+        stripe_customer_id: customerId
+      }).eq("user_id", user.id);
     }
 
-    // Get success and cancel URLs from the request headers
-    const origin = req.headers.get("origin") || "https://your-default-domain.com";
-    const successUrl = `${origin}/payment-success`;
-    const cancelUrl = `${origin}/pricing`;
-
-    // Create the checkout session
+    // Create a checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId,
+          price: priceId, // Use the price ID from Stripe
           quantity: 1,
         },
       ],
       mode: "subscription",
-      client_reference_id: user.id,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get("origin")}/pricing`,
+      automatic_tax: { enabled: true },
     });
 
+    // Return the checkout session URL
     return new Response(
       JSON.stringify({ url: session.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
-    console.error("Error creating checkout session:", error);
-    
+    console.error("Stripe checkout error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "创建结账会话时出错" }),
+      JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }

@@ -52,10 +52,6 @@ import {
   FileCheck, 
   FilePlus 
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { UserSubscription } from "@/types/subscription";
-import { getUserSubscription, getRemainingQuestions, incrementQuestionCount } from "@/utils/subscriptionService";
-import SubscriptionBanner from "@/components/SubscriptionBanner";
 
 interface QuizGeneratorProps {
   initialTopic?: string;
@@ -170,55 +166,19 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const [documentTitle, setDocumentTitle] = useState("");
   
   const [demoLimitReached, setDemoLimitReached] = useState(false);
-  const [remainingQuestions, setRemainingQuestions] = useState<number>(0);
-  const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
-  const { isSignedIn, userId } = useAuthentication();
-
-  function useAuthentication() {
-    const [isSignedIn, setIsSignedIn] = useState(false);
-    const [userId, setUserId] = useState<string | undefined>(undefined);
-
-    useEffect(() => {
-      const checkAuth = async () => {
-        const isAuth = isAuthenticated();
-        setIsSignedIn(isAuth);
-        
-        if (isAuth) {
-          const user = await supabase.auth.getUser();
-          setUserId(user.data.user?.id);
-        }
-      };
-      
-      checkAuth();
-      
-      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-        setIsSignedIn(!!session);
-        setUserId(session?.user?.id);
-      });
-      
-      return () => {
-        authListener?.subscription.unsubscribe();
-      };
-    }, []);
-
-    return { isSignedIn, userId };
-  }
-
+  
   useEffect(() => {
+    setQuizHistory(loadQuizHistory());
+    
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
       
-      const isLimitReached = usage.count >= 5;
-      setDemoLimitReached(isLimitReached);
-      
-      if (isLimitReached) {
-        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
-      }
-      
-      const remaining = 5 - usage.count;
-      if (remaining <= 2 && remaining > 0) {
-        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      if (Date.now() - usage.timestamp > oneDayMs) {
+        localStorage.setItem("demoQuizUsage", JSON.stringify({ count: 0, timestamp: Date.now() }));
+      } else if (usage.count >= 5) {
+        setDemoLimitReached(true);
       }
     }
   }, [isAuth]);
@@ -231,34 +191,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     }
   }, [objectives]);
 
-  useEffect(() => {
-    setQuizHistory(loadQuizHistory());
-  }, []);
-
-  useEffect(() => {
-    if (isSignedIn && userId) {
-      const fetchSubscriptionData = async () => {
-        try {
-          const subscription = await getUserSubscription(userId);
-          setUserSubscription(subscription);
-          const remaining = await getRemainingQuestions(userId);
-          setRemainingQuestions(remaining);
-        } catch (error) {
-          console.error("Error fetching subscription data:", error);
-        }
-      };
-      
-      fetchSubscriptionData();
-    } else {
-      setRemainingQuestions(5);
-      setUserSubscription({
-        tier: 'free',
-        questionCount: 0,
-        isActive: true
-      });
-    }
-  }, [isSignedIn, userId]);
-
   const handleGenerate = async () => {
     const combinedObjectives = objectives.trim();
     
@@ -267,12 +199,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
       return;
     }
     
-    if (isSignedIn && userId) {
-      if (remainingQuestions < questionCount) {
-        toast.error(`You only have ${remainingQuestions} questions remaining. Please reduce the number of questions or upgrade your plan.`);
-        return;
-      }
-    } else if (!isAuth) {
+    if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
       
@@ -303,12 +230,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
         count: questionCount,
         questionTypes
       });
-      
-      if (isSignedIn && userId) {
-        await incrementQuestionCount(userId, questionCount);
-        const remaining = await getRemainingQuestions(userId);
-        setRemainingQuestions(remaining);
-      }
       
       dispatch({ type: "SET_QUESTIONS", payload: questions });
       
@@ -612,13 +533,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
           </SheetContent>
         </Sheet>
       </div>
-
-      {(isSignedIn || !demoLimitReached) && (
-        <SubscriptionBanner 
-          subscription={userSubscription}
-          remainingQuestions={remainingQuestions}
-        />
-      )}
 
       {state.status === "idle" && (
         <motion.div 

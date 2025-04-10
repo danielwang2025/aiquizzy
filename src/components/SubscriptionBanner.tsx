@@ -36,7 +36,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
           ) : null}
           <div>
             <h3 className={`font-medium ${isPremium ? 'text-amber-800' : 'text-blue-800'}`}>
-              {isPremium ? '高级会员' : '免费账户'}
+              {isPremium ? 'Premium Plan' : 'Free Plan'}
             </h3>
           </div>
         </div>
@@ -45,7 +45,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
           <Link to="/pricing">
             <Button variant="outline" size="sm" className="bg-white hover:bg-amber-50 border-amber-200 text-amber-800">
               <Crown className="h-4 w-4 mr-1" />
-              升级会员
+              Upgrade
             </Button>
           </Link>
         )}
@@ -55,7 +55,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <span className={`text-sm ${isPremium ? 'text-amber-700' : 'text-blue-700'}`}>
-              题目生成额度:
+              Question Credits:
             </span>
             <TooltipProvider>
               <Tooltip>
@@ -66,8 +66,8 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="w-[200px] text-xs">
-                    每次生成问题时，您的额度将会减少。
-                    {isPremium ? " 高级用户每月可生成1,000个问题。" : " 免费用户每月可生成50个问题。"}
+                    Each time you generate questions, your credits will decrease. 
+                    {isPremium ? " Premium users get 1,000 questions per month." : " Free users get 50 questions per month."}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -91,7 +91,7 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
             <Link to="/pricing">
               <Button variant="outline" size="sm" className="bg-white hover:bg-amber-50 border-amber-200 text-amber-800 w-full">
                 <Crown className="h-4 w-4 mr-1" />
-                升级高级会员
+                Upgrade to Premium
               </Button>
             </Link>
           </div>

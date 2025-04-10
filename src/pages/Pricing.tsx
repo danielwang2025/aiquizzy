@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -11,11 +12,9 @@ import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-
 const Pricing = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-
   const plans = getSubscriptionPlans();
   const isAuth = isAuthenticated();
 
@@ -34,17 +33,10 @@ const Pricing = () => {
 
     if (planId === "free-tier" || planId === "registered-tier") {
       toast.success(`You are already on the ${planId === "free-tier" ? "Free" : "Registered"} plan!`);
-
-
-
-
-
-
       return;
     }
 
     setIsProcessing(true);
-
 
     try {
       const user = await getCurrentUser();
@@ -54,13 +46,13 @@ const Pricing = () => {
         setIsProcessing(false);
         return;
       }
-
+      
       // Use a fixed price ID for the premium plan
       // In production, you would fetch this from your Stripe dashboard
       const stripePriceId = "price_premium"; // Replace with your actual Stripe price ID
       
       const checkoutUrl = await createCheckoutSession(user.id, stripePriceId);
-
+      
       if (checkoutUrl) {
         // Redirect to Stripe Checkout
         window.location.href = checkoutUrl;
@@ -72,15 +64,8 @@ const Pricing = () => {
       console.error("Subscription error:", error);
       setIsProcessing(false);
       toast.error("Failed to process subscription. Please try again.");
-
-
     }
   };
-
-
-
-
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -209,24 +194,6 @@ const Pricing = () => {
                 </AccordionItem>
               </Accordion>
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
           </div>
         </div>
       </main>
