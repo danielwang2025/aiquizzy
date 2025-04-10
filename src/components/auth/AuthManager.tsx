@@ -53,24 +53,24 @@ const AuthManager: React.FC = () => {
             const userData = await getCurrentUser();
             console.log("onAuthStateChange - Current user data:", userData);
             setUser(userData);
-            toast.success("Login successful");
+            toast.success("登录成功");
             // Redirect to home page on successful login
             navigate('/');
             // Close auth modal if open
             setIsAuthModalOpen(false);
           } catch (error) {
             console.error("Error fetching user after sign in:", error);
-            toast.error("Failed to get user information");
+            toast.error("获取用户信息失败");
           }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out, clearing user state");
         setUser(null);
-        toast.success("Logged out successfully");
+        toast.success("已退出登录");
       } else if (event === 'PASSWORD_RECOVERY') {
-        toast.info("Please follow the instructions in your email to reset your password");
+        toast.info("请按照邮件指引重置密码");
       } else if (event === 'USER_UPDATED') {
-        toast.success("User information updated");
+        toast.success("用户信息已更新");
         setTimeout(async () => {
           try {
             const userData = await getCurrentUser();
@@ -84,7 +84,7 @@ const AuthManager: React.FC = () => {
       // Handle magic link email sent event through custom toast notification
       // instead of direct event comparison since it's not in the type definition
       if (event && event.toString().includes('MAGIC_LINK_EMAIL_SENT')) {
-        toast.success("Magic link has been sent to your email");
+        toast.success("魔术链接已发送至您的邮箱，请查收");
       }
     });
     
@@ -130,8 +130,8 @@ const AuthManager: React.FC = () => {
       setIsLoading(true); // Show loading state during logout
       await logoutUser();
     } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error("Failed to log out, please try again");
+      console.error("登出失败:", error);
+      toast.error("退出登录失败，请稍后再试");
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +149,7 @@ const AuthManager: React.FC = () => {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Loading...
+          加载中...
         </span>
       </Button>
     );
@@ -173,12 +173,12 @@ const AuthManager: React.FC = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 animate-fade-in">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuLabel>我的账户</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link to="/profile" className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />
-              Profile
+              个人资料
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
@@ -188,12 +188,12 @@ const AuthManager: React.FC = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Logging out...
+                退出中...
               </>
             ) : (
               <>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                退出登录
               </>
             )}
           </DropdownMenuItem>
@@ -212,7 +212,7 @@ const AuthManager: React.FC = () => {
         aria-label="Login / Register"
       >
         <User className="h-4 w-4 mr-2" />
-        <span>Login / Register</span>
+        <span>登录 / 注册</span>
       </Button>
       
       <Dialog open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen}>
