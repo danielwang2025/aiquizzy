@@ -64,7 +64,8 @@ export const checkApiKeys = async (): Promise<{
     try {
       const response = await fetch("/api/check-api-keys", {
         method: "GET",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store" // 禁用缓存，确保每次获取最新数据
       });
       
       if (response.ok) {
@@ -100,6 +101,27 @@ const getApiKey = (keyName: string): string | null => {
   return null;
 };
 
+// 优化的API请求函数，添加AbortController支持
+const fetchWithTimeout = async (
+  url: string, 
+  options: RequestInit, 
+  timeout: number = 30000
+): Promise<Response> => {
+  const controller = new AbortController();
+  const { signal } = controller;
+  
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, { ...options, signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 export async function generateQuestions(
   learningObjectives: string,
   options: {
@@ -127,37 +149,6 @@ export async function generateQuestions(
     
     toast.loading("AI 正在生成练习题...");
 
-    // 设置布鲁姆分类级别描述
-    const bloomLevelDescriptions = {
-      remember: "基础记忆级别 - 考验学生对事实、术语、概念的记忆和识别能力。问题类型：定义术语、列出要点、识别正确陈述等。",
-      understand: "理解级别 - 考验学生对所学内容的理解并能用自己的话解释的能力。问题类型：解释概念、总结内容、分类、比较差异等。",
-      apply: "应用级别 - 考验学生在新情境中应用所学知识解决问题的能力。问题类型：应用公式、使用概念解决实际问题、展示使用方法等。",
-      analyze: "分析级别 - 考验学生将信息分解为各组成部分并理解其关系的能力。问题类型：分析原因和结果、找出模式、辨别主要观点和支持证据等。",
-      evaluate: "评估级别 - 考验学生基于标准和证据做出判断的能力。问题类型：评判方法有效性、辩护观点、批判性分析论点、作出决策并证明等。",
-      create: "创造级别 - 考验学生将各元素组合成新整体的能力。问题类型：设计解决方案、提出假设、创建模型、开发计划等。"
-    };
-    
-    // 设置默认选项
-    const {
-      count = 5,
-      bloomLevel = 'understand',
-      questionTypes = ['multiple_choice', 'fill_in']
-    } = options || {};
-    
-    // 计算选择题和填空题的数量
-    let multipleChoiceCount = count;
-    let fillInCount = 0;
-    
-    if (questionTypes.includes('multiple_choice') && questionTypes.includes('fill_in')) {
-      multipleChoiceCount = Math.ceil(count * 0.6); // 60% multiple choice
-      fillInCount = count - multipleChoiceCount;
-    } else if (questionTypes.includes('fill_in')) {
-      multipleChoiceCount = 0;
-      fillInCount = count;
-    }
-    
-    const bloomLevelDescription = bloomLevelDescriptions[bloomLevel];
-    
     // 获取DeepSeek API密钥
     const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
@@ -172,71 +163,33 @@ export async function generateQuestions(
       }
     }
 
-    // 内容审核
-    if (detectPromptInjection(learningObjectives)) {
-      toast.dismiss();
-      toast.error("检测到潜在的提示注入");
-      throw new Error("检测到潜在的提示注入");
-    }
-    
-    // 自定义系统提示
-    const systemPrompt = `你是一个练习题生成器。请根据提供的学习目标创建 ${count} 个练习题（${multipleChoiceCount} 个选择题和 ${fillInCount} 个填空题）。
+    // 服务端API请求选项
+    const serverRequestBody = {
+      learningObjectives,
+      options: {
+        count: options.count || 5,
+        bloomLevel: options.bloomLevel || 'understand',
+        questionTypes: options.questionTypes || ['multiple_choice', 'fill_in']
+      }
+    };
 
-问题应符合布鲁姆分类法中的"${bloomLevel}"认知层级：
-${bloomLevelDescription}
-
-使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "bloomLevel": "${bloomLevel}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "bloomLevel": "${bloomLevel}"}]}`;
-
-    console.log("Attempting to call DeepSeek API...");
+    // 设置缓存控制
+    const cacheOptions: RequestCache = "no-store"; // 禁用缓存
     
     try {
-      // 选择API调用方法
-      let response;
+      // 使用优化的timeout请求，15秒超时
+      console.log("Calling API endpoint");
+      const response = await fetchWithTimeout(
+        "/api/generate-quiz", 
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(serverRequestBody),
+          cache: cacheOptions
+        },
+        60000 // 60秒超时，因为生成可能需要时间
+      );
       
-      // 如果本地有API密钥，直接调用API
-      if (DEEPSEEK_API_KEY) {
-        console.log("Using local API key to call DeepSeek API");
-        response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "deepseek-chat",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt
-              },
-              {
-                role: "user",
-                content: `根据这些学习目标创建测试：${learningObjectives}`
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: 2000
-          })
-        });
-      } else {
-        // 否则使用服务器端API（会使用环境变量中的API密钥）
-        console.log("Using server-side API endpoint");
-        response = await fetch("/api/generate-quiz", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            learningObjectives,
-            options: {
-              count,
-              bloomLevel,
-              questionTypes
-            }
-          })
-        });
-      }
-
       console.log("API response status:", response.status);
       
       if (!response.ok) {
@@ -245,13 +198,16 @@ ${bloomLevelDescription}
         
         toast.dismiss();
         
-        // Provide more specific error messages
+        // 提供更具体的错误消息
         if (response.status === 401) {
           toast.error(`DeepSeek API 认证失败：API 密钥无效或过期`);
           throw new Error(`DeepSeek API 认证失败：API 密钥无效或过期`);
         } else if (response.status === 429) {
           toast.error(`DeepSeek API 请求过多：已达到限额`);
           throw new Error(`DeepSeek API 请求过多：已达到限额`);
+        } else if (response.status === 408 || response.status === 504) {
+          toast.error(`生成超时，请重试或简化您的请求`);
+          throw new Error(`API请求超时`);
         } else {
           toast.error(`DeepSeek API 错误: ${errorData.error?.message || response.statusText || "Unknown error"}`);
           throw new Error(`DeepSeek API 错误: ${errorData.error?.message || response.statusText || "Unknown error"}`);
@@ -263,46 +219,17 @@ ${bloomLevelDescription}
       
       toast.dismiss();
       
-      // 解析内容
+      // 处理响应
       try {
-        let questions;
+        const questions = data.questions;
         
-        // 处理直接API调用的响应
-        if (DEEPSEEK_API_KEY) {
-          const content = data.choices[0].message.content;
-          // 有时 API 返回带有 ```json 块的 markdown，因此我们需要提取 JSON
-          const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```([\s\S]*?)```/);
-          const jsonString = jsonMatch ? jsonMatch[1] : content;
-          
-          let parsedContent;
-          try {
-            parsedContent = JSON.parse(jsonString.trim());
-          } catch (jsonError) {
-            console.error("JSON parse error:", jsonError);
-            console.log("Raw content that failed to parse:", jsonString);
-            toast.error("无法解析 DeepSeek API 响应");
-            throw new Error("Failed to parse DeepSeek API response as JSON");
-          }
-          
-          if (!parsedContent.questions || !Array.isArray(parsedContent.questions)) {
-            console.error("Invalid response format:", parsedContent);
-            toast.error("来自 DeepSeek API 的响应格式无效");
-            throw new Error("Invalid response format from DeepSeek API");
-          }
-          
-          questions = parsedContent.questions;
-        } else {
-          // 处理服务器端API的响应
-          if (!data.questions || !Array.isArray(data.questions)) {
-            console.error("Invalid response format from server:", data);
-            toast.error("服务器返回的响应格式无效");
-            throw new Error("Invalid response format from server");
-          }
-          
-          questions = data.questions;
+        if (!questions || !Array.isArray(questions)) {
+          console.error("Invalid response format from server:", data);
+          toast.error("服务器返回的响应格式无效");
+          throw new Error("Invalid response format from server");
         }
         
-        // 验证并转换问题
+        // 验证并处理问题
         const processedQuestions = questions.map((q: any, index: number) => {
           // 确保每个问题都有有效的 ID
           const id = q.id || `q${index + 1}`;
@@ -311,7 +238,7 @@ ${bloomLevelDescription}
           let correctAnswer = q.correctAnswer;
           if (q.type === "multiple_choice" && typeof correctAnswer === "string") {
             // 如果 correctAnswer 是像 "A"、"B" 这样的字符串，转换为索引
-            const optionIndex = q.options.findIndex((opt: string) => 
+            const optionIndex = q.options?.findIndex((opt: string) => 
               opt.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
             );
             
@@ -334,7 +261,7 @@ ${bloomLevelDescription}
             ...q,
             id,
             correctAnswer,
-            bloomLevel: q.bloomLevel || bloomLevel,
+            bloomLevel: q.bloomLevel || options.bloomLevel || 'understand',
             topic
           };
         });
@@ -345,7 +272,13 @@ ${bloomLevelDescription}
       } catch (parseError) {
         return handleApiError(parseError, "解析 API 响应中的问题失败");
       }
-    } catch (apiError) {
+    } catch (apiError: any) {
+      // 处理请求超时
+      if (apiError.name === 'AbortError') {
+        toast.dismiss();
+        toast.error("生成请求超时，请重试或简化您的请求");
+        throw new Error("API request timed out");
+      }
       return handleApiError(apiError, "无法连接到 API");
     }
   } catch (error) {
@@ -353,16 +286,21 @@ ${bloomLevelDescription}
   }
 }
 
-// 用于生成提示的函数
+// 优化的提示生成函数
 export async function generateHint(question: QuizQuestion): Promise<string> {
   try {
     // 获取OpenAI API密钥
     const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
     
-    // 如果有API密钥，直接调用API
-    if (OPENAI_API_KEY) {
-      try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // 如果没有API密钥，直接返回基本提示
+    if (!OPENAI_API_KEY) {
+      return getBasicHint(question);
+    }
+    
+    try {
+      const response = await fetchWithTimeout(
+        "https://api.openai.com/v1/chat/completions", 
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -383,41 +321,19 @@ export async function generateHint(question: QuizQuestion): Promise<string> {
             temperature: 0.4,
             max_tokens: 100
           })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`OpenAI API error: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        return data.choices[0].message.content.trim();
-      } catch (error) {
-        console.error("Error calling OpenAI API directly:", error);
-        // 回退到备用提示
-        return getBasicHint(question);
+        },
+        5000 // 5秒超时
+      );
+      
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
       }
-    } else {
-      // 尝试服务器端API
-      try {
-        const response = await fetch("/api/generate-hint", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ question })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server API error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        return data.hint;
-      } catch (serverError) {
-        console.error("Error with server API:", serverError);
-        // 回退到基本提示
-        return getBasicHint(question);
-      }
+      
+      const data = await response.json();
+      return data.choices[0].message.content.trim();
+    } catch (error) {
+      console.error("Error calling OpenAI API directly:", error);
+      return getBasicHint(question);
     }
   } catch (error) {
     console.error("Error generating hint:", error);
@@ -441,85 +357,68 @@ export const moderateContent = async (content: string): Promise<any> => {
     // 获取OpenAI API密钥
     const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
     
-    // 如果有API密钥，直接调用API
-    if (OPENAI_API_KEY) {
-      try {
-        const response = await fetch('https://api.openai.com/v1/moderations', {
+    // 如果没有API密钥，使用本地审核
+    if (!OPENAI_API_KEY) {
+      return localModerateContent(content);
+    }
+    
+    try {
+      const response = await fetchWithTimeout(
+        'https://api.openai.com/v1/moderations', 
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${OPENAI_API_KEY}`
           },
           body: JSON.stringify({ input: content })
-        });
+        },
+        5000 // 5秒超时
+      );
 
-        if (!response.ok) {
-          throw new Error(`OpenAI Moderation API error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.results || !data.results[0]) {
-          throw new Error('Invalid response from OpenAI Moderation API');
-        }
-
-        const result = data.results[0];
-        
-        // 映射 OpenAI 类别到我们的简化类别
-        return {
-          flagged: result.flagged,
-          categories: {
-            sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
-            hate: result.categories.hate || result.categories["hate/threatening"] || false,
-            harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
-            selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
-                      result.categories["self-harm/instructions"] || false,
-            violence: result.categories.violence || result.categories["violence/graphic"] || false,
-            illicit: result.categories.illicit || false
-          },
-          categoryScores: {
-            sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
-            hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
-            harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
-            selfHarm: Math.max(
-              result.category_scores["self-harm"] || 0, 
-              result.category_scores["self-harm/intent"] || 0,
-              result.category_scores["self-harm/instructions"] || 0
-            ),
-            violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
-            illicit: result.category_scores.illicit || 0
-          }
-        };
-      } catch (error) {
-        console.error("Error calling OpenAI Moderation API:", error);
-        // 回退到本地内容审核
-        return localModerateContent(content);
+      if (!response.ok) {
+        throw new Error(`OpenAI Moderation API error: ${response.statusText}`);
       }
-    } else {
-      // 尝试服务器端API
-      try {
-        const response = await fetch("/api/moderate-content", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ content })
-        });
 
-        if (!response.ok) {
-          throw new Error(`Moderation server API error: ${response.statusText}`);
-        }
-
-        return await response.json();
-      } catch (serverError) {
-        console.error("Error with moderation server API:", serverError);
-        // 回退到本地内容审核
-        return localModerateContent(content);
+      const data = await response.json();
+      
+      if (!data.results || !data.results[0]) {
+        throw new Error('Invalid response from OpenAI Moderation API');
       }
+
+      const result = data.results[0];
+      
+      // 映射 OpenAI 类别到我们的简化类别
+      return {
+        flagged: result.flagged,
+        categories: {
+          sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
+          hate: result.categories.hate || result.categories["hate/threatening"] || false,
+          harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
+          selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
+                    result.categories["self-harm/instructions"] || false,
+          violence: result.categories.violence || result.categories["violence/graphic"] || false,
+          illicit: result.categories.illicit || false
+        },
+        categoryScores: {
+          sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
+          hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
+          harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
+          selfHarm: Math.max(
+            result.category_scores["self-harm"] || 0, 
+            result.category_scores["self-harm/intent"] || 0,
+            result.category_scores["self-harm/instructions"] || 0
+          ),
+          violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
+          illicit: result.category_scores.illicit || 0
+        }
+      };
+    } catch (error) {
+      console.error("Error calling OpenAI Moderation API:", error);
+      return localModerateContent(content);
     }
   } catch (error) {
     console.error("Error with content moderation:", error);
-    // 如果所有方法都失败，使用本地内容审核
     return localModerateContent(content);
   }
 };
@@ -600,68 +499,45 @@ export async function sendContactMessage(
     
     let response;
     
-    // 如果有API密钥，直接调用API
-    if (BREVO_API_KEY) {
-      // 创建邮件内容
-      const emailContent = {
-        sender: {
-          name,
-          email
+    try {
+      // 使用优化的请求函数
+      response = await fetchWithTimeout(
+        "/api/send-message", 
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, email, subject, message })
         },
-        to: [{
-          email: "dickbussiness@163.com",
-          name: "Website Contact"
-        }],
-        subject,
-        htmlContent: `
-          <html>
-            <body>
-              <h2>New Contact Form Submission</h2>
-              <p><strong>From:</strong> ${name} (${email})</p>
-              <p><strong>Subject:</strong> ${subject}</p>
-              <div>
-                <p><strong>Message:</strong></p>
-                <p>${message.replace(/\n/g, '<br/>')}</p>
-              </div>
-            </body>
-          </html>
-        `
-      };
+        10000 // 10秒超时
+      );
       
-      response = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "api-key": BREVO_API_KEY
-        },
-        body: JSON.stringify(emailContent)
-      });
-    } else {
-      // 尝试服务器端API
-      response = await fetch("/api/send-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ name, email, subject, message })
-      });
-    }
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        toast.dismiss();
+        toast.error(`发送失败: ${errorData.error || response.statusText || "未知错误"}`);
+        return false;
+      }
+      
       toast.dismiss();
-      toast.error(`发送失败: ${errorData.error || response.statusText || "未知错误"}`);
+      toast.success("您的消息已成功发送！");
+      return true;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        toast.dismiss();
+        toast.error("发送请求超时，请重试");
+        return false;
+      }
+      console.error("Error sending message:", error);
+      toast.dismiss();
+      toast.error(`发送失败: ${error.message || "未知错误"}`);
       return false;
     }
-    
+  } catch (error: any) {
+    console.error("Error in contact form:", error);
     toast.dismiss();
-    toast.success("您的消息已成功发送！");
-    return true;
-  } catch (error) {
-    console.error("Error sending message:", error);
-    toast.dismiss();
-    toast.error(`发送失败: ${(error as Error).message || "未知错误"}`);
+    toast.error(`发送失败: ${error.message || "未知错误"}`);
     return false;
   }
 }

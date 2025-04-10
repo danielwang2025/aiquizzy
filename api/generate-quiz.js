@@ -74,104 +74,122 @@ ${bloomLevelDescription}
 
 使用JSON格式返回响应，结构如下：{"questions": [{"id": "q1", "type": "multiple_choice", "question": "问题文本", "options": ["选项 A", "选项 B", "选项 C", "选项 D"], "correctAnswer": 0, "explanation": "解释", "bloomLevel": "${bloomLevel}"}, {"id": "q2", "type": "fill_in", "question": "带有空格的问题 ________。", "correctAnswer": "答案", "explanation": "解释", "bloomLevel": "${bloomLevel}"}]}`;
 
-    // 调用 DeepSeek API
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: `根据这些学习目标创建测试：${learningObjectives}`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("DeepSeek API error response:", errorData);
-      
-      // Provide more specific error messages
-      if (response.status === 401) {
-        return res.status(401).json({ error: `DeepSeek API authentication failed: Invalid or expired API key` });
-      } else if (response.status === 429) {
-        return res.status(429).json({ error: `DeepSeek API rate limit exceeded` });
-      } else {
-        return res.status(500).json({ error: errorData.error?.message || response.statusText || "Unknown error" });
-      }
-    }
-
-    const data = await response.json();
+    // 设置请求超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50秒超时
     
-    // 解析内容
-    const content = data.choices[0].message.content;
-    // 有时 API 返回带有 ```json 块的 markdown，因此我们需要提取 JSON
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```([\s\S]*?)```/);
-    const jsonString = jsonMatch ? jsonMatch[1] : content;
-    
-    let parsedContent;
     try {
-      parsedContent = JSON.parse(jsonString.trim());
-    } catch (jsonError) {
-      console.error("JSON parse error:", jsonError);
-      console.log("Raw content that failed to parse:", jsonString);
-      return res.status(500).json({ error: "Failed to parse DeepSeek API response as JSON" });
-    }
-    
-    if (!parsedContent.questions || !Array.isArray(parsedContent.questions)) {
-      console.error("Invalid response format:", parsedContent);
-      return res.status(500).json({ error: "Invalid response format from DeepSeek API" });
-    }
-    
-    // 验证并转换问题
-    const questions = parsedContent.questions.map((q, index) => {
-      // 确保每个问题都有有效的 ID
-      const id = q.id || `q${index + 1}`;
+      // 调用 DeepSeek API，加入信号控制
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: `根据这些学习目标创建测试：${learningObjectives}`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        })
+      });
       
-      // 对于 multiple_choice 问题，确保 correctAnswer 是一个数字
-      let correctAnswer = q.correctAnswer;
-      if (q.type === "multiple_choice" && typeof correctAnswer === "string") {
-        // 如果 correctAnswer 是像 "A"、"B" 这样的字符串，转换为索引
-        const optionIndex = q.options.findIndex((opt) => 
-          opt.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
-        );
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("DeepSeek API error response:", errorData);
         
-        if (optionIndex >= 0) {
-          correctAnswer = optionIndex;
+        // Provide more specific error messages
+        if (response.status === 401) {
+          return res.status(401).json({ error: `DeepSeek API authentication failed: Invalid or expired API key` });
+        } else if (response.status === 429) {
+          return res.status(429).json({ error: `DeepSeek API rate limit exceeded` });
         } else {
-          const letterToIndex = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4};
-          const letter = correctAnswer.trim().toLowerCase();
-          if (letter in letterToIndex) {
-            correctAnswer = letterToIndex[letter];
-          }
+          return res.status(500).json({ error: errorData.error?.message || response.statusText || "Unknown error" });
         }
       }
+
+      const data = await response.json();
       
-      // 根据学习目标添加主题信息
-      const topics = learningObjectives.split(',').map(t => t.trim());
-      const topic = topics.length > 0 ? topics[0] : undefined;
+      // 解析内容
+      const content = data.choices[0].message.content;
+      // 有时 API 返回带有 ```json 块的 markdown，因此我们需要提取 JSON
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```([\s\S]*?)```/);
+      const jsonString = jsonMatch ? jsonMatch[1] : content;
       
-      return {
-        ...q,
-        id,
-        correctAnswer,
-        bloomLevel: q.bloomLevel || bloomLevel,
-        topic
-      };
-    });
-    
-    return res.status(200).json({ questions });
+      let parsedContent;
+      try {
+        parsedContent = JSON.parse(jsonString.trim());
+      } catch (jsonError) {
+        console.error("JSON parse error:", jsonError);
+        console.log("Raw content that failed to parse:", jsonString);
+        return res.status(500).json({ error: "Failed to parse DeepSeek API response as JSON" });
+      }
+      
+      if (!parsedContent.questions || !Array.isArray(parsedContent.questions)) {
+        console.error("Invalid response format:", parsedContent);
+        return res.status(500).json({ error: "Invalid response format from DeepSeek API" });
+      }
+      
+      // 验证并转换问题
+      const questions = parsedContent.questions.map((q, index) => {
+        // 确保每个问题都有有效的 ID
+        const id = q.id || `q${index + 1}`;
+        
+        // 对于 multiple_choice 问题，确保 correctAnswer 是一个数字
+        let correctAnswer = q.correctAnswer;
+        if (q.type === "multiple_choice" && typeof correctAnswer === "string") {
+          // 如果 correctAnswer 是像 "A"、"B" 这样的字符串，转换为索引
+          const optionIndex = q.options.findIndex((opt) => 
+            opt.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
+          );
+          
+          if (optionIndex >= 0) {
+            correctAnswer = optionIndex;
+          } else {
+            const letterToIndex = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4};
+            const letter = correctAnswer.trim().toLowerCase();
+            if (letter in letterToIndex) {
+              correctAnswer = letterToIndex[letter];
+            }
+          }
+        }
+        
+        // 根据学习目标添加主题信息
+        const topics = learningObjectives.split(',').map(t => t.trim());
+        const topic = topics.length > 0 ? topics[0] : undefined;
+        
+        return {
+          ...q,
+          id,
+          correctAnswer,
+          bloomLevel: q.bloomLevel || bloomLevel,
+          topic
+        };
+      });
+      
+      return res.status(200).json({ questions });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        return res.status(504).json({ error: "Request timeout - DeepSeek API took too long to respond" });
+      }
+      
+      console.error("Error fetching from DeepSeek API:", fetchError);
+      return res.status(500).json({ error: fetchError.message || "Failed to connect to DeepSeek API" });
+    }
   } catch (error) {
     console.error("Error generating quiz:", error);
     return res.status(500).json({ error: error.message || "Failed to generate quiz" });
