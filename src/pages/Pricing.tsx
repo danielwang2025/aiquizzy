@@ -33,7 +33,7 @@ const Pricing = () => {
       return;
     }
 
-    // Fix the type comparison error by using explicit string comparison
+    // Fix the type comparison error by using strict equality operator
     if (planId === "free-tier" || planId === "registered-tier") {
       toast.success(`You are already on the ${planId === "free-tier" ? "Free" : "Registered"} plan!`);
       return;
@@ -154,7 +154,24 @@ const Pricing = () => {
 
             <div className="glass-effect rounded-2xl overflow-hidden">
               <Accordion type="single" collapsible className="border-none">
-                {/* ...Accordion items as before... */}
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="px-6 py-4 text-lg">How does the subscription work?</AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    Our subscription is billed monthly. You can cancel anytime and your subscription will remain active until the end of the current billing period.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger className="px-6 py-4 text-lg">Can I upgrade or downgrade my plan?</AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    Yes, you can upgrade or downgrade your plan at any time. If you upgrade, the change takes effect immediately. If you downgrade, the change takes effect at the end of your current billing cycle.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger className="px-6 py-4 text-lg">How are question credits calculated?</AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    Each time you generate a quiz, the number of questions in that quiz counts against your monthly question credit limit. Credits reset on your billing date each month.
+                  </AccordionContent>
+                </AccordionItem>
               </Accordion>
             </div>
           </div>
