@@ -1,4 +1,3 @@
-为我调整格式：
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -14,9 +13,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 
 const Pricing = () => {
-
-
-
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
