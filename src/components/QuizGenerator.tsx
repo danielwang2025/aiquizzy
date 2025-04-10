@@ -174,41 +174,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
   const { isSignedIn, userId } = useAuthentication();
 
-  useEffect(() => {
-    setQuizHistory(loadQuizHistory());
-    
-    if (!isAuth) {
-      const demoUsage = localStorage.getItem("demoQuizUsage");
-      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
-      
-      if (usage.count >= 5) {
-        setDemoLimitReached(true);
-        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
-        return;
-      }
-      
-      const newUsage = { count: usage.count + 1, timestamp: usage.timestamp };
-      localStorage.setItem("demoQuizUsage", JSON.stringify(newUsage));
-      
-      const remaining = 5 - newUsage.count;
-      if (remaining <= 2) {
-        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
-      }
-      
-      if (newUsage.count >= 5) {
-        setDemoLimitReached(true);
-      }
-    }
-  }, [isAuth]);
-
-  useEffect(() => {
-    if (objectives) {
-      setDocumentTitle(objectives.length > 50 
-        ? objectives.substring(0, 50) + "..." 
-        : objectives);
-    }
-  }, [objectives]);
-
   function useAuthentication() {
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [userId, setUserId] = useState<string | undefined>(undefined);
@@ -238,6 +203,37 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
 
     return { isSignedIn, userId };
   }
+
+  useEffect(() => {
+    if (!isAuth) {
+      const demoUsage = localStorage.getItem("demoQuizUsage");
+      const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
+      
+      const isLimitReached = usage.count >= 5;
+      setDemoLimitReached(isLimitReached);
+      
+      if (isLimitReached) {
+        toast.error("You've reached the demo limit (5 quizzes). Please sign in to continue.");
+      }
+      
+      const remaining = 5 - usage.count;
+      if (remaining <= 2 && remaining > 0) {
+        toast.info(`Demo mode: ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining`);
+      }
+    }
+  }, [isAuth]);
+
+  useEffect(() => {
+    if (objectives) {
+      setDocumentTitle(objectives.length > 50 
+        ? objectives.substring(0, 50) + "..." 
+        : objectives);
+    }
+  }, [objectives]);
+
+  useEffect(() => {
+    setQuizHistory(loadQuizHistory());
+  }, []);
 
   useEffect(() => {
     if (isSignedIn && userId) {

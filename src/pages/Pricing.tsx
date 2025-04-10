@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Loader2 } from "lucide-react";
@@ -126,7 +127,7 @@ const Pricing = () => {
               <Button
                 onClick={() => handleSubscribe(plan.id, plan.tier === 'premium' ? 'price_1OP4etKfkkTK3nF4QH29LwXp' : '')}
                 className="w-full"
-                disabled={isLoading || isCurrent || plan.tier === 'free' || plan.tier === 'registered'}
+                disabled={isLoading || isCurrent || (plan.tier !== 'premium')}
                 variant={plan.tier === 'premium' ? 'default' : 'outline'}
               >
                 {isLoading && processingPlanId === plan.id ? (
