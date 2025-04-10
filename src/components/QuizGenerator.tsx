@@ -276,7 +276,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
         toast.error(`You only have ${remainingQuestions} questions remaining. Please reduce the number of questions or upgrade your plan.`);
         return;
       }
-    } else if (!isSignedIn) {
+    } else if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : { count: 0, timestamp: Date.now() };
       
