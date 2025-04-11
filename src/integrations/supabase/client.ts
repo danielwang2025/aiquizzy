@@ -2,26 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Define fallback values for local development
-let supabaseUrl = '';
-let supabaseKey = '';
+// 从环境变量中读取配置
+const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
 
-// Check if we're running in Vercel production environment
-if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_PUBLISHABLE_KEY !== 'undefined') {
-  // Use Vercel environment variables
-  supabaseUrl = SUPABASE_URL;
-  supabaseKey = SUPABASE_PUBLISHABLE_KEY;
-} else if (import.meta.env.SUPABASE_URL && import.meta.env.SUPABASE_PUBLISHABLE_KEY) {
-  // Use Vite environment variables
-  supabaseUrl = import.meta.env.SUPABASE_URL;
-  supabaseKey = import.meta.env.SUPABASE_PUBLISHABLE_KEY;
-} else {
+// 如果环境变量缺失，则抛出错误
+if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase configuration. Please set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.');
 }
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
+// 创建 Supabase 客户端
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // Mock functions to simulate database operations without actual DB tables
@@ -33,18 +23,18 @@ export const mockDB = {
       }),
       limit: (limit: number) => ({
         eq: (column: string, value: any) => ({
-          data: null, 
+          data: null,
           error: null
         })
       })
     }),
     insert: (data: any) => ({
-      data: null, 
+      data: null,
       error: null
     }),
     update: (data: any) => ({
       eq: (column: string, value: any) => ({
-        data: null, 
+        data: null,
         error: null
       })
     })
