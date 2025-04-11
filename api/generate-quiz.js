@@ -80,7 +80,7 @@ ${bloomLevelDescription}
     
     try {
       // 调用 DeepSeek API，加入信号控制
-      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      const response = await fetch("https://api.deepseek.com", {
         method: "POST",
         signal: controller.signal,
         headers: {
