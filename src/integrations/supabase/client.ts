@@ -3,9 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Read configuration from environment variables
-const supabaseUrl = process.env.SUPABASE_URL || import.meta.env?.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env?.SUPABASE_PUBLISHABLE_KEY;
+// Read configuration from environment variables (browser compatible way)
+const supabaseUrl = import.meta.env?.SUPABASE_URL;
+const supabaseKey = import.meta.env?.SUPABASE_PUBLISHABLE_KEY;
 
 // If environment variables are missing, use development fallback values (only in development)
 const isDevelopment = import.meta.env?.DEV === true;
