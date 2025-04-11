@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, UserPlus, LogOut } from "lucide-react";
-import { getCurrentUser, logoutUser, sendMagicLink } from "@/utils/authService";
+import { getCurrentUser, logoutUser } from "@/utils/authService";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
@@ -24,104 +24,89 @@ const AuthManager: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
   const [user, setUser] = useState<UserType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const navigate = useNavigate();
   
+  // Handle initial auth state check and subscription
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getCurrentUser();
-        console.log("fetchUser - Current user data:", userData);
-        setUser(userData);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    let isMounted = true;
+    setIsLoading(true);
     
-    fetchUser();
-    
-    // Set up Supabase auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up Supabase auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session ? "User logged in" : "User logged out");
       
+      if (!isMounted) return;
+      
       if (event === 'SIGNED_IN' && session?.user) {
-        // Use setTimeout to avoid potential deadlocks with Supabase client
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            console.log("onAuthStateChange - Current user data:", userData);
+        // For sign in event, fetch the user data
+        getCurrentUser()
+          .then(userData => {
+            if (!isMounted) return;
             setUser(userData);
-            // Only show toast on actual sign in event
             toast.success("Login successful");
-            // Close auth modal if open
             setIsAuthModalOpen(false);
-          } catch (error) {
+          })
+          .catch(error => {
             console.error("Error fetching user after sign in:", error);
-            toast.error("Failed to get user information");
-          }
-        }, 0);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out, clearing user state");
-        setUser(null);
-        toast.success("Logged out successfully");
-      } else if (event === 'PASSWORD_RECOVERY') {
-        toast.info("Please follow the email instructions to reset your password");
-      } else if (event === 'USER_UPDATED') {
-        toast.success("User information updated");
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            setUser(userData);
-          } catch (error) {
-            console.error("Error fetching updated user:", error);
-          }
-        }, 0);
-      } else if (event === 'INITIAL_SESSION' && session?.user) {
-        // For initial session detection, just update the user state silently without toast
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            console.log("Initial session detected - Current user data:", userData);
-            setUser(userData);
-            // No toast notification for initial session
-          } catch (error) {
-            console.error("Error fetching user for initial session:", error);
-          }
-        }, 0);
+            if (isMounted) toast.error("Failed to get user information");
+          });
+      } 
+      else if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setUser(null);
+          toast.success("Logged out successfully");
+        }
+      } 
+      else if (event === 'PASSWORD_RECOVERY') {
+        if (isMounted) toast.info("Please follow the email instructions to reset your password");
+      } 
+      else if (event === 'USER_UPDATED') {
+        if (isMounted) {
+          getCurrentUser()
+            .then(userData => {
+              if (!isMounted) return;
+              setUser(userData);
+              toast.success("User information updated");
+            })
+            .catch(error => console.error("Error fetching updated user:", error));
+        }
       }
       
-      // Handle magic link email sent event through custom toast notification
-      // instead of direct event comparison since it's not in the type definition
-      if (event && event.toString().includes('MAGIC_LINK_EMAIL_SENT')) {
+      // Handle magic link email sent event
+      if (event && event.toString().includes('MAGIC_LINK_EMAIL_SENT') && isMounted) {
         toast.success("Magic link has been sent to your email, please check");
       }
     });
     
-    // Check for current session on mount or route change
+    // Check for existing session
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        if (data.session) {
+        if (data.session && isMounted) {
           console.log("Existing session found");
           const userData = await getCurrentUser();
-          setUser(userData);
+          if (isMounted) setUser(userData);
         } else {
           console.log("No active session found");
-          setUser(null);
+          if (isMounted) setUser(null);
         }
       } catch (error) {
         console.error("Session check failed:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setInitialLoadComplete(true);
+        }
       }
     };
 
     checkSession();
     
-    // Clean up subscription when component unmounts
+    // Clean up subscription and prevent state updates after unmount
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -138,22 +123,23 @@ const AuthManager: React.FC = () => {
   
   const handleLogout = async () => {
     try {
-      setIsLoading(true); // Show loading state during logout
+      setIsLoading(true);
       await logoutUser();
+      // State will be updated by the auth listener
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Failed to log out, please try again");
-    } finally {
       setIsLoading(false);
     }
   };
   
-  if (isLoading) {
+  // Show loading indicator only during initial load
+  if (!initialLoadComplete) {
     return (
       <Button 
         variant="outline" 
         size="sm"
-        className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 animate-pulse"
+        className="glass-effect border-white/20 shadow-sm transition-all duration-300"
       >
         <span className="flex items-center">
           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -174,13 +160,26 @@ const AuthManager: React.FC = () => {
             variant="outline" 
             size="sm"
             className="glass-effect border-white/20 shadow-sm hover:shadow-md transition-all duration-300 flex items-center"
+            disabled={isLoading}
           >
-            <Avatar className="h-6 w-6 mr-2">
-              <AvatarFallback className="text-xs bg-primary/20">
-                {user.displayName?.substring(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <span className="max-w-[100px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </span>
+            ) : (
+              <>
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarFallback className="text-xs bg-primary/20">
+                    {user.displayName?.substring(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="max-w-[100px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+              </>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 animate-fade-in">

@@ -21,41 +21,69 @@ const QuizCustomizer = () => {
   const [remainingQuestions, setRemainingQuestions] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAuth = async () => {
-      const authStatus = await isAuthenticated();
-      setIsAuth(authStatus);
-      
-      if (!authStatus) {
-        // Redirect to home page if not authenticated
-        toast.info("Please sign in to create quizzes", {
-          action: {
-            label: "Sign In",
-            onClick: handleLoginClick,
-          },
-        });
-        navigate('/');
-        return;
-      }
-      
       try {
-        const user = await getCurrentUser();
-        if (user) {
-          const userSubscription = await getUserSubscription(user.id);
-          setSubscription(userSubscription);
+        const authStatus = await isAuthenticated();
+        
+        if (!isMounted) return;
+        setIsAuth(authStatus);
+        
+        if (!authStatus) {
+          // Redirect to home page if not authenticated
+          toast.info("Please sign in to create quizzes", {
+            action: {
+              label: "Sign In",
+              onClick: handleLoginClick,
+            },
+          });
+          navigate('/');
+          return;
+        }
+        
+        // If authenticated, fetch user subscription data
+        try {
+          const user = await getCurrentUser();
+          if (!isMounted) return;
           
-          const remaining = await getRemainingQuestions(user.id);
-          setRemainingQuestions(remaining);
+          if (user) {
+            const [userSubscription, remaining] = await Promise.all([
+              getUserSubscription(user.id),
+              getRemainingQuestions(user.id)
+            ]);
+            
+            if (isMounted) {
+              setSubscription(userSubscription);
+              setRemainingQuestions(remaining);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading subscription data:", error);
+          if (isMounted) {
+            setLoadingError("Failed to load subscription data. Please try refreshing the page.");
+          }
         }
       } catch (error) {
-        console.error("Error loading subscription data:", error);
+        console.error("Authentication check failed:", error);
+        if (isMounted) {
+          setLoadingError("Authentication check failed. Please try again.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
     checkAuth();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   const handleLoginClick = () => {
@@ -63,14 +91,30 @@ const QuizCustomizer = () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
   };
 
-  // If still checking authentication or not authenticated, don't render the quiz content
-  if (isAuth === null || loading) {
+  // If still checking authentication or loading data, show loading indicator
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
         <Navigation />
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
           <div className="animate-pulse text-center">
             <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If there was an error loading data
+  if (loadingError) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
+        <Navigation />
+        <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{loadingError}</p>
+            <Button onClick={() => window.location.reload()}>Refresh Page</Button>
           </div>
         </main>
         <Footer />
@@ -137,14 +181,12 @@ const QuizCustomizer = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {!loading && (
-              <div className="mb-8">
-                <SubscriptionBanner 
-                  subscription={subscription} 
-                  remainingQuestions={remainingQuestions} 
-                />
-              </div>
-            )}
+            <div className="mb-8">
+              <SubscriptionBanner 
+                subscription={subscription} 
+                remainingQuestions={remainingQuestions} 
+              />
+            </div>
             <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
               <QuizGenerator initialTopic={topicFromUrl} />
             </div>
