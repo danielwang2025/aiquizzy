@@ -1,15 +1,18 @@
 
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Home, Settings, Book, BarChart, User, PlusCircle, Mail, DollarSign, Menu, X } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { isAuthenticated } from "@/utils/authService";
 
 const Navigation: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,10 +33,29 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
+  // Handle authenticated navigation
+  const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (path === "/customize") {
+      e.preventDefault();
+      const auth = await isAuthenticated();
+      
+      if (!auth) {
+        toast.info("Please sign in to create quizzes", {
+          action: {
+            label: "Sign In",
+            onClick: () => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()
+          }
+        });
+      } else {
+        navigate(path);
+      }
+    }
+  };
+  
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/pricing", label: "Pricing", icon: <DollarSign className="h-5 w-5" /> },
-    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
+    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" />, requiresAuth: true },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
@@ -78,6 +100,7 @@ const Navigation: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={(e) => item.requiresAuth && handleAuthRequiredClick(e, item.path)}
                   className={cn(
                     "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
                     location.pathname === item.path
@@ -137,7 +160,10 @@ const Navigation: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    item.requiresAuth && handleAuthRequiredClick(e, item.path);
+                    setMobileMenuOpen(false);
+                  }}
                   className={cn(
                     "block px-3 py-3 rounded-md text-base font-medium transition-colors",
                     location.pathname === item.path
@@ -164,6 +190,7 @@ const Navigation: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={(e) => item.requiresAuth && handleAuthRequiredClick(e, item.path)}
                 className={cn(
                   "flex flex-col items-center justify-center py-2",
                   location.pathname === item.path
