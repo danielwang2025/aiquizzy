@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,8 +18,8 @@ interface RegisterFormProps {
 }
 
 const registerSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
-  displayName: z.string().min(2, "显示名称至少为2个字符").optional(),
+  email: z.string().email("Please enter a valid email address."),
+  displayName: z.string().min(2, "Display name must be at least 2 characters.").optional(),
 });
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) => {
@@ -39,21 +38,21 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
       setIsRegistering(true);
-      // 直接发送 OTP 验证码，而不是 Magic Link
+      // Directly send the OTP code instead of a Magic Link
       await sendEmailOTP(values.email);
       setRegisterEmail(values.email);
-      toast.success("验证码已发送，请查收邮箱");
+      toast.success("Verification code sent. Please check your email.");
       setShowOTPVerification(true);
     } catch (error: any) {
-      console.error("注册失败:", error);
-      toast.error(error.message || "注册失败，请稍后再试");
+      console.error("Registration failed:", error);
+      toast.error(error.message || "Registration failed. Please try again later.");
     } finally {
       setIsRegistering(false);
     }
   };
 
   const handleOTPSuccess = () => {
-    toast.success("验证成功，注册完成！");
+    toast.success("Verification successful. Registration complete!");
     onSuccess?.();
   };
 
@@ -74,7 +73,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-center text-2xl font-bold">创建账户</DialogTitle>
+        <DialogTitle className="text-center text-2xl font-bold">Create Account</DialogTitle>
       </DialogHeader>
 
       <div className="mt-6">
@@ -85,7 +84,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>邮箱</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input placeholder="your@email.com" {...field} />
                   </FormControl>
@@ -99,9 +98,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>显示名称 (可选)</FormLabel>
+                  <FormLabel>Display Name (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="您希望展示的名称" {...field} />
+                    <Input placeholder="Your preferred display name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,11 +115,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
               {isRegistering ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  发送验证码中...
+                  Sending verification code...
                 </>
               ) : (
                 <>
-                  获取验证码
+                  Get Verification Code
                   <Mail className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -131,13 +130,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onLoginClick }) 
         <div className="mt-6">
           <Separator />
           <p className="text-center text-sm text-muted-foreground mt-4">
-            已有账号? {" "}
+            Already have an account? {" "}
             <Button
               variant="link"
               className="p-0 h-auto"
               onClick={onLoginClick}
             >
-              登录
+              Log In
               <MoveRight className="ml-1 h-4 w-4" />
             </Button>
           </p>
