@@ -1,64 +1,41 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { X, AlertCircle } from "lucide-react";
+import { X } from "lucide-react";
 
 const ApiKeyNotice: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
-  const [missingKeys, setMissingKeys] = useState<string[]>([]);
   
   useEffect(() => {
-    // Check if the notice has already been dismissed in this session
-    const dismissed = sessionStorage.getItem('apiKeyNoticeDismissed');
+    // Check if the notice has already been dismissed in local storage
+    const dismissed = localStorage.getItem('apiKeyNoticeDismissed');
     
-    // Only check API keys if not dismissed
-    if (!dismissed) {
-      checkApiKeys();
-    }
+    // Attempt to call the API endpoint to check if environment variables are set
+    const checkApiKeys = async () => {
+      try {
+        const response = await fetch('/api/check-api-keys');
+        
+        // Only show the banner if the response status is not 200 and the error is related to missing API keys
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          
+          if (data.error && data.error.includes('API key not configured') && !dismissed) {
+            setShowBanner(true);
+          }
+        }
+      } catch (error) {
+        // If the API endpoint is unavailable, it might be because the app is in local development or the server side is not configured yet
+        if (!dismissed) {
+          setShowBanner(true);
+        }
+      }
+    };
+    
+    checkApiKeys();
   }, []);
-  
-  const checkApiKeys = async () => {
-    try {
-      const response = await fetch('/api/check-api-keys');
-      
-      if (!response.ok) {
-        const data = await response.json();
-        // Filter out VITE_SUPABASE_KEY since we have it hardcoded now
-        const filteredKeys = data.missingKeys ? 
-          data.missingKeys.filter((key: string) => key !== 'VITE_SUPABASE_KEY') : 
-          [];
-          
-        if (filteredKeys.length > 0) {
-          setShowBanner(true);
-          setMissingKeys(filteredKeys);
-          // Log to console for developers
-          console.warn('Missing required environment variables:', filteredKeys);
-        }
-      } else {
-        const data = await response.json();
-        // Check for optional keys, also filtering out SUPABASE_KEY
-        const filteredOptionalKeys = data.optionalMissingKeys ? 
-          data.optionalMissingKeys.filter((key: string) => key !== 'VITE_SUPABASE_KEY') : 
-          [];
-          
-        if (filteredOptionalKeys.length > 0) {
-          setShowBanner(true);
-          setMissingKeys(filteredOptionalKeys);
-          console.info('Missing optional environment variables:', filteredOptionalKeys);
-        }
-      }
-    } catch (error) {
-      // Silent fail in production, log in development
-      if (import.meta.env.DEV) {
-        console.error("Error checking API keys:", error);
-      }
-    }
-  };
   
   const dismissBanner = () => {
     setShowBanner(false);
-    // Use sessionStorage instead of localStorage to make it persist only for current session
-    sessionStorage.setItem('apiKeyNoticeDismissed', 'true');
+    localStorage.setItem('apiKeyNoticeDismissed', 'true');
   };
   
   if (!showBanner) return null;
@@ -67,41 +44,26 @@ const ApiKeyNotice: React.FC = () => {
     <div className="bg-amber-50 border-l-4 border-amber-400 p-4 fixed bottom-4 right-4 max-w-md rounded shadow-lg z-50">
       <div className="flex">
         <div className="flex-shrink-0">
-          <AlertCircle className="h-5 w-5 text-amber-400" />
+          <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
         </div>
         <div className="ml-3">
           <p className="text-sm text-amber-700">
-            {missingKeys.length > 0 ? (
-              <>
-                Missing environment variables in Vercel:
-                <strong className="block mt-1">
-                  {missingKeys.join(', ')}
-                </strong>
-              </>
-            ) : (
-              "Please configure the required API keys in the Vercel environment variables."
-            )}
+            Please configure the required API keys in the Vercel environment variables:
+            <strong>DEEPSEEK_API_KEY</strong>, <strong>BREVO_API_KEY</strong>, and optionally <strong>OPENAI_API_KEY</strong>.
           </p>
-          <div className="mt-2 flex space-x-3">
+          <div className="mt-2">
             <button
               onClick={() => {
                 // Copy the hint to the clipboard
-                navigator.clipboard.writeText(missingKeys.join(', '));
+                navigator.clipboard.writeText('DEEPSEEK_API_KEY, BREVO_API_KEY, OPENAI_API_KEY');
                 toast.success('API key names copied to clipboard');
               }}
               className="text-sm text-amber-700 hover:text-amber-600 font-medium underline"
             >
               Copy key names
             </button>
-            
-            <a
-              href="https://vercel.com/docs/projects/environment-variables"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-amber-700 hover:text-amber-600 font-medium underline"
-            >
-              Vercel docs
-            </a>
           </div>
         </div>
         <div className="ml-auto">
