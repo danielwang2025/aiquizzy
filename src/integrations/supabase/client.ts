@@ -3,26 +3,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Read configuration from environment variables (browser compatible way)
-const supabaseUrl = import.meta.env?.SUPABASE_URL;
-const supabaseKey = import.meta.env?.SUPABASE_PUBLISHABLE_KEY;
+// Using hardcoded values for the Supabase URL and anon key
+// This is safe since these are public keys
+const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
 
-// If environment variables are missing, use development fallback values (only in development)
-const isDevelopment = import.meta.env?.DEV === true;
-const fallbackUrl = isDevelopment ? 'https://icezlugcnsmpfpsiszvu.supabase.co' : '';
-const fallbackKey = isDevelopment ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc' : '';
+// Import the supabase client like this:
+// import { supabase } from "@/integrations/supabase/client";
 
-// Use environment variables or fallbacks
-const finalSupabaseUrl = supabaseUrl || fallbackUrl;
-const finalSupabaseKey = supabaseKey || fallbackKey;
-
-// If configuration is still missing, throw an error
-if (!finalSupabaseUrl || !finalSupabaseKey) {
-  throw new Error('Missing Supabase configuration. Please set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your environment variables.');
-}
-
-// Create Supabase client
-export const supabase = createClient<Database>(finalSupabaseUrl, finalSupabaseKey);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // Mock functions to simulate database operations without actual DB tables
 export const mockDB = {
@@ -33,18 +22,18 @@ export const mockDB = {
       }),
       limit: (limit: number) => ({
         eq: (column: string, value: any) => ({
-          data: null,
+          data: null, 
           error: null
         })
       })
     }),
     insert: (data: any) => ({
-      data: null,
+      data: null, 
       error: null
     }),
     update: (data: any) => ({
       eq: (column: string, value: any) => ({
-        data: null,
+        data: null, 
         error: null
       })
     })
