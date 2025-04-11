@@ -31,11 +31,13 @@ import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
+import { getSubscriptionPlans } from "@/utils/subscriptionService";
 
 const Index = () => {
   const history = loadQuizHistory();
   const hasHistory = history.attempts.length > 0;
   const [topic, setTopic] = useState("");
+  const plans = getSubscriptionPlans();
   
   // Animation variants
   const fadeIn = {
@@ -137,55 +139,55 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="neo-card p-8"
-            >
-              <Badge className="mb-2 bg-blue-100 text-blue-700 border-none">Free Plan</Badge>
-              <div className="mb-6">
-                <h3 className="text-2xl font-semibold">Basic</h3>
-                <p className="text-4xl font-bold mt-2">$0<span className="text-muted-foreground text-sm">/month</span></p>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Up to 50 questions per month</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Basic question types</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Review list functionality</li>
-              </ul>
-              <Link to="/pricing">
-                <Button variant="outline" className="w-full h-12 text-base btn-3d">Get Started</Button>
-              </Link>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="relative gradient-border neo-card p-8"
-            >
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 gradient-bg-primary text-white px-6 py-1.5 rounded-full text-sm font-medium">
-                RECOMMENDED
-              </div>
-              <Badge className="mb-2 bg-indigo-100 text-indigo-700 border-none">Premium</Badge>
-              <div className="mb-6">
-                <h3 className="text-2xl font-semibold">Premium</h3>
-                <p className="text-4xl font-bold mt-2">$10<span className="text-muted-foreground text-sm">/month</span></p>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Up to 5,000 questions per month</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> All question types</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Advanced Bloom's taxonomy targeting</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Priority support</li>
-                <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-3" /> Export to Word with custom formatting</li>
-              </ul>
-              <Link to="/pricing">
-                <Button className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 btn-3d">Subscribe Now</Button>
-              </Link>
-            </motion.div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {plans.map((plan) => (
+              <motion.div 
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: plan.tier === 'premium' ? 0.2 : 0 }}
+                whileHover={{ y: -5 }}
+              >
+                <Card className={`overflow-hidden neo-card h-full flex flex-col justify-between ${plan.tier === 'premium' ? 'gradient-border shadow-lg' : ''}`}>
+                  {plan.tier === 'premium' && (
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2 text-sm font-medium">
+                      RECOMMENDED
+                    </div>
+                  )}
+                  <div className="flex flex-col flex-grow">
+                    <div className="space-y-4 p-6">
+                      <h3 className="text-2xl font-semibold">{plan.name}</h3>
+                      <p className="text-muted-foreground">{plan.description}</p>
+                      <div className="mt-4 pt-2">
+                        <span className="text-4xl font-bold">${plan.price}</span>
+                        {plan.price > 0 && <span className="text-muted-foreground ml-1">/month</span>}
+                      </div>
+                    </div>
+                    <div className="p-6 pt-0 flex-grow">
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-start">
+                            <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
+                            <span className="text-muted-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="p-6 pt-4">
+                      <Link to="/pricing">
+                        <Button 
+                          className={`w-full h-11 ${plan.tier === 'premium' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700' : ''} btn-3d`}
+                          variant={plan.tier === 'premium' ? 'default' : 'outline'}
+                        >
+                          {plan.price === 0 ? 'Get Started' : 'Subscribe Now'}
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
           </div>
           
           <div className="text-center mt-8">
