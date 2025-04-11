@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,15 +19,15 @@ interface LoginFormProps {
   onRegisterClick?: () => void;
 }
 
-// 为登录表单创建模式验证
+// Create schema validation for login form
 const loginSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
-  password: z.string().min(6, "密码至少为6个字符"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-// 为魔术链接创建模式验证
+// Create schema validation for magic link
 const magicLinkSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => {
@@ -39,7 +38,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [emailForOTP, setEmailForOTP] = useState("");
 
-  // 登录表单初始化
+  // Initialize login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -48,7 +47,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     },
   });
 
-  // 魔术链接表单初始化
+  // Initialize magic link form
   const magicLinkForm = useForm<z.infer<typeof magicLinkSchema>>({
     resolver: zodResolver(magicLinkSchema),
     defaultValues: {
@@ -56,58 +55,58 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
     },
   });
 
-  // 处理常规登录提交
+  // Handle login submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsLoggingIn(true);
-      console.log("尝试登录...", values.email);
+      console.log("Attempting to log in...", values.email);
       await loginUser(values.email, values.password);
-      console.log("登录成功!");
+      console.log("Login successful!");
       onSuccess?.();
     } catch (error: any) {
-      console.error("登录失败:", error.message);
-      toast.error(error.message || "登录失败，请稍后再试");
+      console.error("Login failed:", error.message);
+      toast.error(error.message || "Login failed, please try again later");
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  // 处理魔术链接登录 - 现在改为发送OTP
+  // Handle magic link submission - now sending OTP
   const onMagicLinkSubmit = async (values: z.infer<typeof magicLinkSchema>) => {
     try {
       setIsSendingMagicLink(true);
       await sendEmailOTP(values.email);
       setEmailForOTP(values.email);
-      toast.success("验证码已发送到您的邮箱，请查收");
+      toast.success("Verification code has been sent to your email, please check");
       setShowOTPVerification(true);
     } catch (error: any) {
-      toast.error(error.message || "发送验证码失败，请稍后再试");
+      toast.error(error.message || "Failed to send verification code, please try again later");
     } finally {
       setIsSendingMagicLink(false);
     }
   };
 
-  // 处理密码重置
+  // Handle password reset
   const onResetPasswordSubmit = async (values: z.infer<typeof magicLinkSchema>) => {
     try {
       setIsSendingReset(true);
       await requestPasswordReset(values.email);
-      toast.success("密码重置链接已发送到您的邮箱，请查收");
+      toast.success("Password reset link has been sent to your email, please check");
       setForgotPassword(false);
     } catch (error: any) {
-      toast.error(error.message || "发送重置链接失败，请稍后再试");
+      toast.error(error.message || "Failed to send reset link, please try again later");
     } finally {
       setIsSendingReset(false);
     }
   };
 
-  // 处理OTP验证成功
+  // Handle OTP verification success
   const handleOTPSuccess = () => {
-    toast.success("登录成功！");
+    toast.success("Login successful!");
     onSuccess?.();
   };
 
-  // 返回登录表单
+  // Return to login form
   const handleBackToLogin = () => {
     setShowOTPVerification(false);
   };
@@ -125,13 +124,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-center text-2xl font-bold">欢迎回来</DialogTitle>
+        <DialogTitle className="text-center text-2xl font-bold">Welcome Back</DialogTitle>
       </DialogHeader>
 
       {forgotPassword ? (
         <div className="animate-fade-in">
           <p className="text-center text-muted-foreground mb-6">
-            请输入您的邮箱地址，我们将发送密码重置链接
+            Please enter your email address, and we will send a password reset link
           </p>
           
           <Form {...magicLinkForm}>
@@ -141,7 +140,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>邮箱</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="your@email.com" {...field} />
                     </FormControl>
@@ -158,10 +157,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                 {isSendingReset ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    发送中...
+                    Sending...
                   </>
                 ) : (
-                  "发送重置链接"
+                  "Send Reset Link"
                 )}
               </Button>
               
@@ -171,7 +170,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                 className="w-full mt-2"
                 onClick={() => setForgotPassword(false)}
               >
-                返回登录
+                Back to Login
               </Button>
             </form>
           </Form>
@@ -179,8 +178,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       ) : (
         <Tabs defaultValue="password" className="w-full mt-4">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="password">密码登录</TabsTrigger>
-            <TabsTrigger value="magic-link">OTP登录</TabsTrigger>
+            <TabsTrigger value="password">Password Login</TabsTrigger>
+            <TabsTrigger value="magic-link">OTP Login</TabsTrigger>
           </TabsList>
           
           <TabsContent value="password" className="animate-fade-in">
@@ -191,7 +190,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>邮箱</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input placeholder="your@email.com" {...field} />
                       </FormControl>
@@ -206,14 +205,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <FormLabel>密码</FormLabel>
+                        <FormLabel>Password</FormLabel>
                         <Button
                           variant="link"
                           className="p-0 h-auto text-xs"
                           type="button"
                           onClick={() => setForgotPassword(true)}
                         >
-                          忘记密码?
+                          Forgot password?
                         </Button>
                       </div>
                       <FormControl>
@@ -232,11 +231,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                   {isLoggingIn ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      登录中...
+                      Logging in...
                     </>
                   ) : (
                     <>
-                      登录
+                      Login
                       <KeyRound className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -253,7 +252,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>邮箱</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input placeholder="your@email.com" {...field} />
                       </FormControl>
@@ -270,11 +269,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
                   {isSendingMagicLink ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      发送中...
+                      Sending...
                     </>
                   ) : (
                     <>
-                      发送验证码
+                      Send Verification Code
                       <Mail className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -288,13 +287,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onRegisterClick }) => 
       <div className="mt-6">
         <Separator />
         <p className="text-center text-sm text-muted-foreground mt-4">
-          还没有账号?{" "}
+          Don't have an account?{" "}
           <Button
             variant="link"
             className="p-0 h-auto"
             onClick={onRegisterClick}
           >
-            立即注册
+            Sign up now
             <MoveRight className="ml-1 h-4 w-4" />
           </Button>
         </p>
