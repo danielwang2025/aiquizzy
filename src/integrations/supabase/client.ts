@@ -4,11 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 // Read configuration from environment variables
-const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || import.meta.env?.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env?.SUPABASE_PUBLISHABLE_KEY;
 
 // If environment variables are missing, use development fallback values (only in development)
-const isDevelopment = import.meta.env.DEV;
+const isDevelopment = import.meta.env?.DEV === true;
 const fallbackUrl = isDevelopment ? 'https://icezlugcnsmpfpsiszvu.supabase.co' : '';
 const fallbackKey = isDevelopment ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc' : '';
 
