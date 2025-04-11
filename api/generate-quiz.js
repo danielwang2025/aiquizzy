@@ -26,10 +26,10 @@ export default async function handler(req, res) {
     }
     
     // 从 Vercel 环境变量中获取 API 密钥
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || req.headers['x-deepseek-key'];
     
     if (!DEEPSEEK_API_KEY) {
-      return res.status(500).json({ error: 'DeepSeek API key not configured in environment variables' });
+      return res.status(500).json({ error: 'DeepSeek API key not configured. Please add it in API settings.' });
     }
 
     // 简单检查是否包含提示注入
@@ -76,11 +76,12 @@ ${bloomLevelDescription}
 
     // 设置请求超时
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时，延长超时时间
     
     try {
+      console.log("Sending request to DeepSeek API...");
       // 调用 DeepSeek API，加入信号控制
-      const response = await fetch("https://api.deepseek.com", {
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
         signal: controller.signal,
         headers: {
@@ -105,6 +106,7 @@ ${bloomLevelDescription}
       });
       
       clearTimeout(timeoutId);
+      console.log("DeepSeek API response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -116,11 +118,12 @@ ${bloomLevelDescription}
         } else if (response.status === 429) {
           return res.status(429).json({ error: `DeepSeek API rate limit exceeded` });
         } else {
-          return res.status(500).json({ error: errorData.error?.message || response.statusText || "Unknown error" });
+          return res.status(500).json({ error: errorData.error?.message || response.statusText || "Unknown error with DeepSeek API" });
         }
       }
 
       const data = await response.json();
+      console.log("Received response from DeepSeek API");
       
       // 解析内容
       const content = data.choices[0].message.content;
@@ -179,6 +182,7 @@ ${bloomLevelDescription}
         };
       });
       
+      console.log(`Successfully generated ${questions.length} questions`);
       return res.status(200).json({ questions });
     } catch (fetchError) {
       clearTimeout(timeoutId);

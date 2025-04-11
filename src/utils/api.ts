@@ -176,18 +176,27 @@ export async function generateQuestions(
     // 设置缓存控制
     const cacheOptions: RequestCache = "no-store"; // 禁用缓存
     
+    // 添加自定义头以传递API密钥（如果在客户端有）
+    const headers: Record<string, string> = { 
+      "Content-Type": "application/json"
+    };
+    
+    if (DEEPSEEK_API_KEY) {
+      headers["x-deepseek-key"] = DEEPSEEK_API_KEY;
+    }
+    
     try {
-      // 使用优化的timeout请求，15秒超时
+      // 使用优化的timeout请求，60秒超时
       console.log("Calling API endpoint");
       const response = await fetchWithTimeout(
         "/api/generate-quiz", 
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(serverRequestBody),
           cache: cacheOptions
         },
-        60000 // 60秒超时，因为生成可能需要时间
+        90000 // 90秒超时，因为生成可能需要时间
       );
       
       console.log("API response status:", response.status);
@@ -209,8 +218,8 @@ export async function generateQuestions(
           toast.error(`生成超时，请重试或简化您的请求`);
           throw new Error(`API请求超时`);
         } else {
-          toast.error(`DeepSeek API 错误: ${errorData.error?.message || response.statusText || "Unknown error"}`);
-          throw new Error(`DeepSeek API 错误: ${errorData.error?.message || response.statusText || "Unknown error"}`);
+          toast.error(`DeepSeek API 错误: ${errorData.error || response.statusText || "Unknown error"}`);
+          throw new Error(`DeepSeek API 错误: ${errorData.error || response.statusText || "Unknown error"}`);
         }
       }
 

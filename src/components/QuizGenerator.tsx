@@ -225,28 +225,40 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     dispatch({ type: "SET_LOADING" });
 
     try {
+      toast.loading("AI 正在生成练习题，这可能需要一点时间...", {
+        duration: 30000,
+      });
+      
       const questions = await generateQuestions(objectives, {
         bloomLevel,
         count: questionCount,
         questionTypes
       });
       
-      dispatch({ type: "SET_QUESTIONS", payload: questions });
+      if (questions && questions.length > 0) {
+        dispatch({ type: "SET_QUESTIONS", payload: questions });
       
-      const quizTitle = objectives.length > 50 
-        ? objectives.substring(0, 50) + "..." 
-        : objectives;
+        const quizTitle = objectives.length > 50 
+          ? objectives.substring(0, 50) + "..." 
+          : objectives;
+        
+        const quizId = saveQuizToDatabase(questions, quizTitle);
+        console.log("Quiz saved to database with ID:", quizId);
+        
+        toast.dismiss();
+        toast.success("Quiz generated successfully!");
+      } else {
+        throw new Error("No questions were generated");
+      }
+    } catch (error: any) {
+      console.error("Error generating quiz:", error);
+      toast.dismiss();
+      toast.error(error.message || "Failed to generate quiz. Please try again.");
       
-      const quizId = saveQuizToDatabase(questions, quizTitle);
-      console.log("Quiz saved to database with ID:", quizId);
-      
-      toast.success("Quiz generated successfully!");
-    } catch (error) {
       dispatch({
         type: "SET_ERROR",
         payload: "Failed to generate quiz. Please try again.",
       });
-      toast.error("Failed to generate quiz. Please check the console for details.");
     }
   };
 
