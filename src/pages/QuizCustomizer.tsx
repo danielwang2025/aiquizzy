@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -12,6 +11,7 @@ import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { getUserSubscription, getRemainingQuestions } from "@/utils/subscriptionService";
 import { UserSubscription } from "@/types/subscription";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
@@ -34,7 +34,6 @@ const QuizCustomizer = () => {
         setIsAuth(authStatus);
         
         if (!authStatus) {
-          // Redirect to home page if not authenticated
           toast.info("Please sign in to create quizzes", {
             action: {
               label: "Sign In",
@@ -45,7 +44,6 @@ const QuizCustomizer = () => {
           return;
         }
         
-        // If authenticated, fetch user subscription data
         try {
           const user = await getCurrentUser();
           if (!isMounted) return;
@@ -87,26 +85,21 @@ const QuizCustomizer = () => {
   }, [navigate]);
 
   const handleLoginClick = () => {
-    // This will open the auth sheet from the Navigation component
     document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
   };
 
-  // If still checking authentication or loading data, show loading indicator
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
         <Navigation />
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
-          <div className="animate-pulse text-center">
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+          <LoadingSpinner />
         </main>
         <Footer />
       </div>
     );
   }
 
-  // If there was an error loading data
   if (loadingError) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
@@ -122,7 +115,6 @@ const QuizCustomizer = () => {
     );
   }
 
-  // If not authenticated, the useEffect will redirect, but this is a fallback
   if (isAuth === false) {
     return null;
   }

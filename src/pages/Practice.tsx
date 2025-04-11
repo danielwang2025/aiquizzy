@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -13,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Footer from "@/components/Footer";
 
 const Practice = () => {
   const { quizId } = useParams();
@@ -22,78 +24,103 @@ const Practice = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(string | number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   
+  // Use a more reliable way to track component mounting state
   useEffect(() => {
-    if (quizId) {
-      if (quizId === "demo") {
-        const demoQuiz = {
-          id: "demo",
-          title: "Demo Quiz",
-          questions: [
-            {
-              id: "demo-q1",
-              type: "multiple_choice",
-              question: "What is React primarily used for?",
-              options: ["Server-side scripting", "Building user interfaces", "Database management", "Network configuration"],
-              correctAnswer: 1,
-              explanation: "React is a JavaScript library for building user interfaces, particularly single-page applications.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q2",
-              type: "multiple_choice",
-              question: "Which lifecycle method is called after a component is rendered for the first time?",
-              options: ["componentWillMount", "componentDidMount", "componentWillUpdate", "componentDidUpdate"],
-              correctAnswer: 1,
-              explanation: "componentDidMount is called once the component has been rendered to the DOM for the first time.",
-              difficulty: "medium"
-            },
-            {
-              id: "demo-q3",
-              type: "fill_in",
-              question: "In React, the function that is used to update state variables is called ________.",
-              correctAnswer: "setState",
-              explanation: "setState is the method used to update state in class components in React.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q4",
-              type: "multiple_choice",
-              question: "What does JSX stand for?",
-              options: ["JavaScript XML", "Java Standard XML", "JavaScript Extension", "Java Syntax Extension"],
-              correctAnswer: 0,
-              explanation: "JSX stands for JavaScript XML. It allows us to write HTML in React.",
-              difficulty: "easy"
-            },
-            {
-              id: "demo-q5",
-              type: "fill_in",
-              question: "The React Hook used to perform side effects in function components is called ________.",
-              correctAnswer: "useEffect",
-              explanation: "useEffect is a Hook that lets you perform side effects in function components.",
-              difficulty: "medium"
-            }
-          ]
-        };
+    let isMounted = true;
+    
+    const fetchQuizData = async () => {
+      try {
+        if (!quizId) {
+          if (isMounted) navigate("/customize");
+          return;
+        }
         
-        setQuiz(demoQuiz);
-        setUserAnswers(Array(demoQuiz.questions.length).fill(null));
-        setLoading(false);
-        return;
+        if (quizId === "demo") {
+          if (!isMounted) return;
+          
+          const demoQuiz = {
+            id: "demo",
+            title: "Demo Quiz",
+            questions: [
+              {
+                id: "demo-q1",
+                type: "multiple_choice",
+                question: "What is React primarily used for?",
+                options: ["Server-side scripting", "Building user interfaces", "Database management", "Network configuration"],
+                correctAnswer: 1,
+                explanation: "React is a JavaScript library for building user interfaces, particularly single-page applications.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q2",
+                type: "multiple_choice",
+                question: "Which lifecycle method is called after a component is rendered for the first time?",
+                options: ["componentWillMount", "componentDidMount", "componentWillUpdate", "componentDidUpdate"],
+                correctAnswer: 1,
+                explanation: "componentDidMount is called once the component has been rendered to the DOM for the first time.",
+                difficulty: "medium"
+              },
+              {
+                id: "demo-q3",
+                type: "fill_in",
+                question: "In React, the function that is used to update state variables is called ________.",
+                correctAnswer: "setState",
+                explanation: "setState is the method used to update state in class components in React.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q4",
+                type: "multiple_choice",
+                question: "What does JSX stand for?",
+                options: ["JavaScript XML", "Java Standard XML", "JavaScript Extension", "Java Syntax Extension"],
+                correctAnswer: 0,
+                explanation: "JSX stands for JavaScript XML. It allows us to write HTML in React.",
+                difficulty: "easy"
+              },
+              {
+                id: "demo-q5",
+                type: "fill_in",
+                question: "The React Hook used to perform side effects in function components is called ________.",
+                correctAnswer: "useEffect",
+                explanation: "useEffect is a Hook that lets you perform side effects in function components.",
+                difficulty: "medium"
+              }
+            ]
+          };
+          
+          setQuiz(demoQuiz);
+          setUserAnswers(Array(demoQuiz.questions.length).fill(null));
+          setLoading(false);
+          return;
+        }
+        
+        const quizData = getQuizById(quizId);
+        if (quizData && isMounted) {
+          setQuiz(quizData);
+          setUserAnswers(Array(quizData.questions.length).fill(null));
+        } else if (isMounted) {
+          setLoadingError("Quiz not found. Please try creating a new quiz.");
+          toast.error("Quiz not found");
+        }
+      } catch (error) {
+        console.error("Error fetching quiz:", error);
+        if (isMounted) {
+          setLoadingError("Failed to load quiz data. Please try again.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      
-      const quizData = getQuizById(quizId);
-      if (quizData) {
-        setQuiz(quizData);
-        setUserAnswers(Array(quizData.questions.length).fill(null));
-      } else {
-        toast.error("Quiz not found");
-        navigate("/customize");
-      }
-    } else {
-      navigate("/customize");
-    }
-    setLoading(false);
+    };
+    
+    fetchQuizData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [quizId, navigate]);
   
   const handleAnswer = (answer: string | number) => {
@@ -141,26 +168,61 @@ const Practice = () => {
     };
   };
   
+  const handleCreateNewQuiz = () => {
+    // Clear any cached data before navigating
+    navigate("/customize", { replace: true });
+  };
+  
+  const handleRetryQuiz = () => {
+    setCurrentQuestionIndex(0);
+    setUserAnswers(Array(quiz.questions.length).fill(null));
+    setShowResults(false);
+  };
+  
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
         <Navigation />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <LoadingSpinner size="lg" />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-muted-foreground">Loading quiz...</p>
+          </div>
         </div>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (loadingError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+        <Navigation />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h1 className="text-xl font-bold mb-2">Error Loading Quiz</h1>
+            <p className="text-muted-foreground mb-6">{loadingError}</p>
+            <Button onClick={handleCreateNewQuiz}>Create New Quiz</Button>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
   
   if (!quiz) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
         <Navigation />
-        <div className="max-w-3xl mx-auto py-8 px-4 text-center">
-          <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
-          <p className="mb-6">The quiz you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate("/customize")}>Create a New Quiz</Button>
+        <div className="flex-grow flex items-center justify-center">
+          <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
+            <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
+            <p className="mb-6">The quiz you're looking for doesn't exist or has been removed.</p>
+            <Button onClick={handleCreateNewQuiz}>Create a New Quiz</Button>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -169,10 +231,10 @@ const Practice = () => {
   const progressPercentage = quiz ? (currentQuestionIndex / (quiz.questions.length - 1)) * 100 : 0;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
       <Navigation />
       
-      <main className="py-8 px-4">
+      <main className="py-8 px-4 flex-grow">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">
             {quiz?.title}
@@ -362,6 +424,8 @@ const Practice = () => {
           )}
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };
