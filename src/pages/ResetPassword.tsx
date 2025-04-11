@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { updateUserPassword } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ const ResetPassword: React.FC = () => {
   const [isChecking, setIsChecking] = useState(true);
   const [isValid, setIsValid] = useState(false);
   const navigate = useNavigate();
-  
+
   // Check if we have a valid reset token
   useEffect(() => {
     const checkResetToken = async () => {
@@ -39,20 +38,20 @@ const ResetPassword: React.FC = () => {
         // Extract token from hash if present
         const params = new URLSearchParams(hashFragment.replace('#', ''));
         const accessToken = params.get('access_token');
-        
+
         if (!accessToken) {
           setIsValid(false);
           return;
         }
-        
+
         // Try to get user with the token
         const { data, error } = await supabase.auth.getUser(accessToken);
-        
+
         if (error || !data.user) {
           setIsValid(false);
           return;
         }
-        
+
         // Token is valid
         setIsValid(true);
       } catch (error) {
@@ -62,10 +61,10 @@ const ResetPassword: React.FC = () => {
         setIsChecking(false);
       }
     };
-    
+
     checkResetToken();
   }, []);
-  
+
   // Update password strength when password changes
   useEffect(() => {
     if (!password) {
@@ -73,7 +72,7 @@ const ResetPassword: React.FC = () => {
       setPasswordError(null);
       return;
     }
-    
+
     // Calculate password strength
     let strength = 0;
     if (password.length >= 8) strength += 1;
@@ -81,51 +80,51 @@ const ResetPassword: React.FC = () => {
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
+
     setPasswordStrength(strength);
-    
+
     // Validate password
     const validation = validateStrongPassword(password);
     setPasswordError(validation.isValid ? null : validation.message);
   }, [password]);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password || !confirmPassword) {
-      toast.error("请填写所有必填字段");
+      toast.error("Please fill in all required fields");
       return;
     }
-    
+
     if (password !== confirmPassword) {
-      toast.error("两次输入的密码不一致");
+      toast.error("Passwords do not match");
       return;
     }
-    
+
     const validation = validateStrongPassword(password);
     if (!validation.isValid) {
       toast.error(validation.message);
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await updateUserPassword(password);
-      toast.success("密码已成功重置");
-      
+      toast.success("Password reset successfully");
+
       // Redirect to profile after short delay
       setTimeout(() => {
         navigate("/profile");
       }, 2000);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "重置密码失败";
+      const errorMessage = error instanceof Error ? error.message : "Password reset failed";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   if (isChecking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 flex items-center justify-center">
@@ -133,15 +132,15 @@ const ResetPassword: React.FC = () => {
       </div>
     );
   }
-  
+
   if (!isValid) {
     return <Navigate to="/" replace />;
   }
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
       <Navigation />
-      
+
       <main className="py-20 px-4">
         <div className="container mx-auto max-w-md">
           <motion.div
@@ -153,18 +152,18 @@ const ResetPassword: React.FC = () => {
               <CardHeader className="space-y-1">
                 <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
                   <KeyRound className="h-6 w-6 text-primary" />
-                  重置密码
+                  Reset Password
                 </CardTitle>
                 <CardDescription className="text-center">
-                  请设置您的新密码
+                  Please set your new password
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <label htmlFor="password" className="text-sm font-medium">
-                      新密码
+                      New Password
                     </label>
                     <div className="relative">
                       <Input
@@ -185,11 +184,11 @@ const ResetPassword: React.FC = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    
+
                     {/* Password Strength Indicator */}
                     <div className="mt-1">
                       <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className={`h-full transition-all duration-300 ${
                             passwordStrength === 0 ? 'w-0' :
                             passwordStrength === 1 ? 'w-1/5 bg-red-500' :
@@ -200,25 +199,25 @@ const ResetPassword: React.FC = () => {
                           }`}
                         ></div>
                       </div>
-                      
+
                       {passwordError && (
                         <div className="text-xs text-red-500 flex items-center mt-1">
                           <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
                           <span>{passwordError}</span>
                         </div>
                       )}
-                      
+
                       {!passwordError && password && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          密码必须是8-12个字符长度，并包含大写字母、小写字母、数字和特殊字符。
+                          Password must be 8-12 characters long and include uppercase letters, lowercase letters, numbers, and special characters.
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="confirmPassword" className="text-sm font-medium">
-                      确认新密码
+                      Confirm New Password
                     </label>
                     <div className="relative">
                       <Input
@@ -239,12 +238,12 @@ const ResetPassword: React.FC = () => {
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    
+
                     {password && confirmPassword && password !== confirmPassword && (
-                      <p className="text-xs text-red-500 mt-1">两次输入的密码不一致</p>
+                      <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
                     )}
                   </div>
-                  
+
                   <Button
                     type="submit"
                     className="w-full h-11 bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-600 transition-all"
@@ -253,28 +252,28 @@ const ResetPassword: React.FC = () => {
                     {isLoading ? (
                       <>
                         <LoadingSpinner size="sm" className="mr-2" />
-                        处理中...
+                        Processing...
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 h-4 w-4" />
-                        保存新密码
+                        Save New Password
                       </>
                     )}
                   </Button>
                 </form>
               </CardContent>
-              
+
               <CardFooter className="text-center text-sm text-muted-foreground">
                 <p className="w-full">
-                  密码重置后，您将使用新密码登录您的账户。
+                  After resetting your password, you will use the new password to log in to your account.
                 </p>
               </CardFooter>
             </Card>
           </motion.div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
