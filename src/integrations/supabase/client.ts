@@ -3,10 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Using hardcoded values for the Supabase URL and anon key
-// This is safe since these are public keys
-const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co"
-const SUPABASE_ANON_KEY = process.env.SUPABASE_KEY
+// Using environment variables for Supabase connection
+const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

@@ -8,39 +8,48 @@ const ApiKeyNotice: React.FC = () => {
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
   
   useEffect(() => {
-    // Check if the notice has already been dismissed in local storage
-    const dismissed = localStorage.getItem('apiKeyNoticeDismissed');
+    // Check if the notice has already been dismissed in this session
+    const dismissed = sessionStorage.getItem('apiKeyNoticeDismissed');
     
-    // Attempt to call the API endpoint to check if environment variables are set
-    const checkApiKeys = async () => {
-      try {
-        const response = await fetch('/api/check-api-keys');
+    // Only check API keys if not dismissed
+    if (!dismissed) {
+      checkApiKeys();
+    }
+  }, []);
+  
+  const checkApiKeys = async () => {
+    try {
+      const response = await fetch('/api/check-api-keys');
+      
+      if (!response.ok) {
         const data = await response.json();
-        
-        // If we have missing required keys or optional keys, show the banner
-        if (!response.ok) {
-          if (data.missingKeys && data.missingKeys.length > 0 && !dismissed) {
-            setShowBanner(true);
-            setMissingKeys(data.missingKeys);
-          }
-        } else if (data.optionalMissingKeys && data.optionalMissingKeys.length > 0 && !dismissed) {
-          // Show banner for optional missing keys but with different styling
+        if (data.missingKeys && data.missingKeys.length > 0) {
+          setShowBanner(true);
+          setMissingKeys(data.missingKeys);
+          // Log to console for developers
+          console.warn('Missing required environment variables:', data.missingKeys);
+        }
+      } else {
+        const data = await response.json();
+        // Check for optional keys
+        if (data.optionalMissingKeys && data.optionalMissingKeys.length > 0) {
           setShowBanner(true);
           setMissingKeys(data.optionalMissingKeys);
+          console.info('Missing optional environment variables:', data.optionalMissingKeys);
         }
-      } catch (error) {
-        // If the API endpoint is unavailable, it might be because the app is in local development
-        // or the server side is not configured yet
+      }
+    } catch (error) {
+      // Silent fail in production, log in development
+      if (process.env.NODE_ENV !== 'production') {
         console.error("Error checking API keys:", error);
       }
-    };
-    
-    checkApiKeys();
-  }, []);
+    }
+  };
   
   const dismissBanner = () => {
     setShowBanner(false);
-    localStorage.setItem('apiKeyNoticeDismissed', 'true');
+    // Use sessionStorage instead of localStorage to make it persist only for current session
+    sessionStorage.setItem('apiKeyNoticeDismissed', 'true');
   };
   
   if (!showBanner) return null;
@@ -77,7 +86,7 @@ const ApiKeyNotice: React.FC = () => {
             </button>
             
             <a
-              href="https://vercel.com/docs/concepts/projects/environment-variables"
+              href="https://vercel.com/docs/projects/environment-variables"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-amber-700 hover:text-amber-600 font-medium underline"

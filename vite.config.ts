@@ -24,38 +24,104 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist",
     sourcemap: false,
     minify: true,
-    chunkSizeWarningLimit: 1000, // Increase the warning limit to 1000 kB
+    // Use more advanced code splitting strategy
+    cssCodeSplit: true,
+    modulePreload: {
+      polyfill: true,
+    },
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor chunks
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-          ],
-          'vendor-charts': ['recharts'],
-          'vendor-animation': ['framer-motion'],
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'vendor-utils': ['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge'],
-          'vendor-doc': ['docx', 'file-saver', 'pdfjs-dist'],
+        // Implement more granular chunk strategy
+        manualChunks(id) {
+          // Core React libraries
+          if (id.includes('node_modules/react/') || 
+              id.includes('node_modules/react-dom/')) {
+            return 'react-core';
+          }
+          
+          // React router
+          if (id.includes('node_modules/react-router') || 
+              id.includes('node_modules/history') ||
+              id.includes('node_modules/@remix-run')) {
+            return 'router';
+          }
+          
+          // Radix UI components (split into smaller chunks)
+          if (id.includes('node_modules/@radix-ui')) {
+            if (id.includes('dialog') || id.includes('popover') || id.includes('modal')) {
+              return 'ui-overlays';
+            }
+            if (id.includes('accordion') || id.includes('tabs') || id.includes('collapsible')) {
+              return 'ui-containers';
+            }
+            if (id.includes('form') || id.includes('checkbox') || id.includes('radio') || id.includes('select')) {
+              return 'ui-inputs';
+            }
+            return 'ui-base';
+          }
+          
+          // Form libraries
+          if (id.includes('node_modules/react-hook-form') || 
+              id.includes('node_modules/@hookform') ||
+              id.includes('node_modules/zod')) {
+            return 'forms';
+          }
+          
+          // Charts
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')) {
+            return 'charts';
+          }
+          
+          // Animation
+          if (id.includes('node_modules/framer-motion')) {
+            return 'animation';
+          }
+          
+          // Document processing
+          if (id.includes('node_modules/docx') || 
+              id.includes('node_modules/file-saver') || 
+              id.includes('node_modules/pdfjs-dist')) {
+            return 'document-processing';
+          }
+          
+          // Utilities
+          if (id.includes('node_modules/date-fns') ||
+              id.includes('node_modules/lodash') ||
+              id.includes('node_modules/clsx') ||
+              id.includes('node_modules/class-variance-authority') ||
+              id.includes('node_modules/tailwind-merge')) {
+            return 'utils';
+          }
+          
+          // AI/OpenAI
+          if (id.includes('node_modules/openai') || 
+              id.includes('node_modules/langchain')) {
+            return 'ai';
+          }
+          
+          // Supabase
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
         },
-        // Optimize code splitting
-        chunkFileNames: 'assets/js/[name]-[hash].js',
+        // Optimize file names and organization
         entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: ({ name }) => {
+          // Put CSS files in their own directory
+          if (/\.css$/.test(name ?? '')) {
+            return 'assets/css/[name]-[hash][extname]';
+          }
+          // Put images in their own directory
+          if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(name ?? '')) {
+            return 'assets/img/[name]-[hash][extname]';
+          }
+          // Put fonts in their own directory
+          if (/\.(woff|woff2|eot|ttf|otf)$/.test(name ?? '')) {
+            return 'assets/fonts/[name]-[hash][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
       },
     },
   }
