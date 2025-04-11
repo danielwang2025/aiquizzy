@@ -3,14 +3,30 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// For Vercel deployment using environment variables
-declare const SUPABASE_URL: string;
-declare const SUPABASE_PUBLISHABLE_KEY: string;
+// Define fallback values for local development
+let supabaseUrl = '';
+let supabaseKey = '';
+
+// Check if we're running in Vercel production environment
+if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_PUBLISHABLE_KEY !== 'undefined') {
+  // Use Vercel environment variables
+  supabaseUrl = SUPABASE_URL;
+  supabaseKey = SUPABASE_PUBLISHABLE_KEY;
+} else if (import.meta.env.SUPABASE_URL && import.meta.env.SUPABASE_PUBLISHABLE_KEY) {
+  // Use Vite environment variables
+  supabaseUrl = import.meta.env.SUPABASE_URL;
+  supabaseKey = import.meta.env.SUPABASE_PUBLISHABLE_KEY;
+} else {
+  // Fallback for development - these values will be used during development
+  supabaseUrl = "https://icezlugcnsmpfpsiszvu.supabase.co";
+  supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
+  console.warn('Using development Supabase credentials. In production, set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Vercel environment variables.');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // Mock functions to simulate database operations without actual DB tables
 export const mockDB = {
