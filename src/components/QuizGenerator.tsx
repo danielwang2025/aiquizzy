@@ -225,7 +225,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
     dispatch({ type: "SET_LOADING" });
 
     try {
-      toast.loading("AI 正在生成练习题，这可能需要一点时间...", {
+      toast.loading("The AI is generating practice questions, which may take a little time...", {
         duration: 30000,
       });
       
@@ -488,17 +488,17 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({ initialTopic = "" }) => {
   const getBloomLevelDescription = (level: string) => {
     switch (level) {
       case 'remember':
-        return "记忆 - 回忆事实、术语和基本概念";
+        return "Remember - Recalling facts, terms, and basic concepts";
       case 'understand':
-        return "理解 - 解释想法或概念";
+        return "Understand - Explaining ideas or concepts";
       case 'apply':
-        return "应用 - 在新情境中使用信息";
+        return "Apply - Using information in new situations";
       case 'analyze':
-        return "分析 - 区分不同部分之间的关系";
+        return "Analyze - Distinguishing relationships between different parts";
       case 'evaluate':
-        return "评估 - 作出判断和决策";
+        return "Evaluate - Making judgments and decisions";
       case 'create':
-        return "创造 - 创建新的想法或产品";
+        return "Create - Producing new ideas or products";
       default:
         return "";
     }
