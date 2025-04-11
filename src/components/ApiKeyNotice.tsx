@@ -23,24 +23,33 @@ const ApiKeyNotice: React.FC = () => {
       
       if (!response.ok) {
         const data = await response.json();
-        if (data.missingKeys && data.missingKeys.length > 0) {
+        // Filter out VITE_SUPABASE_KEY since we have it hardcoded now
+        const filteredKeys = data.missingKeys ? 
+          data.missingKeys.filter((key: string) => key !== 'VITE_SUPABASE_KEY') : 
+          [];
+          
+        if (filteredKeys.length > 0) {
           setShowBanner(true);
-          setMissingKeys(data.missingKeys);
+          setMissingKeys(filteredKeys);
           // Log to console for developers
-          console.warn('Missing required environment variables:', data.missingKeys);
+          console.warn('Missing required environment variables:', filteredKeys);
         }
       } else {
         const data = await response.json();
-        // Check for optional keys
-        if (data.optionalMissingKeys && data.optionalMissingKeys.length > 0) {
+        // Check for optional keys, also filtering out SUPABASE_KEY
+        const filteredOptionalKeys = data.optionalMissingKeys ? 
+          data.optionalMissingKeys.filter((key: string) => key !== 'VITE_SUPABASE_KEY') : 
+          [];
+          
+        if (filteredOptionalKeys.length > 0) {
           setShowBanner(true);
-          setMissingKeys(data.optionalMissingKeys);
-          console.info('Missing optional environment variables:', data.optionalMissingKeys);
+          setMissingKeys(filteredOptionalKeys);
+          console.info('Missing optional environment variables:', filteredOptionalKeys);
         }
       }
     } catch (error) {
       // Silent fail in production, log in development
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         console.error("Error checking API keys:", error);
       }
     }

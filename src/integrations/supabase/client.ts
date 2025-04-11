@@ -5,7 +5,7 @@ import type { Database } from './types';
 
 // Using environment variables for Supabase connection
 const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY || "";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
