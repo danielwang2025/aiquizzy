@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -66,7 +65,7 @@ const Profile: React.FC = () => {
     saveQuizHistory(history);
     
     // Also update user preferences if we had user auth backend
-    toast.success("学习偏好已成功保存！");
+    toast.success("Learning preferences successfully saved!");
   };
   
   const handleAddTopic = () => {
@@ -112,7 +111,7 @@ const Profile: React.FC = () => {
   
   const handleUpdateProfile = async () => {
     if (!displayName.trim()) {
-      toast.error("显示名称不能为空");
+      toast.error("Display name cannot be empty");
       return;
     }
     
@@ -121,9 +120,9 @@ const Profile: React.FC = () => {
       const updatedUser = await updateUserProfile(displayName);
       setUser(updatedUser);
       setIsProfileEditing(false);
-      toast.success("个人资料已成功更新");
+      toast.success("Profile successfully updated");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "更新个人资料失败";
+      const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
       toast.error(errorMessage);
     } finally {
       setIsUpdatingProfile(false);
@@ -154,10 +153,10 @@ const Profile: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="text-center mb-16"
           >
-            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">个人中心</span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">您的个人资料</h1>
+            <span className="px-4 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-full inline-block mb-4">Profile Center</span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary">Your Profile</h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              管理您的账户信息和学习偏好设置
+              Manage your account information and learning preference settings
             </p>
           </motion.div>
           
@@ -173,7 +172,7 @@ const Profile: React.FC = () => {
                 <div>
                   <CardTitle className="flex items-center text-lg">
                     <UserIcon className="h-5 w-5 mr-2 text-blue-500" />
-                    用户信息
+                    User Information
                   </CardTitle>
                 </div>
                 {!isProfileEditing && (
@@ -184,7 +183,7 @@ const Profile: React.FC = () => {
                     onClick={() => setIsProfileEditing(true)}
                   >
                     <Edit2 className="h-4 w-4" />
-                    <span className="sr-only">编辑</span>
+                    <span className="sr-only">Edit</span>
                   </Button>
                 )}
               </CardHeader>
@@ -192,25 +191,25 @@ const Profile: React.FC = () => {
                 {isProfileEditing ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="display_name">显示名称</Label>
+                      <Label htmlFor="display_name">Display Name</Label>
                       <Input
                         id="display_name"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="您的显示名称"
+                        placeholder="Your display name"
                         className="bg-white/50 dark:bg-white/5"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">电子邮箱</Label>
+                      <Label htmlFor="email">Email</Label>
                       <Input
                         id="email"
                         value={user.email}
                         disabled
                         className="bg-muted/50"
                       />
-                      <p className="text-xs text-muted-foreground">邮箱地址无法更改</p>
+                      <p className="text-xs text-muted-foreground">Email address cannot be changed</p>
                     </div>
                     
                     <div className="flex justify-end space-x-2 pt-2">
@@ -222,7 +221,7 @@ const Profile: React.FC = () => {
                         }}
                         disabled={isUpdatingProfile}
                       >
-                        取消
+                        Cancel
                       </Button>
                       <Button 
                         onClick={handleUpdateProfile}
@@ -231,12 +230,12 @@ const Profile: React.FC = () => {
                         {isUpdatingProfile ? (
                           <>
                             <LoadingSpinner size="sm" className="mr-2" />
-                            保存中...
+                            Saving...
                           </>
                         ) : (
                           <>
                             <Save className="mr-2 h-4 w-4" />
-                            保存
+                            Save
                           </>
                         )}
                       </Button>
@@ -245,17 +244,17 @@ const Profile: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">电子邮箱</p>
+                      <p className="text-sm text-muted-foreground">Email</p>
                       <p className="font-medium">{user.email}</p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-muted-foreground">显示名称</p>
+                      <p className="text-sm text-muted-foreground">Display Name</p>
                       <p className="font-medium">{user.displayName || user.email?.split('@')[0]}</p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-muted-foreground">注册时间</p>
+                      <p className="text-sm text-muted-foreground">Registration Date</p>
                       <p className="font-medium">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </p>
@@ -270,33 +269,33 @@ const Profile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <BookOpen className="h-5 w-5 mr-2 text-emerald-500" />
-                  学习统计
+                  Learning Statistics
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">每日目标</p>
-                    <p className="font-medium">{preferences.dailyGoal} 题</p>
+                    <p className="text-sm text-muted-foreground">Daily Goal</p>
+                    <p className="font-medium">{preferences.dailyGoal} questions</p>
                   </div>
                   
                   <div>
-                    <p className="text-sm text-muted-foreground">首选难度</p>
+                    <p className="text-sm text-muted-foreground">Preferred Difficulty</p>
                     <p className="font-medium capitalize">
-                      {preferences.preferredDifficulty === "remember" ? "记忆（基础）" : 
-                       preferences.preferredDifficulty === "understand" ? "理解" :
-                       preferences.preferredDifficulty === "apply" ? "应用" :
-                       preferences.preferredDifficulty === "analyze" ? "分析" :
-                       preferences.preferredDifficulty === "evaluate" ? "评估" :
-                       preferences.preferredDifficulty === "create" ? "创造（进阶）" : ""}
+                      {preferences.preferredDifficulty === "remember" ? "Remember (Basic)" : 
+                       preferences.preferredDifficulty === "understand" ? "Understand" :
+                       preferences.preferredDifficulty === "apply" ? "Apply" :
+                       preferences.preferredDifficulty === "analyze" ? "Analyze" :
+                       preferences.preferredDifficulty === "evaluate" ? "Evaluate" :
+                       preferences.preferredDifficulty === "create" ? "Create (Advanced)" : ""}
                     </p>
                   </div>
                   
                   <div>
-                    <p className="text-sm text-muted-foreground">题型偏好</p>
+                    <p className="text-sm text-muted-foreground">Preferred Question Types</p>
                     <p className="font-medium capitalize">{preferences.preferredQuestionTypes?.map(t => 
-                      t === 'multiple_choice' ? '多选题' : '填空题'
-                    ).join('、')}</p>
+                      t === 'multiple_choice' ? 'Multiple Choice' : 'Fill In'
+                    ).join(', ')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -307,7 +306,7 @@ const Profile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
                   <Target className="h-5 w-5 mr-2 text-red-500" />
-                  重点主题
+                  Focus Topics
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -320,7 +319,7 @@ const Profile: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm">还没有添加重点主题</p>
+                  <p className="text-muted-foreground text-sm">No focus topics added yet</p>
                 )}
               </CardContent>
             </Card>
@@ -334,28 +333,28 @@ const Profile: React.FC = () => {
           >
             {/* Password Management */}
             <div className="space-y-8">
-              <h2 className="text-2xl font-semibold text-gradient-primary">账户安全</h2>
+              <h2 className="text-2xl font-semibold text-gradient-primary">Account Security</h2>
               <PasswordManager />
             </div>
             
             {/* Learning Preferences */}
             <div className="space-y-8">
-              <h2 className="text-2xl font-semibold text-gradient-primary">学习偏好</h2>
+              <h2 className="text-2xl font-semibold text-gradient-primary">Learning Preferences</h2>
               
               <Card className="neo-card hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Settings className="h-5 w-5 mr-2" />
-                    编辑学习偏好设置
+                    Edit Learning Preferences
                   </CardTitle>
                   <CardDescription>
-                    自定义您的学习方式和重点关注内容
+                    Customize your learning style and focus areas
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-8">
                     <div className="space-y-3">
-                      <Label htmlFor="difficulty" className="text-base">首选难度（布鲁姆层级）</Label>
+                      <Label htmlFor="difficulty" className="text-base">Preferred Difficulty (Bloom's Taxonomy)</Label>
                       <Select
                         value={preferences.preferredDifficulty}
                         onValueChange={(value) => setPreferences(prev => ({
@@ -365,21 +364,21 @@ const Profile: React.FC = () => {
                         }))}
                       >
                         <SelectTrigger id="difficulty" className="bg-white/50 dark:bg-white/5 h-12">
-                          <SelectValue placeholder="选择难度" />
+                          <SelectValue placeholder="Select Difficulty" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="remember">记忆（基础）</SelectItem>
-                          <SelectItem value="understand">理解</SelectItem>
-                          <SelectItem value="apply">应用</SelectItem>
-                          <SelectItem value="analyze">分析</SelectItem>
-                          <SelectItem value="evaluate">评估</SelectItem>
-                          <SelectItem value="create">创造（高级）</SelectItem>
+                          <SelectItem value="remember">Remember (Basic)</SelectItem>
+                          <SelectItem value="understand">Understand</SelectItem>
+                          <SelectItem value="apply">Apply</SelectItem>
+                          <SelectItem value="analyze">Analyze</SelectItem>
+                          <SelectItem value="evaluate">Evaluate</SelectItem>
+                          <SelectItem value="create">Create (Advanced)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="space-y-4">
-                      <Label className="text-base">偏好的题型</Label>
+                      <Label className="text-base">Preferred Question Types</Label>
                       <div className="flex flex-col space-y-3">
                         <div className="flex items-center space-x-3">
                           <Checkbox 
@@ -392,7 +391,7 @@ const Profile: React.FC = () => {
                             htmlFor="multiple_choice"
                             className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
-                            多选题
+                            Multiple Choice
                           </label>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -406,14 +405,14 @@ const Profile: React.FC = () => {
                             htmlFor="fill_in"
                             className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
-                            填空题
+                            Fill In
                           </label>
                         </div>
                       </div>
                     </div>
                     
                     <div className="space-y-3">
-                      <Label htmlFor="daily_goal" className="text-base">每日目标（题数）</Label>
+                      <Label htmlFor="daily_goal" className="text-base">Daily Goal (Questions)</Label>
                       <Input
                         id="daily_goal"
                         type="number"
@@ -430,14 +429,14 @@ const Profile: React.FC = () => {
                     
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="topics" className="text-base">感兴趣的主题</Label>
+                        <Label htmlFor="topics" className="text-base">Topics of Interest</Label>
                       </div>
                       <div className="flex">
                         <Input
                           id="topics"
                           value={newTopic}
                           onChange={(e) => setNewTopic(e.target.value)}
-                          placeholder="添加主题（例如：JavaScript、物理）"
+                          placeholder="Add topics (e.g., JavaScript, Physics)"
                           className="rounded-r-none bg-white/50 dark:bg-white/5 h-12"
                         />
                         <Button
@@ -445,7 +444,7 @@ const Profile: React.FC = () => {
                           onClick={handleAddTopic}
                           className="rounded-l-none btn-3d"
                         >
-                          添加
+                          Add
                         </Button>
                       </div>
                       
@@ -481,7 +480,7 @@ const Profile: React.FC = () => {
                         htmlFor="reminders"
                         className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        启用每日练习提醒
+                        Enable daily practice reminders
                       </label>
                     </div>
                     
@@ -490,7 +489,7 @@ const Profile: React.FC = () => {
                       onClick={handleSavePreferences}
                     >
                       <Check className="mr-2 h-4 w-4" />
-                      保存偏好设置
+                      Save Preferences
                     </Button>
                   </div>
                 </CardContent>
