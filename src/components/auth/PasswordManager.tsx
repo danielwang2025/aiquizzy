@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +13,11 @@ import { AlertCircle, Eye, EyeOff, Key, Save, ShieldAlert } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const formSchema = z.object({
-  currentPassword: z.string().min(1, "当前密码不能为空"),
-  newPassword: z.string().min(8, "密码必须至少有8个字符"),
-  confirmPassword: z.string().min(1, "请确认您的密码"),
+  currentPassword: z.string().min(1, "Current password cannot be empty"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "两次输入的新密码不匹配",
+  message: "The new passwords do not match",
   path: ["confirmPassword"],
 });
 
@@ -76,10 +75,10 @@ const PasswordManager: React.FC = () => {
       
       await updateUserPassword(values.newPassword);
       
-      toast.success("密码已成功更新");
+      toast.success("Password updated successfully");
       form.reset();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "更新密码失败";
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -89,16 +88,16 @@ const PasswordManager: React.FC = () => {
   const handlePasswordReset = async () => {
     const email = form.getValues("currentPassword");
     if (!email) {
-      toast.error("请输入您的电子邮件地址");
+      toast.error("Please enter your email address");
       return;
     }
     
     try {
       setIsResetLoading(true);
       await requestPasswordReset(email);
-      toast.success("密码重置链接已发送到您的邮箱");
+      toast.success("Password reset link has been sent to your email");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "发送重置密码链接失败";
+      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset link";
       toast.error(errorMessage);
     } finally {
       setIsResetLoading(false);
@@ -110,10 +109,10 @@ const PasswordManager: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="h-5 w-5 text-primary" />
-          修改密码
+          Change Password
         </CardTitle>
         <CardDescription>
-          定期更新您的密码可以提高账户安全性
+          Regularly updating your password can improve account security
         </CardDescription>
       </CardHeader>
       
@@ -126,13 +125,13 @@ const PasswordManager: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1">
-                    当前密码
+                    Current Password
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="输入当前密码"
+                        placeholder="Enter current password"
                         type={showCurrentPassword ? "text" : "password"}
                         className="pr-10"
                       />
@@ -161,13 +160,13 @@ const PasswordManager: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1">
-                    新密码
+                    New Password
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="设置新密码"
+                        placeholder="Set a new password"
                         type={showNewPassword ? "text" : "password"}
                         className="pr-10"
                       />
@@ -201,7 +200,7 @@ const PasswordManager: React.FC = () => {
                       ></div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      密码必须是8-12个字符长度，并包含大写字母、小写字母、数字和特殊字符。
+                      Password must be 8-12 characters long and include uppercase letters, lowercase letters, numbers, and special characters.
                     </p>
                   </div>
                   
@@ -216,13 +215,13 @@ const PasswordManager: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1">
-                    确认新密码
+                    Confirm New Password
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="再次输入新密码"
+                        placeholder="Re-enter new password"
                         type={showConfirmPassword ? "text" : "password"}
                         className="pr-10"
                       />
@@ -250,12 +249,12 @@ const PasswordManager: React.FC = () => {
                 {isLoading ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
-                    更新中...
+                    Updating...
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    保存新密码
+                    Save New Password
                   </>
                 )}
               </Button>
@@ -268,10 +267,10 @@ const PasswordManager: React.FC = () => {
         <div className="w-full border-t border-border pt-4">
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-medium">忘记密码？</span>
+            <span className="text-sm font-medium">Forgot Password?</span>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            如果您忘记了密码，我们可以向您的邮箱发送重置链接。
+            If you forgot your password, we can send a reset link to your email.
           </p>
           <Button 
             variant="outline" 
@@ -281,9 +280,9 @@ const PasswordManager: React.FC = () => {
             {isResetLoading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                发送中...
+                Sending...
               </>
-            ) : "发送重置链接"}
+            ) : "Send Reset Link"}
           </Button>
         </div>
       </CardFooter>
