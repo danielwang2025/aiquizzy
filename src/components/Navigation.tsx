@@ -3,19 +3,19 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Settings, Book, BarChart, User, PlusCircle, Mail, DollarSign, Menu, X } from "lucide-react";
+import { Home, Settings, Book, BarChart, User, PlusCircle, Mail, DollarSign } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { isAuthenticated } from "@/utils/authService";
+import MobileDrawer from "./MobileDrawer";
 
 const Navigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isHomePage = location.pathname === "/";
   
   // 监听滚动事件，控制导航栏样式
@@ -61,10 +61,6 @@ const Navigation: React.FC = () => {
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
 
   return (
     <nav 
@@ -125,65 +121,14 @@ const Navigation: React.FC = () => {
             <AuthManager />
             
             {isMobile && (
-              <div className="ml-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={toggleMobileMenu}
-                  aria-label="Toggle mobile menu"
-                  className={isHomePage && !scrolled ? "text-white hover:bg-white/10" : ""}
-                >
-                  {mobileMenuOpen ? (
-                    <X className="h-6 w-6" />
-                  ) : (
-                    <Menu className="h-6 w-6" />
-                  )}
-                </Button>
-              </div>
+              <MobileDrawer handleAuthRequiredClick={handleAuthRequiredClick} />
             )}
           </div>
         </div>
       </div>
       
-      {/* 移动端弹出导航 - 玻璃态设计 */}
-      <AnimatePresence>
-        {isMobile && mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="glass-effect border-t border-border/50 overflow-hidden shadow-lg"
-          >
-            <div className="px-2 pt-2 pb-4 space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={(e) => {
-                    item.requiresAuth && handleAuthRequiredClick(e, item.path);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    "block px-3 py-3 rounded-md text-base font-medium transition-colors",
-                    location.pathname === item.path
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-secondary"
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    {item.icon}
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* 移动端底部导航 */}
-      {isMobile && !mobileMenuOpen && (
+      {/* Mobile bottom navigation */}
+      {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border shadow-lg z-50">
           <div className="grid grid-cols-5 h-16">
             {navItems.slice(0, 5).map((item) => (

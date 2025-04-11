@@ -17,6 +17,9 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ApiKeyNotice from "./components/ApiKeyNotice";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import Layout from "./components/Layout";
+import { useEffect } from "react";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +31,17 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Add viewport meta tag dynamically for mobile devices
+  useEffect(() => {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
@@ -36,18 +50,18 @@ const App = () => {
           <Sonner />
           <ApiKeyNotice />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/customize" element={<QuizCustomizer />} />
-            <Route path="/practice/:quizId?" element={<Practice />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/review" element={<ReviewHub />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/customize" element={<Layout><QuizCustomizer /></Layout>} />
+            <Route path="/practice/:quizId?" element={<Layout><Practice /></Layout>} />
+            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/profile" element={<Layout><Profile /></Layout>} />
+            <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
+            <Route path="/contact" element={<Layout><Contact /></Layout>} />
+            <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
+            <Route path="/terms" element={<Layout><Terms /></Layout>} />
+            <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+            <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
+            <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
         </TooltipProvider>
       </QueryClientProvider>

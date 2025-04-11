@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -95,15 +94,15 @@
   }
 
   h1 {
-    @apply text-4xl md:text-5xl md:leading-[1.1];
+    @apply text-3xl md:text-4xl lg:text-5xl md:leading-[1.1];
   }
 
   h2 {
-    @apply text-3xl md:text-4xl;
+    @apply text-2xl md:text-3xl lg:text-4xl;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl;
+    @apply text-xl md:text-2xl lg:text-3xl;
   }
 
   p {
@@ -238,15 +237,15 @@
 
   /* 改进的空间系统 */
   .space-section {
-    @apply py-16 md:py-24;
+    @apply py-8 md:py-16 lg:py-24;
   }
   
   .space-content {
-    @apply max-w-3xl mx-auto px-4 md:px-0;
+    @apply max-w-3xl mx-auto px-4 md:px-8 lg:px-0;
   }
   
   .space-between-components {
-    @apply my-10 md:my-16;
+    @apply my-6 md:my-10 lg:my-16;
   }
   
   /* Gradient backgrounds */
@@ -266,11 +265,27 @@
     @apply bg-gradient-to-r from-amber-500 to-yellow-500;
   }
 
-  /* Text gradients */
-  .text-gradient-primary {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+  /* Mobile-specific utilities */
+  .mobile-padding {
+    @apply px-4 md:px-6;
   }
   
+  .mobile-py {
+    @apply py-6 md:py-10;
+  }
+  
+  .mobile-header {
+    @apply text-2xl md:text-3xl lg:text-4xl;
+  }
+  
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .mobile-bottom-safe {
+    @apply pb-20 md:pb-0;
+  }
+
   /* 3D 按钮效果 */
   .btn-3d {
     @apply shadow-md transition-all duration-200 transform;
@@ -286,42 +301,25 @@
   
   /* 响应式间距工具类 */
   .section-pad {
-    @apply py-16 md:py-24;
+    @apply py-10 md:py-16 lg:py-24;
   }
   
   .section-margin {
-    @apply my-16 md:my-24;
+    @apply my-10 md:my-16 lg:my-24;
   }
 
-  /* 文本间距与排版优化 */
-  .text-spacing-improved {
-    @apply tracking-wide leading-relaxed;
+  /* Mobile-optimized form elements */
+  .mobile-input {
+    @apply h-12 md:h-10 text-base md:text-sm px-4 py-3 md:py-2;
   }
-
-  .heading-spacing {
-    @apply mb-8 md:mb-12;
+  
+  .mobile-button {
+    @apply h-12 md:h-10 px-5 py-3 md:py-2 text-base md:text-sm;
   }
-
-  .paragraph-spacing {
-    @apply mb-6;
-  }
-
-  /* 改进的表单元素样式 */
-  .input-improved {
-    @apply h-12 px-4 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-primary/50;
-  }
-
-  .label-improved {
-    @apply text-sm font-medium mb-2 inline-block;
-  }
-
-  /* 分割线和分隔符 */
-  .divider {
-    @apply w-full h-px bg-border my-8;
-  }
-
-  .divider-vertical {
-    @apply h-full w-px bg-border mx-4;
+  
+  /* Touch-friendly list items */
+  .touch-list-item {
+    @apply py-3 px-4 md:py-2 md:px-3;
   }
 }
 
@@ -349,4 +347,33 @@
 /* 容器视觉增强 */
 .content-container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .mobile-container {
+    @apply px-4 w-full;
+  }
+  
+  .mobile-stack > * + * {
+    @apply mt-4;
+  }
+  
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+  
+  .hide-on-mobile {
+    @apply hidden md:block;
+  }
+  
+  .show-on-mobile {
+    @apply block md:hidden;
+  }
+}
+
+/* Interactive mobile elements */
+.tap-highlight {
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  @apply touch-none select-none;
 }
