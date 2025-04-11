@@ -53,6 +53,7 @@ const AuthManager: React.FC = () => {
             const userData = await getCurrentUser();
             console.log("onAuthStateChange - Current user data:", userData);
             setUser(userData);
+            // Only show toast on actual sign in event
             toast.success("Login successful");
             // Close auth modal if open
             setIsAuthModalOpen(false);
@@ -75,6 +76,18 @@ const AuthManager: React.FC = () => {
             setUser(userData);
           } catch (error) {
             console.error("Error fetching updated user:", error);
+          }
+        }, 0);
+      } else if (event === 'INITIAL_SESSION' && session?.user) {
+        // For initial session detection, just update the user state silently without toast
+        setTimeout(async () => {
+          try {
+            const userData = await getCurrentUser();
+            console.log("Initial session detected - Current user data:", userData);
+            setUser(userData);
+            // No toast notification for initial session
+          } catch (error) {
+            console.error("Error fetching user for initial session:", error);
           }
         }, 0);
       }
