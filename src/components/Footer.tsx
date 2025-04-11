@@ -106,8 +106,7 @@ const Footer = () => {
 
         <div className="flex flex-col md:flex-row items-center justify-between">
           <p className="text-muted-foreground flex items-center">
-            © {currentYear} AI Quizzy. All rights reserved. Made with
-            <Heart className="h-4 w-4 mx-1 text-red-500" /> by our team.
+            © {currentYear} AI Quizzy. All rights reserved.
           </p>
           <div className="flex gap-6 mt-6 md:mt-0">
             <Link to="/terms" className="hover:text-primary transition-colors">
