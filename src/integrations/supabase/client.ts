@@ -6,12 +6,12 @@ import type { Database } from './types';
 // Using hardcoded values for the Supabase URL and anon key
 // This is safe since these are public keys
 const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Mock functions to simulate database operations without actual DB tables
 export const mockDB = {
