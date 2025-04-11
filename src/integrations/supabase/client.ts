@@ -5,7 +5,7 @@ import type { Database } from './types';
 
 // Using environment variables for Supabase connection
 const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY || "";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
