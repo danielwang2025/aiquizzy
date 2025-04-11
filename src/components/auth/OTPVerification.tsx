@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { verifyOTP, sendEmailOTP } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     e.preventDefault();
     
     if (!otpValue || otpValue.length !== 6) {
-      setError("请输入完整的6位验证码");
+      setError("Please enter the complete 6-digit verification code.");
       return;
     }
     
@@ -47,10 +46,10 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     
     try {
       await verifyOTP(email, otpValue);
-      toast.success("验证成功");
+      toast.success("Verification successful.");
       onSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "验证失败";
+      const errorMessage = error instanceof Error ? error.message : "Verification failed.";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -66,10 +65,10 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     
     try {
       await sendEmailOTP(email);
-      toast.success("验证码已重新发送");
+      toast.success("Verification code resent.");
       setResendCooldown(60); // Start 60-second cooldown
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "发送验证码失败";
+      const errorMessage = error instanceof Error ? error.message : "Failed to send verification code.";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -86,11 +85,11 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          验证邮箱
+          Verify Email
         </h1>
         <p className="text-muted-foreground">
-          我们已向 <span className="font-medium">{email}</span> 发送了一个验证码。<br />
-          请输入验证码以完成注册。
+          We have sent a verification code to <span className="font-medium">{email}</span>.<br />
+          Please enter the code to complete registration.
         </p>
       </div>
       
@@ -128,12 +127,12 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             {isLoading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                验证中...
+                Verifying...
               </>
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" />
-                验证
+                Verify
               </>
             )}
           </Button>
@@ -146,14 +145,14 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             disabled={isLoading}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
+            Back
           </Button>
         </div>
       </form>
       
       <div className="text-center text-sm text-muted-foreground">
         <p>
-          没有收到验证码？{" "}
+          Didn't receive the code?{" "}
           <Button
             type="button"
             variant="link"
@@ -162,11 +161,11 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             disabled={resendCooldown > 0 || isLoading}
           >
             {resendCooldown > 0 ? (
-              <span>{resendCooldown}秒后重新发送</span>
+              <span>Resend in {resendCooldown} seconds</span>
             ) : (
               <>
                 <RefreshCcw className="mr-1 h-3 w-3 inline" />
-                重新发送
+                Resend
               </>
             )}
           </Button>
