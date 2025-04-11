@@ -1,19 +1,19 @@
 
 // Vercel Serverless Function for sending contact messages
 export default async function handler(req, res) {
-  // 设置 CORS 头
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  // 处理 OPTIONS 请求
+  // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // 确保请求方法为 POST
+  // Ensure request method is POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -21,19 +21,20 @@ export default async function handler(req, res) {
   try {
     const { name, email, subject, message } = req.body;
     
-    // 从 Vercel 环境变量中获取 API 密钥
+    // Get API key from Vercel environment variables
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     
     if (!BREVO_API_KEY) {
+      console.error("BREVO_API_KEY not configured in environment variables");
       return res.status(500).json({ error: 'API key not configured in environment variables' });
     }
 
-    // 简单内容审核
+    // Content moderation
     if (containsHarmfulContent(message)) {
       return res.status(400).json({ error: "Your message contains potentially harmful content and cannot be sent." });
     }
     
-    // 创建邮件内容
+    // Create email content
     const emailContent = {
       sender: {
         name,
@@ -59,7 +60,9 @@ export default async function handler(req, res) {
       `
     };
     
-    // 调用 Brevo API
+    console.log("Attempting to send email with Brevo API");
+    
+    // Call Brevo API
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -72,21 +75,26 @@ export default async function handler(req, res) {
     
     if (!response.ok) {
       const errorData = await response.json();
-      return res.status(500).json({ error: errorData.message || "Failed to send email" });
+      console.error("Brevo API error:", errorData);
+      return res.status(response.status).json({ error: errorData.message || "Failed to send email" });
     }
     
-    return res.status(200).json({ success: true });
+    const responseData = await response.json();
+    console.log("Email sent successfully:", responseData);
+    return res.status(200).json({ success: true, data: responseData });
   } catch (error) {
     console.error("Failed to send message:", error);
     return res.status(500).json({ error: "Failed to send message. Please try again." });
   }
 }
 
-// 简单内容审核函数
+// Simple content moderation function
 function containsHarmfulContent(text) {
+  if (!text) return false;
+  
   const lowerText = text.toLowerCase();
   
-  // 简单的敏感词检测
+  // Simple sensitive terms detection
   const sensitiveTerms = [
     "porn", "xxx", "sex", "nude",
     "hate", "racist", "nazi", "bigot",
