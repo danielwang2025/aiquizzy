@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, UserPlus, LogOut } from "lucide-react";
@@ -28,101 +27,14 @@ const AuthManager: React.FC = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getCurrentUser();
-        console.log("fetchUser - Current user data:", userData);
-        setUser(userData);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchUser();
-    
-    // Set up Supabase auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session ? "User logged in" : "User logged out");
-      
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Use setTimeout to avoid potential deadlocks with Supabase client
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            console.log("onAuthStateChange - Current user data:", userData);
-            setUser(userData);
-            // Only show toast on actual sign in event
-            toast.success("Login successful");
-            // Close auth modal if open
-            setIsAuthModalOpen(false);
-          } catch (error) {
-            console.error("Error fetching user after sign in:", error);
-            toast.error("Failed to get user information");
-          }
-        }, 0);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out, clearing user state");
-        setUser(null);
-        toast.success("Logged out successfully");
-      } else if (event === 'PASSWORD_RECOVERY') {
-        toast.info("Please follow the email instructions to reset your password");
-      } else if (event === 'USER_UPDATED') {
-        toast.success("User information updated");
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            setUser(userData);
-          } catch (error) {
-            console.error("Error fetching updated user:", error);
-          }
-        }, 0);
-      } else if (event === 'INITIAL_SESSION' && session?.user) {
-        // For initial session detection, just update the user state silently without toast
-        setTimeout(async () => {
-          try {
-            const userData = await getCurrentUser();
-            console.log("Initial session detected - Current user data:", userData);
-            setUser(userData);
-            // No toast notification for initial session
-          } catch (error) {
-            console.error("Error fetching user for initial session:", error);
-          }
-        }, 0);
-      }
-      
-      // Handle magic link email sent event through custom toast notification
-      // instead of direct event comparison since it's not in the type definition
-      if (event && event.toString().includes('MAGIC_LINK_EMAIL_SENT')) {
-        toast.success("Magic link has been sent to your email, please check");
+        toast.success("Login successful");
       }
     });
-    
-    // Check for current session on mount or route change
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("Existing session found");
-          const userData = await getCurrentUser();
-          setUser(userData);
-        } else {
-          console.log("No active session found");
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    checkSession();
-    
-    // Clean up subscription when component unmounts
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe(); // 确保在组件卸载时清除订阅
     };
   }, []);
   
