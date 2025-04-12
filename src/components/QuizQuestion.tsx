@@ -1,12 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { QuizQuestion as QuizQuestionType } from "@/types/quiz";
 import { cn } from "@/lib/utils";
 import DisputeForm from "./DisputeForm";
 import { isQuestionDisputed } from "@/utils/historyService";
-import { CheckCircle, HelpCircle, Lightbulb } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { generateHint, getBasicHint } from "@/utils/hintService";
 
 interface QuizQuestionProps {
   question: QuizQuestionType;
@@ -28,9 +28,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [animatedIn, setAnimatedIn] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [isAlreadyDisputed, setIsAlreadyDisputed] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [hint, setHint] = useState<string>("");
-  const [isLoadingHint, setIsLoadingHint] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,29 +55,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     if (onDisputeQuestion) {
       onDisputeQuestion(questionId);
     }
-  };
-
-  useEffect(() => {
-    const preloadHint = async () => {
-      try {
-        const basicHint = getBasicHint(question);
-        setHint(basicHint);
-        
-        const apiHint = await generateHint(question);
-        if (apiHint) {
-          setHint(apiHint);
-        }
-      } catch (error) {
-        console.error("Error pre-loading hint:", error);
-      }
-    };
-
-    preloadHint();
-  }, [question]);
-
-  const toggleHint = () => {
-    setShowHint(!showHint);
-    setIsLoadingHint(false);
   };
 
   const formatFeedback = () => {
@@ -139,42 +113,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
           </span>
         </div>
-        
-        {!isAlreadyDisputed && !showResult && !showHint && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleHint}
-            className="text-muted-foreground hover:bg-blue-50"
-          >
-            <HelpCircle className="mr-1 h-3.5 w-3.5" />
-            Not Sure
-          </Button>
-        )}
       </div>
 
       <h3 className="text-xl font-medium mb-5 leading-relaxed tracking-wide pl-11">
         {question.question}
       </h3>
-
-      {showHint && !showResult && (
-        <motion.div 
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-5 ml-11 p-3 border border-amber-200 bg-amber-50 rounded-lg"
-        >
-          <div className="flex items-start">
-            <Lightbulb className="h-5 w-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-amber-800">
-                <strong>Hint:</strong> {hint}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {question.type === "multiple_choice" && question.options && (
         <div className="space-y-3 mt-4 pl-11">
