@@ -1,8 +1,5 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -69,8 +66,6 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navigation />
-
       <main className="flex-grow py-20 px-4">
         <div className="max-w-6xl mx-auto space-y-24">
           <motion.div
@@ -197,8 +192,6 @@ const Pricing = () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

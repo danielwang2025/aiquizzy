@@ -1,14 +1,11 @@
 
 import React from "react";
-import Navigation from "@/components/Navigation";
 import ContactUs from "@/components/ContactUs";
-import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 
 const Contact = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-      <Navigation />
       <main className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <motion.div
@@ -29,7 +26,6 @@ const Contact = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
