@@ -19,7 +19,6 @@ import ApiKeyNotice from "./components/ApiKeyNotice";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Layout from "./components/Layout";
 import { useEffect } from "react";
-import { useMediaQuery } from "@/hooks/use-mobile";
 
 const queryClient = new QueryClient({
   defaultOptions: {

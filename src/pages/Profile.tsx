@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { loadQuizHistory, saveQuizHistory } from "@/utils/historyService";
 import { getCurrentUser, updateUserProfile } from "@/utils/authService";
 import { LearningPreferences, User } from "@/types/quiz";
@@ -44,7 +42,6 @@ const Profile: React.FC = () => {
           setDisplayName(userData.displayName || "");
         }
         
-        // Load learning preferences
         const history = loadQuizHistory();
         if (history.learningPreferences) {
           setPreferences(history.learningPreferences);
@@ -64,7 +61,6 @@ const Profile: React.FC = () => {
     history.learningPreferences = preferences;
     saveQuizHistory(history);
     
-    // Also update user preferences if we had user auth backend
     toast.success("Learning preferences successfully saved!");
   };
   
@@ -92,7 +88,6 @@ const Profile: React.FC = () => {
       const currentTypes = prev.preferredQuestionTypes || [];
       
       if (currentTypes.includes(type)) {
-        // Don't allow removing if it's the last type
         if (currentTypes.length === 1) {
           return prev;
         }
@@ -143,8 +138,6 @@ const Profile: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-      <Navigation />
-      
       <main className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <motion.div 
@@ -166,7 +159,6 @@ const Profile: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
           >
-            {/* User Info Card */}
             <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2 flex justify-between items-start">
                 <div>
@@ -264,7 +256,6 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Learning Stats Card */}
             <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
@@ -301,7 +292,6 @@ const Profile: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Focus Topics Card */}
             <Card className="hover:shadow-md transition-shadow glass-effect">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-lg">
@@ -331,13 +321,11 @@ const Profile: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16"
           >
-            {/* Password Management */}
             <div className="space-y-8">
               <h2 className="text-2xl font-semibold text-gradient-primary">Account Security</h2>
               <PasswordManager />
             </div>
             
-            {/* Learning Preferences */}
             <div className="space-y-8">
               <h2 className="text-2xl font-semibold text-gradient-primary">Learning Preferences</h2>
               
@@ -498,8 +486,6 @@ const Profile: React.FC = () => {
           </motion.div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

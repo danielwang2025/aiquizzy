@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import QuizGenerator from "@/components/QuizGenerator";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -91,11 +89,9 @@ const QuizCustomizer = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-        <Navigation />
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
           <LoadingSpinner />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -103,14 +99,12 @@ const QuizCustomizer = () => {
   if (loadingError) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-        <Navigation />
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-500 mb-4">{loadingError}</p>
             <Button onClick={() => window.location.reload()}>Refresh Page</Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -131,8 +125,6 @@ const QuizCustomizer = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-      <Navigation />
-      
       <main className="py-20 px-4 md:py-24 flex-grow">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -185,8 +177,6 @@ const QuizCustomizer = () => {
           </motion.div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
