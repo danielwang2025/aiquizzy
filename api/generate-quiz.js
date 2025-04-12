@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-Deepseek-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
   // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
@@ -66,34 +66,41 @@ export default async function handler(req, res) {
     
     const bloomLevelDescription = bloomLevelDescriptions[bloomLevel];
     
-    // Custom system prompt in English - Streamlined for faster performance
-    const systemPrompt = `You are a quiz generator. Generate ${count} questions (${multipleChoiceCount} multiple-choice, ${fillInCount} fill-in-the-blank) based on: ${learningObjectives}.
+    // Custom system prompt in English
+    const systemPrompt = `You are a quiz generator. Please create ${count} practice questions (${multipleChoiceCount} multiple-choice and ${fillInCount} fill-in-the-blank) based on the provided learning objectives.
 
-Cognitive level: ${bloomLevel} - ${bloomLevelDescription}
+The questions should align with the "${bloomLevel}" cognitive level of Bloom's Taxonomy:
+${bloomLevelDescription}
 
-Guidelines:
-1. Use clear language suitable for assessment.
-2. Multiple-choice: 4 options (A, B, C, D), similar length, plausible distractors.
-3. Fill-in: Short answers (1-3 words), focus on key concepts.
+IMPORTANT GUIDELINES FOR CREATING EFFECTIVE QUESTIONS:
+1. Use clear, concise language suitable for educational assessment.
+2. For multiple-choice questions:
+   - Keep correct answers relatively short and concise
+   - Make all options similar in length to avoid giving away the answer
+   - Ensure distractors (wrong answers) are plausible but clearly incorrect
+   - Avoid obviously wrong options that can be eliminated easily
+   - Use 4 options for each multiple-choice question (A, B, C, D)
 
-Return JSON format:
+3. For fill-in-the-blank questions:
+   - Keep the answer short (1-3 words maximum)
+   - Focus on key concepts rather than lengthy definitions
+   - Avoid using blank spaces that could accept multiple correct answers
+
+Return your response in JSON format as follows:
 {"questions": [
-  {"type": "multiple_choice", "question": "Text", "options": ["A", "B", "C", "D"], "correctAnswer": 0, "explanation": "Why", "bloomLevel": "${bloomLevel}"},
-  {"type": "fill_in", "question": "Text with _____.", "correctAnswer": "answer", "explanation": "Why", "bloomLevel": "${bloomLevel}"}
-]}`;
+  {"id": "q1", "type": "multiple_choice", "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "correctAnswer": 0, "explanation": "Explanation", "bloomLevel": "${bloomLevel}"},
+  {"id": "q2", "type": "fill_in", "question": "Question with blank ________.", "correctAnswer": "answer", "explanation": "Explanation", "bloomLevel": "${bloomLevel}"}
+]}
 
-    // Set request timeout and implement performance optimizations
+Remember to ensure all questions are in English, regardless of what language the learning objectives are provided in.`;
+
+    // Set request timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60-second timeout
-
-    // Cache key based on input parameters
-    const cacheKey = `${learningObjectives}-${bloomLevel}-${count}-${questionTypes.join('-')}`;
-    const requestStartTime = Date.now();
     
     try {
-      console.log(`Sending request to DeepSeek API for: ${cacheKey}`);
-      
-      // Performance optimization: Smaller payload and more focused prompt
+      console.log("Sending request to DeepSeek API...");
+      // Call DeepSeek API with signal control
       const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
         method: "POST",
         signal: controller.signal,
@@ -107,16 +114,19 @@ Return JSON format:
             {
               role: "system",
               content: systemPrompt
+            },
+            {
+              role: "user",
+              content: `Create test questions based on these learning objectives: ${learningObjectives}`
             }
           ],
-          temperature: 0.5, // Reduced temperature for faster responses
-          max_tokens: 1500, // Reduced max tokens to speed up processing
-          frequency_penalty: 0.5, // Added to discourage repetitive text
+          temperature: 0.7,
+          max_tokens: 2000
         })
       });
       
       clearTimeout(timeoutId);
-      console.log(`DeepSeek API response status: ${response.status}, time taken: ${Date.now() - requestStartTime}ms`);
+      console.log("DeepSeek API response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -133,7 +143,7 @@ Return JSON format:
       }
 
       const data = await response.json();
-      console.log(`Received response from DeepSeek API in ${Date.now() - requestStartTime}ms`);
+      console.log("Received response from DeepSeek API");
       
       // Parse content
       const content = data.choices[0].message.content;
@@ -192,7 +202,7 @@ Return JSON format:
         };
       });
       
-      console.log(`Successfully generated ${questions.length} questions in ${Date.now() - requestStartTime}ms`);
+      console.log(`Successfully generated ${questions.length} questions`);
       return res.status(200).json({ questions });
     } catch (fetchError) {
       clearTimeout(timeoutId);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Drawer,
@@ -21,14 +20,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface ApiKeys {
   DEEPSEEK_API_KEY: string;
   BREVO_API_KEY: string;
-  DEEPSEEK_API_KEY_MODERATION: string;
+  OPENAI_API_KEY: string;
 }
 
 const ApiKeysManager = () => {
   const [apiKeys, setApiKeys] = useState<ApiKeys>({
     DEEPSEEK_API_KEY: "",
     BREVO_API_KEY: "",
-    DEEPSEEK_API_KEY_MODERATION: "",
+    OPENAI_API_KEY: "",
   });
   
   const [isProduction, setIsProduction] = useState(false);
@@ -39,7 +38,7 @@ const ApiKeysManager = () => {
     const storedKeys: ApiKeys = {
       DEEPSEEK_API_KEY: localStorage.getItem("DEEPSEEK_API_KEY") || "",
       BREVO_API_KEY: localStorage.getItem("BREVO_API_KEY") || "",
-      DEEPSEEK_API_KEY_MODERATION: localStorage.getItem("DEEPSEEK_API_KEY_MODERATION") || "",
+      OPENAI_API_KEY: localStorage.getItem("OPENAI_API_KEY") || "",
     };
     setApiKeys(storedKeys);
     
@@ -160,17 +159,17 @@ const ApiKeysManager = () => {
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <Key className="mr-2 h-4 w-4" />
-                      <label htmlFor="DEEPSEEK_API_KEY_MODERATION" className="text-sm font-medium">
-                        DeepSeek API Key for Content Moderation
+                      <label htmlFor="OPENAI_API_KEY" className="text-sm font-medium">
+                        OpenAI API Key (for content moderation)
                       </label>
                     </div>
                     <Input
-                      id="DEEPSEEK_API_KEY_MODERATION"
-                      name="DEEPSEEK_API_KEY_MODERATION"
+                      id="OPENAI_API_KEY"
+                      name="OPENAI_API_KEY"
                       type="password"
-                      value={apiKeys.DEEPSEEK_API_KEY_MODERATION}
+                      value={apiKeys.OPENAI_API_KEY}
                       onChange={handleChange}
-                      placeholder="Enter DeepSeek API Key for moderation (optional)"
+                      placeholder="Enter OpenAI API Key"
                     />
                   </div>
                 </div>
@@ -233,7 +232,7 @@ const ApiKeysManager = () => {
                     
                     <h3 className="text-sm font-medium mt-4 mb-2">Optional environment variables:</h3>
                     <ul className="list-disc list-inside text-sm text-gray-600">
-                      <li>DEEPSEEK_API_KEY_MODERATION - for enhanced content moderation</li>
+                      <li>OPENAI_API_KEY - for enhanced content moderation</li>
                     </ul>
                   </div>
                 </div>

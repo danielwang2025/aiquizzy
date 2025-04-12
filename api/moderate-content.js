@@ -22,80 +22,63 @@ export default async function handler(req, res) {
     const { content } = req.body;
     
     // 从 Vercel 环境变量中获取 API 密钥
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY_MODERATION;
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     
-    // 如果有 DeepSeek API 密钥，使用其内容审核能力
-    if (DEEPSEEK_API_KEY) {
+    // 如果有 OpenAI API 密钥，使用他们的内容审核 API
+    if (OPENAI_API_KEY) {
       try {
-        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        const response = await fetch('https://api.openai.com/v1/moderations', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
           },
           body: JSON.stringify({
-            model: "deepseek-chat",
-            messages: [
-              {
-                role: "system",
-                content: `You are a content moderation system. Analyze the following content and determine if it contains inappropriate material in any of these categories:
-                - sexual: Any sexually explicit or adult content
-                - hate: Hateful, racist or discriminatory content
-                - harassment: Content that harasses or bullies individuals or groups
-                - selfHarm: Content promoting self-harm or suicide
-                - violence: Violent or graphic content
-                - illicit: Content promoting illegal activities
-
-                Respond with a JSON object only, structured as follows:
-                {
-                  "flagged": boolean,
-                  "categories": {
-                    "sexual": boolean,
-                    "hate": boolean,
-                    "harassment": boolean,
-                    "selfHarm": boolean,
-                    "violence": boolean,
-                    "illicit": boolean
-                  },
-                  "categoryScores": {
-                    "sexual": number (0-1),
-                    "hate": number (0-1),
-                    "harassment": number (0-1),
-                    "selfHarm": number (0-1),
-                    "violence": number (0-1),
-                    "illicit": number (0-1)
-                  }
-                }`
-              },
-              {
-                role: "user",
-                content: content
-              }
-            ],
-            temperature: 0.1,
-            max_tokens: 500,
-            response_format: { type: "json_object" }
+            input: content
           })
         });
 
-        if (!response.ok) {
-          throw new Error(`DeepSeek API returned ${response.status}`);
-        }
-
         const data = await response.json();
-        let moderationResult;
         
-        try {
-          const contentResponse = data.choices[0].message.content;
-          moderationResult = JSON.parse(contentResponse);
-        } catch (error) {
-          throw new Error('Invalid response from DeepSeek API');
+        if (!data.results || !data.results[0]) {
+          throw new Error('Invalid response from OpenAI Moderation API');
         }
 
-        return res.status(200).json(moderationResult);
+        const result = data.results[0];
+        
+        // 映射 OpenAI 类别到我们的简化类别
+        const categories = {
+          sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
+          hate: result.categories.hate || result.categories["hate/threatening"] || false,
+          harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
+          selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
+                    result.categories["self-harm/instructions"] || false,
+          violence: result.categories.violence || result.categories["violence/graphic"] || false,
+          illicit: result.categories.illicit || result.categories["illicit/violent"] || false
+        };
+
+        // 映射分数
+        const categoryScores = {
+          sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
+          hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
+          harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
+          selfHarm: Math.max(
+            result.category_scores["self-harm"] || 0, 
+            result.category_scores["self-harm/intent"] || 0,
+            result.category_scores["self-harm/instructions"] || 0
+          ),
+          violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
+          illicit: Math.max(result.category_scores.illicit || 0, result.category_scores["illicit/violent"] || 0)
+        };
+
+        return res.status(200).json({
+          flagged: result.flagged,
+          categories,
+          categoryScores
+        });
       } catch (error) {
-        console.error("Error using DeepSeek moderation:", error);
-        // 如果 DeepSeek API 出错，回退到本地内容审核
+        console.error("Error using OpenAI moderation:", error);
+        // 如果 OpenAI API 出错，回退到本地内容审核
         return res.status(200).json(localModerateContent(content));
       }
     } else {
@@ -114,7 +97,7 @@ export default async function handler(req, res) {
   }
 }
 
-// 基本的本地内容审核（当 DeepSeek API 不可用时的回退）
+// 基本的本地内容审核（当 OpenAI API 不可用时的回退）
 function localModerateContent(content) {
   // 基于单词的简单检测
   const sensitiveTerms = {
