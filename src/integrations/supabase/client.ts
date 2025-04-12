@@ -19,26 +19,27 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       'Cache-Control': 'max-age=120', // Add caching headers
     },
   },
-  // Add fetch implementation with optimized settings
-  fetch: (...args) => {
-    const [url, options = {}] = args;
-    
-    // Set more aggressive timeout
-    const timeoutController = new AbortController();
-    const timeoutId = setTimeout(() => timeoutController.abort(), 15000); // 15 second timeout
-    
-    // Merge with any existing signal
-    const originalSignal = options?.signal;
-    const { signal, ...fetchOptions } = options;
-    
-    return fetch(url, {
-      ...fetchOptions,
-      signal: timeoutController.signal,
-      cache: 'default' // Enable browser caching when appropriate
-    })
-    .finally(() => clearTimeout(timeoutId));
-  }
+  // Note: Custom fetch implementation removed as it's not supported in this version
 });
+
+// Configure global fetch with better timeout and caching behavior
+// This will affect all fetch calls in the application, including those made by Supabase
+const originalFetch = window.fetch;
+window.fetch = function(input, init) {
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 15000); // 15 second timeout
+  
+  // Merge with any existing signal
+  const originalSignal = init?.signal;
+  const { signal, ...fetchOptions } = init || {};
+  
+  return originalFetch(input, {
+    ...fetchOptions,
+    signal: timeoutController.signal,
+    cache: init?.cache || 'default'
+  })
+  .finally(() => clearTimeout(timeoutId));
+};
 
 // Mock functions to simulate database operations without actual DB tables
 export const mockDB = {
