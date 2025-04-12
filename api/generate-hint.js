@@ -28,56 +28,48 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured in environment variables' });
     }
 
-    // For simple questions, return a generic hint to avoid unnecessary API calls
-    if (question.bloomLevel === "remember") {
-      if (question.type === "multiple_choice") {
-        return res.status(200).json({ hint: "Try eliminating options that are clearly incorrect first. Look for keywords in the question that match with specific options." });
-      } else {
-        const answer = String(question.correctAnswer);
-        return res.status(200).json({ hint: `The answer is a term related to ${question.question.split(" ").slice(-3).join(" ")}. It starts with "${answer.charAt(0)}".` });
-      }
-    }
+    // For any question, generate a simpler hint that doesn't reveal too much
+    let hint = "";
     
-    // For more complex questions, use DeepSeek API
-    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful tutor that provides hints for quiz questions without giving away the answer. Provide a concise hint (max 100 characters) that guides the student in the right direction."
-          },
-          {
-            role: "user",
-            content: `Generate a hint for this question: "${question.question}". ${question.type === "multiple_choice" ? "Options: " + JSON.stringify(question.options) : ""}`
-          }
-        ],
-        temperature: 0.4,
-        max_tokens: 100
-      })
-    });
-
-    if (!response.ok) {
-      return res.status(500).json({ error: "Failed to generate hint" });
+    // For multiple choice questions, provide a strategy hint instead of content hint
+    if (question.type === "multiple_choice") {
+      const hintOptions = [
+        "Look for keywords in the question that may point to a specific option.",
+        "Try to eliminate obviously incorrect options first.",
+        "Consider what you know about this topic and use process of elimination.",
+        "Think about related concepts that might help you determine the answer.",
+        "Review what you've learned about this topic recently.",
+        "Focus on the specific terminology used in the question.",
+        "Try to recall examples related to this concept."
+      ];
+      hint = hintOptions[Math.floor(Math.random() * hintOptions.length)];
+      return res.status(200).json({ hint });
+    } else {
+      // For fill-in-the-blank, provide very general hints
+      const answer = String(question.correctAnswer);
+      const firstLetter = answer.charAt(0);
+      
+      const hintOptions = [
+        `This term starts with the letter "${firstLetter}".`,
+        "Consider the key terminology related to this topic.",
+        "Think about the main concepts discussed in this section.",
+        "Remember the definitions you've studied about this topic."
+      ];
+      hint = hintOptions[Math.floor(Math.random() * hintOptions.length)];
+      return res.status(200).json({ hint });
     }
-
-    const data = await response.json();
-    const hint = data.choices[0].message.content.trim();
-    
-    return res.status(200).json({ hint });
   } catch (error) {
     console.error("Error generating hint:", error);
     
-    // Provide fallback hints if API call fails
+    // Provide fallback hints if any error occurs
     if (req.body.question.type === "multiple_choice") {
-      return res.status(200).json({ hint: "Consider the context of the question and try to eliminate options that don't fit." });
+      return res.status(200).json({ 
+        hint: "Consider all options carefully and eliminate those that don't fit." 
+      });
     } else {
-      return res.status(200).json({ hint: "Think about the key concepts related to this question and try to recall relevant terminology." });
+      return res.status(200).json({ 
+        hint: "Think about the key terminology related to this question." 
+      });
     }
   }
 }

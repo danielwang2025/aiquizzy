@@ -37,7 +37,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
       setAnimatedIn(true);
     }, 50 * index);
 
-    // Check if this question is already disputed
     setIsAlreadyDisputed(isQuestionDisputed(question.id));
 
     return () => clearTimeout(timer);
@@ -61,25 +60,59 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     }
   };
 
-  const toggleHint = async () => {
-    setShowHint(!showHint);
-    
-    // Generate hint if not already available
-    if (!hint && !showHint) {
-      // Use the basic hint for immediate feedback
-      setHint(getBasicHint(question));
-      
-      // Then try to get a better hint from the API
-      setIsLoadingHint(true);
+  useEffect(() => {
+    const preloadHint = async () => {
       try {
+        const basicHint = getBasicHint(question);
+        setHint(basicHint);
+        
         const apiHint = await generateHint(question);
-        setHint(apiHint);
+        if (apiHint) {
+          setHint(apiHint);
+        }
       } catch (error) {
-        console.error("Error fetching hint:", error);
-        // Keep the basic hint if API fails
-      } finally {
-        setIsLoadingHint(false);
+        console.error("Error pre-loading hint:", error);
       }
+    };
+
+    preloadHint();
+  }, [question]);
+
+  const toggleHint = () => {
+    setShowHint(!showHint);
+    setIsLoadingHint(false);
+  };
+
+  const formatFeedback = () => {
+    if (!showResult) return null;
+    
+    if (isCorrect) {
+      return (
+        <div>
+          <p className="font-medium mb-2 text-lg">Correct!</p>
+          <p className="text-base leading-relaxed">
+            {question.explanation || "Great job! You've selected the correct answer."}
+          </p>
+        </div>
+      );
+    } else {
+      let correctAnswerText = "";
+      
+      if (question.type === "multiple_choice" && question.options) {
+        correctAnswerText = "The correct option was one of the choices provided.";
+      } else {
+        const answer = String(question.correctAnswer);
+        correctAnswerText = `The correct answer is a term with ${answer.length} characters.`;
+      }
+      
+      return (
+        <div>
+          <p className="font-medium mb-2 text-lg">Incorrect</p>
+          <p className="text-base leading-relaxed">
+            {correctAnswerText} {question.explanation || "Review the related concepts to understand this better."}
+          </p>
+        </div>
+      );
     }
   };
 
@@ -136,7 +169,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             <Lightbulb className="h-5 w-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-amber-800">
-                <strong>Hint:</strong> {isLoadingHint ? "Loading hint..." : hint}
+                <strong>Hint:</strong> {hint}
               </p>
             </div>
           </div>
@@ -224,21 +257,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             )}
           >
             <div className="flex justify-between items-start">
-              <div>
-                <p className="font-medium mb-2 text-lg">
-                  {isCorrect ? "Correct!" : "Incorrect!"}
-                </p>
-                <p className="text-base leading-relaxed">
-                  {isCorrect 
-                    ? question.explanation 
-                    : `The correct answer is: ${
-                        question.type === "multiple_choice" && question.options
-                          ? question.options[question.correctAnswer as number]
-                          : question.correctAnswer
-                      }. ${question.explanation || ""}`
-                  }
-                </p>
-              </div>
+              {formatFeedback()}
               
               {!isAlreadyDisputed && onDisputeQuestion && (
                 <Button
@@ -264,7 +283,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Dispute Form Dialog */}
       {showResult && onDisputeQuestion && (
         <DisputeForm
           question={question}
