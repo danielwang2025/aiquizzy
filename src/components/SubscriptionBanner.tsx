@@ -8,10 +8,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubscriptionBannerProps {
   subscription: UserSubscription | null;
+  remainingQuestions?: number;
 }
 
 const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({ 
-  subscription
+  subscription,
+  remainingQuestions
 }) => {
   const isMobile = useIsMobile();
   
@@ -30,6 +32,11 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
             <h3 className={`font-medium ${isPremium ? 'text-amber-800' : 'text-blue-800'}`}>
               {isPremium ? 'Premium Plan' : 'Free Plan'}
             </h3>
+            {typeof remainingQuestions === 'number' && (
+              <p className={`text-sm ${isPremium ? 'text-amber-600' : 'text-blue-600'}`}>
+                {remainingQuestions} questions remaining
+              </p>
+            )}
           </div>
         </div>
         
