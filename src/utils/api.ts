@@ -44,7 +44,6 @@ export const checkApiKeys = async (): Promise<{
     const localKeys = {
       DEEPSEEK_API_KEY: localStorage.getItem("DEEPSEEK_API_KEY"),
       BREVO_API_KEY: localStorage.getItem("BREVO_API_KEY"),
-      OPENAI_API_KEY: localStorage.getItem("OPENAI_API_KEY"),
     };
     
     // 如果本地存储有密钥，直接返回
@@ -53,7 +52,6 @@ export const checkApiKeys = async (): Promise<{
     
     if (!localKeys.DEEPSEEK_API_KEY) missingKeys.push("DEEPSEEK_API_KEY");
     if (!localKeys.BREVO_API_KEY) missingKeys.push("BREVO_API_KEY");
-    if (!localKeys.OPENAI_API_KEY) optionalMissingKeys.push("OPENAI_API_KEY");
     
     // 如果本地有所有必需的密钥，就不需要检查Vercel环境变量
     if (missingKeys.length === 0) {
@@ -86,7 +84,7 @@ export const checkApiKeys = async (): Promise<{
   } catch (error) {
     return {
       missingKeys: ["DEEPSEEK_API_KEY", "BREVO_API_KEY"],
-      optionalMissingKeys: ["OPENAI_API_KEY"]
+      optionalMissingKeys: []
     };
   }
 };
@@ -298,25 +296,25 @@ export async function generateQuestions(
 // 优化的提示生成函数
 export async function generateHint(question: QuizQuestion): Promise<string> {
   try {
-    // 获取OpenAI API密钥
-    const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
+    // 获取DeepSeek API密钥
+    const DEEPSEEK_API_KEY = getApiKey("DEEPSEEK_API_KEY");
     
     // 如果没有API密钥，直接返回基本提示
-    if (!OPENAI_API_KEY) {
+    if (!DEEPSEEK_API_KEY) {
       return getBasicHint(question);
     }
     
     try {
       const response = await fetchWithTimeout(
-        "https://api.openai.com/v1/chat/completions", 
+        "https://api.deepseek.com/v1/chat/completions", 
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPENAI_API_KEY}`
+            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
           },
           body: JSON.stringify({
-            model: "gpt-3.5-turbo",
+            model: "deepseek-chat",
             messages: [
               {
                 role: "system",
@@ -335,13 +333,13 @@ export async function generateHint(question: QuizQuestion): Promise<string> {
       );
       
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
+        throw new Error(`DeepSeek API error: ${response.statusText}`);
       }
       
       const data = await response.json();
       return data.choices[0].message.content.trim();
     } catch (error) {
-      console.error("Error calling OpenAI API directly:", error);
+      console.error("Error calling DeepSeek API directly:", error);
       return getBasicHint(question);
     }
   } catch (error) {
@@ -360,131 +358,6 @@ export function getBasicHint(question: QuizQuestion): string {
   }
 }
 
-// 内容审核
-export const moderateContent = async (content: string): Promise<any> => {
-  try {
-    // 获取OpenAI API密钥
-    const OPENAI_API_KEY = getApiKey("OPENAI_API_KEY");
-    
-    // 如果没有API密钥，使用本地审核
-    if (!OPENAI_API_KEY) {
-      return localModerateContent(content);
-    }
-    
-    try {
-      const response = await fetchWithTimeout(
-        'https://api.openai.com/v1/moderations', 
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({ input: content })
-        },
-        5000 // 5秒超时
-      );
-
-      if (!response.ok) {
-        throw new Error(`OpenAI Moderation API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.results || !data.results[0]) {
-        throw new Error('Invalid response from OpenAI Moderation API');
-      }
-
-      const result = data.results[0];
-      
-      // 映射 OpenAI 类别到我们的简化类别
-      return {
-        flagged: result.flagged,
-        categories: {
-          sexual: result.categories.sexual || result.categories["sexual/minors"] || false,
-          hate: result.categories.hate || result.categories["hate/threatening"] || false,
-          harassment: result.categories.harassment || result.categories["harassment/threatening"] || false,
-          selfHarm: result.categories["self-harm"] || result.categories["self-harm/intent"] || 
-                    result.categories["self-harm/instructions"] || false,
-          violence: result.categories.violence || result.categories["violence/graphic"] || false,
-          illicit: result.categories.illicit || false
-        },
-        categoryScores: {
-          sexual: Math.max(result.category_scores.sexual || 0, result.category_scores["sexual/minors"] || 0),
-          hate: Math.max(result.category_scores.hate || 0, result.category_scores["hate/threatening"] || 0),
-          harassment: Math.max(result.category_scores.harassment || 0, result.category_scores["harassment/threatening"] || 0),
-          selfHarm: Math.max(
-            result.category_scores["self-harm"] || 0, 
-            result.category_scores["self-harm/intent"] || 0,
-            result.category_scores["self-harm/instructions"] || 0
-          ),
-          violence: Math.max(result.category_scores.violence || 0, result.category_scores["violence/graphic"] || 0),
-          illicit: result.category_scores.illicit || 0
-        }
-      };
-    } catch (error) {
-      console.error("Error calling OpenAI Moderation API:", error);
-      return localModerateContent(content);
-    }
-  } catch (error) {
-    console.error("Error with content moderation:", error);
-    return localModerateContent(content);
-  }
-};
-
-// 本地内容审核（不使用API）
-export const localModerateContent = (content: string): any => {
-  // 简单的基于词的检测
-  const sensitiveTerms = {
-    sexual: ["porn", "xxx", "sex", "nude"],
-    hate: ["hate", "racist", "nazi", "bigot"],
-    harassment: ["harass", "bully", "stalk"],
-    selfHarm: ["suicide", "kill myself", "self harm"],
-    violence: ["kill", "murder", "bomb", "shoot", "terrorist"],
-    illicit: ["drug", "cocaine", "heroin", "illegal"]
-  };
-  
-  const categories: Record<string, boolean> = {
-    sexual: false,
-    hate: false,
-    harassment: false,
-    selfHarm: false,
-    violence: false,
-    illicit: false
-  };
-  
-  const categoryScores: Record<string, number> = {
-    sexual: 0,
-    hate: 0,
-    harassment: 0,
-    selfHarm: 0,
-    violence: 0,
-    illicit: 0
-  };
-  
-  // 转为小写进行不区分大小写的匹配
-  const lowerContent = content.toLowerCase();
-  
-  // 检查每个类别
-  for (const [category, terms] of Object.entries(sensitiveTerms)) {
-    for (const term of terms) {
-      if (lowerContent.includes(term)) {
-        categories[category] = true;
-        categoryScores[category] += 0.7;
-      }
-    }
-  }
-  
-  // 判断内容是否被标记
-  const flagged = Object.values(categories).some(v => v);
-  
-  return {
-    flagged,
-    categories,
-    categoryScores
-  };
-};
-
 // 发送联系消息
 export async function sendContactMessage(
   name: string, 
@@ -497,14 +370,6 @@ export async function sendContactMessage(
     
     // 获取Brevo API密钥
     const BREVO_API_KEY = getApiKey("BREVO_API_KEY");
-    
-    // 内容审核
-    const moderationResult = await moderateContent(message);
-    if (moderationResult.flagged) {
-      toast.dismiss();
-      toast.error("您的消息包含不适当内容，无法发送。");
-      return false;
-    }
     
     let response;
     

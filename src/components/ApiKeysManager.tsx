@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Drawer,
@@ -20,14 +21,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface ApiKeys {
   DEEPSEEK_API_KEY: string;
   BREVO_API_KEY: string;
-  OPENAI_API_KEY: string;
 }
 
 const ApiKeysManager = () => {
   const [apiKeys, setApiKeys] = useState<ApiKeys>({
     DEEPSEEK_API_KEY: "",
     BREVO_API_KEY: "",
-    OPENAI_API_KEY: "",
   });
   
   const [isProduction, setIsProduction] = useState(false);
@@ -38,7 +37,6 @@ const ApiKeysManager = () => {
     const storedKeys: ApiKeys = {
       DEEPSEEK_API_KEY: localStorage.getItem("DEEPSEEK_API_KEY") || "",
       BREVO_API_KEY: localStorage.getItem("BREVO_API_KEY") || "",
-      OPENAI_API_KEY: localStorage.getItem("OPENAI_API_KEY") || "",
     };
     setApiKeys(storedKeys);
     
@@ -155,23 +153,6 @@ const ApiKeysManager = () => {
                       placeholder="Enter Brevo API Key"
                     />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Key className="mr-2 h-4 w-4" />
-                      <label htmlFor="OPENAI_API_KEY" className="text-sm font-medium">
-                        OpenAI API Key (for content moderation)
-                      </label>
-                    </div>
-                    <Input
-                      id="OPENAI_API_KEY"
-                      name="OPENAI_API_KEY"
-                      type="password"
-                      value={apiKeys.OPENAI_API_KEY}
-                      onChange={handleChange}
-                      placeholder="Enter OpenAI API Key"
-                    />
-                  </div>
                 </div>
                 
                 <Button onClick={handleSave} className="mt-6 w-full">
@@ -228,11 +209,6 @@ const ApiKeysManager = () => {
                     <ul className="list-disc list-inside text-sm text-gray-600">
                       <li>DEEPSEEK_API_KEY - for AI generation features</li>
                       <li>BREVO_API_KEY - for sending emails</li>
-                    </ul>
-                    
-                    <h3 className="text-sm font-medium mt-4 mb-2">Optional environment variables:</h3>
-                    <ul className="list-disc list-inside text-sm text-gray-600">
-                      <li>OPENAI_API_KEY - for enhanced content moderation</li>
                     </ul>
                   </div>
                 </div>
