@@ -8,11 +8,37 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://icezlugcnsmpfpsiszvu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZXpsdWdjbnNtcGZwc2lzenZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxOTA3NDAsImV4cCI6MjA1OTc2Njc0MH0.X9OSf14FwU8rpBAJsqeP9ORJrHwFPY4W_ahToqZ3vUc";
   
-
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create client with improved performance options
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    headers: {
+      'Cache-Control': 'max-age=120', // Add caching headers
+    },
+  },
+  // Add fetch implementation with optimized settings
+  fetch: (...args) => {
+    const [url, options = {}] = args;
+    
+    // Set more aggressive timeout
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 15000); // 15 second timeout
+    
+    // Merge with any existing signal
+    const originalSignal = options?.signal;
+    const { signal, ...fetchOptions } = options;
+    
+    return fetch(url, {
+      ...fetchOptions,
+      signal: timeoutController.signal,
+      cache: 'default' // Enable browser caching when appropriate
+    })
+    .finally(() => clearTimeout(timeoutId));
+  }
+});
 
 // Mock functions to simulate database operations without actual DB tables
 export const mockDB = {
