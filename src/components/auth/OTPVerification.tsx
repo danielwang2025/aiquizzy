@@ -106,6 +106,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             maxLength={6}
             value={otpValue}
             onChange={(value) => {
+              console.log("OTP value changed:", value);
               setOtpValue(value);
               setError(null);
             }}
@@ -115,7 +116,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
                   <InputOTPSlot 
                     key={index}
                     index={index}
-                    className="w-10 h-10 text-lg bg-background border-input"
+                    className="w-12 h-12 text-xl font-bold bg-background border-input"
                   />
                 ))}
               </InputOTPGroup>
