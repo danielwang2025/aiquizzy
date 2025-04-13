@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { verifyOTP, sendEmailOTP } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     e.preventDefault();
     
     if (!otpValue || otpValue.length !== 6) {
-      setError("Please enter the complete 6-digit verification code.");
+      setError("请输入完整的6位验证码。");
       return;
     }
     
@@ -46,10 +47,10 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     
     try {
       await verifyOTP(email, otpValue);
-      toast.success("Verification successful.");
+      toast.success("验证成功。");
       onSuccess();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Verification failed.";
+      const errorMessage = error instanceof Error ? error.message : "验证失败。";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -65,10 +66,10 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     
     try {
       await sendEmailOTP(email);
-      toast.success("Verification code resent.");
-      setResendCooldown(60); // Start 60-second cooldown
+      toast.success("验证码已重新发送。");
+      setResendCooldown(60); // 开始60秒冷却时间
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send verification code.";
+      const errorMessage = error instanceof Error ? error.message : "发送验证码失败。";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -85,11 +86,11 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
     >
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-          Verify Email
+          验证邮箱
         </h1>
         <p className="text-muted-foreground">
-          We have sent a verification code to <span className="font-medium">{email}</span>.<br />
-          Please enter the code to complete registration.
+          我们已发送验证码到 <span className="font-medium">{email}</span>。<br />
+          请输入验证码完成注册。
         </p>
       </div>
       
@@ -111,7 +112,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             render={({ slots }) => (
               <InputOTPGroup>
                 {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} index={index} {...slot} className="w-12 h-12" />
+                  <InputOTPSlot key={index} {...slot} index={index} />
                 ))}
               </InputOTPGroup>
             )}
@@ -127,12 +128,12 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             {isLoading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
-                Verifying...
+                验证中...
               </>
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" />
-                Verify
+                验证
               </>
             )}
           </Button>
@@ -145,14 +146,14 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             disabled={isLoading}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            返回
           </Button>
         </div>
       </form>
       
       <div className="text-center text-sm text-muted-foreground">
         <p>
-          Didn't receive the code?{" "}
+          没有收到验证码？{" "}
           <Button
             type="button"
             variant="link"
@@ -161,11 +162,11 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             disabled={resendCooldown > 0 || isLoading}
           >
             {resendCooldown > 0 ? (
-              <span>Resend in {resendCooldown} seconds</span>
+              <span>{resendCooldown} 秒后可重新发送</span>
             ) : (
               <>
                 <RefreshCcw className="mr-1 h-3 w-3 inline" />
-                Resend
+                重新发送
               </>
             )}
           </Button>
