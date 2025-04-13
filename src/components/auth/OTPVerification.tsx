@@ -112,7 +112,11 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
             render={({ slots }) => (
               <InputOTPGroup>
                 {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} index={index} />
+                  <InputOTPSlot 
+                    key={index}
+                    index={index}
+                    className="w-10 h-10 text-lg bg-background border-input"
+                  />
                 ))}
               </InputOTPGroup>
             )}

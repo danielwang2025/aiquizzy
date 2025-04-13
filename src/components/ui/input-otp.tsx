@@ -39,21 +39,20 @@ const InputOTPSlot = React.forwardRef<
   const slots = inputOTPContext?.slots || []
   const slot = index >= 0 && index < slots.length ? slots[index] : null
   const char = slot?.char || ""
-  const hasFakeCaret = slot?.hasFakeCaret || false
   const isActive = slot?.isActive || false
 
   return (
     <div
       ref={ref}
       className={cn(
-        "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all first:rounded-l-md first:border-l last:rounded-r-md",
+        "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all first:rounded-l-md first:border-l last:rounded-r-md text-foreground font-medium",
         isActive && "z-10 ring-2 ring-ring ring-offset-background",
         className
       )}
       {...props}
     >
       {char}
-      {hasFakeCaret && (
+      {slot?.hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
         </div>
