@@ -54,8 +54,6 @@ const InputOTPSlot = React.forwardRef<
     >
       {char ? (
         <span className="text-black text-lg font-semibold">{char}</span>  {/* Display the actual digit */}
-      ) : (
-        <span className="text-muted-foreground select-none">•</span>  {/* Fallback when no digit is entered */}
       )}
       
       {hasFakeCaret && (
