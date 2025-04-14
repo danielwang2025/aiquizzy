@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import QuizGenerator from "@/components/QuizGenerator";
@@ -31,37 +32,33 @@ const QuizCustomizer = () => {
         if (!isMounted) return;
         setIsAuth(authStatus);
         
-        if (!authStatus) {
-          toast.info("Please sign in to create quizzes", {
-            action: {
-              label: "Sign In",
-              onClick: handleLoginClick,
-            },
-          });
-          navigate('/');
-          return;
-        }
-        
-        try {
-          const user = await getCurrentUser();
-          if (!isMounted) return;
-          
-          if (user) {
-            const [userSubscription, remaining] = await Promise.all([
-              getUserSubscription(user.id),
-              getRemainingQuestions(user.id)
-            ]);
+        // If authenticated, load subscription data
+        if (authStatus) {
+          try {
+            const user = await getCurrentUser();
+            if (!isMounted) return;
             
+            if (user) {
+              const [userSubscription, remaining] = await Promise.all([
+                getUserSubscription(user.id),
+                getRemainingQuestions(user.id)
+              ]);
+              
+              if (isMounted) {
+                setSubscription(userSubscription);
+                setRemainingQuestions(remaining);
+              }
+            }
+          } catch (error) {
+            console.error("Error loading subscription data:", error);
             if (isMounted) {
-              setSubscription(userSubscription);
-              setRemainingQuestions(remaining);
+              setLoadingError("Failed to load subscription data. Please try refreshing the page.");
             }
           }
-        } catch (error) {
-          console.error("Error loading subscription data:", error);
-          if (isMounted) {
-            setLoadingError("Failed to load subscription data. Please try refreshing the page.");
-          }
+        } else {
+          // For non-authenticated users, set subscription to null
+          // The SubscriptionBanner component will show demo mode
+          setSubscription(null);
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
@@ -107,10 +104,6 @@ const QuizCustomizer = () => {
         </main>
       </div>
     );
-  }
-
-  if (isAuth === false) {
-    return null;
   }
 
   const containerVariants = {

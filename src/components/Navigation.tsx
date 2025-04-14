@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,29 +32,16 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
-  // Handle authenticated navigation
+  // Handle authenticated navigation - removed auth check for customize page
   const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
-    if (path === "/customize") {
-      e.preventDefault();
-      const auth = await isAuthenticated();
-      
-      if (!auth) {
-        toast.info("Please sign in to create quizzes", {
-          action: {
-            label: "Sign In",
-            onClick: () => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()
-          }
-        });
-      } else {
-        navigate(path);
-      }
-    }
+    // Allow all paths now - we've removed the auth check for the customize page
+    navigate(path);
   };
   
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/pricing", label: "Pricing", icon: <DollarSign className="h-5 w-5" /> },
-    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" />, requiresAuth: true },
+    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> }, // Removed requiresAuth flag
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
