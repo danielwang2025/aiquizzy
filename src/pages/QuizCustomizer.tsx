@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import QuizGenerator from "@/components/QuizGenerator";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, FileText, ArrowRight, Share2 } from "lucide-react";
+import { LockKeyhole, FileText, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
@@ -21,7 +21,6 @@ const QuizCustomizer = () => {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -82,25 +81,6 @@ const QuizCustomizer = () => {
 
   const handleLoginClick = () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
-  };
-
-  const handleShareQuiz = () => {
-    if (!generatedQuizId) {
-      toast.error("请先生成一个测验再分享");
-      return;
-    }
-    
-    // Generate a shareable link
-    const shareableLink = `${window.location.origin}/shared/${generatedQuizId}`;
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(shareableLink)
-      .then(() => {
-        toast.success("测验链接已复制！快分享给你的朋友吧。");
-      })
-      .catch(() => {
-        toast.error("无法复制链接");
-      });
   };
 
   if (loading) {
@@ -171,21 +151,6 @@ const QuizCustomizer = () => {
               <FileText className="h-4 w-4" />
               <span>Create and export quizzes to Word documents with Times New Roman formatting</span>
             </motion.div>
-            
-            {generatedQuizId && (
-              <motion.div
-                variants={itemVariants}
-                className="flex justify-center mb-6"
-              >
-                <Button 
-                  onClick={handleShareQuiz}
-                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Share2 className="h-4 w-4" />
-                  分享这个测验
-                </Button>
-              </motion.div>
-            )}
           </motion.div>
           
           <motion.div
@@ -200,10 +165,7 @@ const QuizCustomizer = () => {
               />
             </div>
             <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
-              <QuizGenerator 
-                initialTopic={topicFromUrl} 
-                onQuizGenerated={(quizId) => setGeneratedQuizId(quizId)}
-              />
+              <QuizGenerator initialTopic={topicFromUrl} />
             </div>
           </motion.div>
         </div>
