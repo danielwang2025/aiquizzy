@@ -1,12 +1,15 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Crown } from "lucide-react";
+import { Crown, Share2 } from "lucide-react";
 import { UserSubscription } from "@/types/subscription";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface SubscriptionBannerProps {
   subscription: UserSubscription | null;
   remainingQuestions?: number;
 }
+
 const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
   subscription,
   remainingQuestions
@@ -15,9 +18,25 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
 
   // If no subscription data is provided, show a demo mode banner
   if (!subscription) {
-    return;
+    return (
+      <div className="w-full mb-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/80 to-indigo-600/80 text-white shadow-md">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center">
+            <Crown className="h-5 w-5 mr-2" />
+            <span className="font-medium">AI Quizzy</span>
+          </div>
+          
+          <div className="text-sm flex items-center">
+            <span className="mr-2">Welcome! Enjoy unlimited access to AI Quizzy.</span>
+            <Share2 className="h-4 w-4 ml-1" />
+          </div>
+        </div>
+      </div>
+    );
   }
-  return <div className="w-full mb-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/80 to-indigo-600/80 text-white shadow-md">
+  
+  return (
+    <div className="w-full mb-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/80 to-indigo-600/80 text-white shadow-md">
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center">
           <Crown className="h-5 w-5 mr-2" />
@@ -25,9 +44,14 @@ const SubscriptionBanner: React.FC<SubscriptionBannerProps> = ({
         </div>
         
         <div className="text-sm">
-          {typeof remainingQuestions === 'number' ? <span>Welcome back! Enjoy unlimited access to AI Quizzy.</span> : <span>Welcome back! Enjoy unlimited access to AI Quizzy.</span>}
+          {typeof remainingQuestions === 'number' ? 
+            <span>Welcome back! Enjoy unlimited access to AI Quizzy.</span> : 
+            <span>Welcome back! Enjoy unlimited access to AI Quizzy.</span>
+          }
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default SubscriptionBanner;

@@ -1,22 +1,24 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { getQuizById } from "@/utils/databaseService";
 import QuizQuestionComponent from "@/components/QuizQuestion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { QuizQuestion } from "@/types/quiz";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Medal, Clock, Zap, BarChart, BookOpen, Check, AlertCircle, Share2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  ArrowLeft, ArrowRight, Medal, 
+  Clock, Share, User, Users, Trophy
+} from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import LeaderboardComponent from "@/components/LeaderboardComponent";
 import Footer from "@/components/Footer";
 
-const Practice = () => {
+const SharedQuiz = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -25,74 +27,19 @@ const Practice = () => {
   const [userAnswers, setUserAnswers] = useState<(string | number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [completionTime, setCompletionTime] = useState<number | null>(null);
+  const [submittingScore, setSubmittingScore] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
   
-  // Use a more reliable way to track component mounting state
   useEffect(() => {
     let isMounted = true;
     
     const fetchQuizData = async () => {
       try {
         if (!quizId) {
-          if (isMounted) navigate("/customize");
-          return;
-        }
-        
-        if (quizId === "demo") {
-          if (!isMounted) return;
-          
-          const demoQuiz = {
-            id: "demo",
-            title: "Demo Quiz",
-            questions: [
-              {
-                id: "demo-q1",
-                type: "multiple_choice",
-                question: "What is React primarily used for?",
-                options: ["Server-side scripting", "Building user interfaces", "Database management", "Network configuration"],
-                correctAnswer: 1,
-                explanation: "React is a JavaScript library for building user interfaces, particularly single-page applications.",
-                difficulty: "easy"
-              },
-              {
-                id: "demo-q2",
-                type: "multiple_choice",
-                question: "Which lifecycle method is called after a component is rendered for the first time?",
-                options: ["componentWillMount", "componentDidMount", "componentWillUpdate", "componentDidUpdate"],
-                correctAnswer: 1,
-                explanation: "componentDidMount is called once the component has been rendered to the DOM for the first time.",
-                difficulty: "medium"
-              },
-              {
-                id: "demo-q3",
-                type: "fill_in",
-                question: "In React, the function that is used to update state variables is called ________.",
-                correctAnswer: "setState",
-                explanation: "setState is the method used to update state in class components in React.",
-                difficulty: "easy"
-              },
-              {
-                id: "demo-q4",
-                type: "multiple_choice",
-                question: "What does JSX stand for?",
-                options: ["JavaScript XML", "Java Standard XML", "JavaScript Extension", "Java Syntax Extension"],
-                correctAnswer: 0,
-                explanation: "JSX stands for JavaScript XML. It allows us to write HTML in React.",
-                difficulty: "easy"
-              },
-              {
-                id: "demo-q5",
-                type: "fill_in",
-                question: "The React Hook used to perform side effects in function components is called ________.",
-                correctAnswer: "useEffect",
-                explanation: "useEffect is a Hook that lets you perform side effects in function components.",
-                difficulty: "medium"
-              }
-            ]
-          };
-          
-          setQuiz(demoQuiz);
-          setUserAnswers(Array(demoQuiz.questions.length).fill(null));
-          setLoading(false);
+          if (isMounted) navigate("/");
           return;
         }
         
@@ -100,8 +47,9 @@ const Practice = () => {
         if (quizData && isMounted) {
           setQuiz(quizData);
           setUserAnswers(Array(quizData.questions.length).fill(null));
+          setStartTime(Date.now());
         } else if (isMounted) {
-          setLoadingError("Quiz not found. Please try creating a new quiz.");
+          setLoadingError("Quiz not found. The link may be invalid or the quiz has been removed.");
           toast.error("Quiz not found");
         }
       } catch (error) {
@@ -133,6 +81,10 @@ const Practice = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
+      if (startTime) {
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        setCompletionTime(elapsedSeconds);
+      }
       setShowResults(true);
     }
   };
@@ -168,41 +120,62 @@ const Practice = () => {
     };
   };
   
-  const handleCreateNewQuiz = () => {
-    // Clear any cached data before navigating
-    navigate("/customize", { replace: true });
-  };
-  
   const handleRetryQuiz = () => {
     setCurrentQuestionIndex(0);
     setUserAnswers(Array(quiz.questions.length).fill(null));
     setShowResults(false);
+    setStartTime(Date.now());
+    setCompletionTime(null);
+    setScoreSubmitted(false);
   };
   
-  const handleShareQuiz = () => {
-    if (quiz.id === "demo") {
-      toast.error("Cannot share demo quiz. Please create your own quiz to share.");
+  const handleSubmitScore = async () => {
+    if (!userName.trim()) {
+      toast.error("Please enter your name");
       return;
     }
     
-    // Generate a shareable link
-    const shareableLink = `${window.location.origin}/shared/${quiz.id}`;
-    
-    // Copy to clipboard
-    navigator.clipboard.writeText(shareableLink)
-      .then(() => {
-        toast.success("Quiz link copied! Share it with your friends.");
-      })
-      .catch(() => {
-        toast.error("Failed to copy link to clipboard");
+    try {
+      setSubmittingScore(true);
+      const results = calculateResults();
+      
+      const { data, error } = await supabase.functions.invoke("leaderboard", {
+        method: "POST",
+        body: {
+          quiz_id: quizId,
+          user_name: userName,
+          score: results.score,
+          completion_time: completionTime
+        }
       });
+      
+      if (error) {
+        console.error("Error submitting score:", error);
+        toast.error("Failed to submit your score. Please try again.");
+        return;
+      }
+      
+      setScoreSubmitted(true);
+      toast.success("Your score has been added to the leaderboard!");
+    } catch (error) {
+      console.error("Error submitting score:", error);
+      toast.error("Failed to submit your score. Please try again.");
+    } finally {
+      setSubmittingScore(false);
+    }
+  };
+  
+  const handleCopyShareLink = () => {
+    const shareUrl = window.location.href;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => toast.success("Share link copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy link"));
   };
   
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
-        <Navigation />
-        <div className="flex-grow flex items-center justify-center">
+        <div className="flex-grow flex items-center justify-center mt-16">
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-muted-foreground">Loading quiz...</p>
@@ -216,29 +189,14 @@ const Practice = () => {
   if (loadingError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
-        <Navigation />
-        <div className="flex-grow flex items-center justify-center">
+        <div className="flex-grow flex items-center justify-center mt-16">
           <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <svg className="h-12 w-12 text-red-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
             <h1 className="text-xl font-bold mb-2">Error Loading Quiz</h1>
             <p className="text-muted-foreground mb-6">{loadingError}</p>
-            <Button onClick={handleCreateNewQuiz}>Create New Quiz</Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-  
-  if (!quiz) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
-        <Navigation />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
-            <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
-            <p className="mb-6">The quiz you're looking for doesn't exist or has been removed.</p>
-            <Button onClick={handleCreateNewQuiz}>Create a New Quiz</Button>
+            <Button onClick={() => navigate("/")}>Back to Home</Button>
           </div>
         </div>
         <Footer />
@@ -250,19 +208,22 @@ const Practice = () => {
   const progressPercentage = quiz ? (currentQuestionIndex / (quiz.questions.length - 1)) * 100 : 0;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
-      <Navigation />
-      
-      <main className="py-8 px-4 flex-grow">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-center">
-              {quiz?.title}
-            </h1>
-            <Button variant="outline" onClick={handleShareQuiz} className="ml-2">
-              <Share2 className="h-4 w-4 mr-2" /> Share Quiz
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">      
+      <main className="py-8 px-4 flex-grow mt-16">
+        <div className="max-w-4xl mx-auto">
+          <Card className="mb-6 bg-blue-500 text-white">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-xl font-bold">Shared Quiz</h1>
+                  <p className="text-sm text-blue-100">{quiz?.title}</p>
+                </div>
+                <Button variant="secondary" size="sm" onClick={handleCopyShareLink}>
+                  <Share className="h-4 w-4 mr-1" /> Share
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           
           {!showResults ? (
             <div>
@@ -363,34 +324,56 @@ const Practice = () => {
                         ></div>
                       </div>
                       
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <h4 className="font-semibold text-blue-800 mb-2">AI Learning Recommendations</h4>
-                        <p className="text-blue-700 text-sm">
-                          {results.score >= 80 
-                            ? "Excellent performance! Consider trying more challenging questions to push yourself further." 
-                            : results.score >= 60 
-                            ? "Good attempt! Focus on reviewing the questions you got wrong to deepen your understanding." 
-                            : "Keep practicing! We recommend revisiting the concepts and trying the quiz again."}
-                        </p>
+                      {completionTime && (
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="font-medium flex items-center">
+                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                            Completion Time
+                          </span>
+                          <span className="font-semibold">
+                            {Math.floor(completionTime / 60)}m {completionTime % 60}s
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!scoreSubmitted ? (
+                      <div className="mb-8 p-4 border border-dashed border-primary/50 rounded-lg bg-primary/5">
+                        <h3 className="font-semibold text-center mb-4 flex items-center justify-center">
+                          <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
+                          Join the Leaderboard
+                        </h3>
+                        
+                        <div className="space-y-4">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex-1">
+                              <Input 
+                                placeholder="Enter your name" 
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                className="w-full"
+                                maxLength={30}
+                              />
+                            </div>
+                            <Button 
+                              onClick={handleSubmitScore}
+                              disabled={submittingScore || !userName.trim()} 
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Users className="h-4 w-4 mr-1" />
+                              Submit Score
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div className="mt-4 p-4 bg-indigo-50 rounded-lg">
-                        <h4 className="font-semibold text-indigo-800 mb-2 flex items-center">
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share this Quiz
-                        </h4>
-                        <p className="text-indigo-700 text-sm mb-3">
-                          Challenge your friends to beat your score! Share this quiz with others.
-                        </p>
-                        <Button 
-                          onClick={handleShareQuiz} 
-                          variant="secondary" 
-                          className="w-full"
-                        >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Copy Shareable Link
-                        </Button>
-                      </div>
+                    ) : null}
+                    
+                    <div className="mb-8">
+                      <h3 className="font-semibold mb-4 flex items-center">
+                        <Award className="h-5 w-5 mr-2 text-yellow-500" />
+                        Leaderboard
+                      </h3>
+                      <LeaderboardComponent quizId={quizId as string} />
                     </div>
                     
                     <div className="space-y-3">
@@ -445,15 +428,14 @@ const Practice = () => {
                     </div>
                     
                     <div className="flex justify-between mt-8">
-                      <Button variant="outline" onClick={() => navigate("/customize")}>
-                        Create New Quiz
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate("/")}
+                      >
+                        Back to Home
                       </Button>
                       <Button 
-                        onClick={() => {
-                          setCurrentQuestionIndex(0);
-                          setUserAnswers(Array(quiz.questions.length).fill(null));
-                          setShowResults(false);
-                        }}
+                        onClick={handleRetryQuiz}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
                         Retry Quiz
@@ -472,4 +454,4 @@ const Practice = () => {
   );
 };
 
-export default Practice;
+export default SharedQuiz;

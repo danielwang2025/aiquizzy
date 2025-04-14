@@ -33,6 +33,33 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_quiz_attempts: {
+        Row: {
+          completion_time: number | null
+          created_at: string
+          id: string
+          quiz_id: string
+          score: number
+          user_name: string
+        }
+        Insert: {
+          completion_time?: number | null
+          created_at?: string
+          id?: string
+          quiz_id: string
+          score: number
+          user_name: string
+        }
+        Update: {
+          completion_time?: number | null
+          created_at?: string
+          id?: string
+          quiz_id?: string
+          score?: number
+          user_name?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string

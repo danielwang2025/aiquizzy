@@ -17,6 +17,7 @@ import Privacy from "./pages/Privacy";
 import ApiKeyNotice from "./components/ApiKeyNotice";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Layout from "./components/Layout";
+import SharedQuiz from "./pages/SharedQuiz";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ const App = () => {
             <Route path="/" element={<Layout><Index /></Layout>} />
             <Route path="/customize" element={<Layout><QuizCustomizer /></Layout>} />
             <Route path="/practice/:quizId?" element={<Layout><Practice /></Layout>} />
+            <Route path="/shared/:quizId" element={<Layout><SharedQuiz /></Layout>} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
