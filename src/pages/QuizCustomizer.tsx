@@ -11,6 +11,7 @@ import { getUserSubscription, getRemainingQuestions } from "@/utils/subscription
 import { UserSubscription } from "@/types/subscription";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { getQuizById } from "@/utils/databaseService";
+import QuizGenerator from "@/components/QuizGenerator";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
