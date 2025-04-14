@@ -35,12 +35,17 @@ serve(async (req) => {
       }
     )
 
-    const url = new URL(req.url);
-    const path = url.pathname.split('/').pop();
-
     // Handle GET request to fetch leaderboard
-    if (req.method === 'GET' && path) {
-      const quiz_id = path;
+    if (req.method === 'GET') {
+      // Get the quiz ID from the request body
+      const { quiz_id } = await req.json();
+      
+      if (!quiz_id) {
+        return new Response(JSON.stringify({ error: 'Missing quiz_id parameter' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
+      }
 
       const { data, error } = await supabaseClient
         .from('shared_quiz_attempts')

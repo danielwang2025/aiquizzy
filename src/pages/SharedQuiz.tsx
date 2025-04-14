@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, ArrowRight, Medal, 
-  Clock, Share, User, Users, Trophy
+  Clock, Share, User, Users, Trophy, Award
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import LeaderboardComponent from "@/components/LeaderboardComponent";

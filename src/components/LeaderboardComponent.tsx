@@ -28,9 +28,10 @@ const LeaderboardComponent: React.FC<LeaderboardComponentProps> = ({ quizId }) =
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
+        // Fix: Change the way we pass the quizId parameter to the function
         const { data, error } = await supabase.functions.invoke("leaderboard", {
           method: "GET",
-          path: quizId
+          body: { quiz_id: quizId }
         });
 
         if (error) {
