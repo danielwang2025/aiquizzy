@@ -55,7 +55,7 @@ const InputOTPSlot = React.forwardRef<
       {char ? (
         <span className="text-foreground font-semibold text-2xl">{char}</span>
       ) : (
-        <span className="text-muted-foreground/50 select-none font-light text-lg">●</span>
+        <span className="text-transparent select-none">&nbsp;</span>
       )}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
