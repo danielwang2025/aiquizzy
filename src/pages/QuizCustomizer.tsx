@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import QuizGenerator from "@/components/QuizGenerator";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, FileText, ArrowRight } from "lucide-react";
+import { LockKeyhole, FileText, ArrowRight, Share2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { getUserSubscription, getRemainingQuestions } from "@/utils/subscriptionService";
 import { UserSubscription } from "@/types/subscription";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { getQuizById } from "@/utils/databaseService";
 
 const QuizCustomizer = () => {
   const navigate = useNavigate();
@@ -21,6 +21,8 @@ const QuizCustomizer = () => {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [quizId, setQuizId] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -81,6 +83,35 @@ const QuizCustomizer = () => {
 
   const handleLoginClick = () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
+  };
+
+  const handleQuizGenerated = (generatedQuizId: string) => {
+    setQuizId(generatedQuizId);
+  };
+
+  const handleShareQuiz = () => {
+    if (!quizId) {
+      toast.error("No quiz available to share. Please generate a quiz first.");
+      return;
+    }
+    
+    // Generate a shareable link
+    const shareableLink = `${window.location.origin}/shared/${quizId}`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(shareableLink)
+      .then(() => {
+        setCopySuccess(true);
+        toast.success("Quiz link copied! Ready to share.");
+        
+        // Reset copy success status after 2 seconds
+        setTimeout(() => {
+          setCopySuccess(false);
+        }, 2000);
+      })
+      .catch(() => {
+        toast.error("Failed to copy link to clipboard");
+      });
   };
 
   if (loading) {
@@ -151,6 +182,35 @@ const QuizCustomizer = () => {
               <FileText className="h-4 w-4" />
               <span>Create and export quizzes to Word documents with Times New Roman formatting</span>
             </motion.div>
+
+            {quizId && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8"
+              >
+                <Button 
+                  onClick={handleShareQuiz} 
+                  className={`${copySuccess ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white flex items-center gap-2 mx-auto`}
+                >
+                  {copySuccess ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-4 w-4" />
+                      Share Quiz
+                    </>
+                  )}
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Share this quiz with your friends or colleagues
+                </p>
+              </motion.div>
+            )}
           </motion.div>
           
           <motion.div
@@ -165,7 +225,7 @@ const QuizCustomizer = () => {
               />
             </div>
             <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
-              <QuizGenerator initialTopic={topicFromUrl} />
+              <QuizGenerator initialTopic={topicFromUrl} onQuizGenerated={handleQuizGenerated} />
             </div>
           </motion.div>
         </div>
