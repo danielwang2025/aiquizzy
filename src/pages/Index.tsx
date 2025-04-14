@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import Footer from "@/components/Footer";
 import { getSubscriptionPlans } from "@/utils/subscriptionService";
 
 const Index = () => {
@@ -553,8 +551,6 @@ const Index = () => {
           </section>
         )}
       </main>
-      
-      <Footer />
     </div>
   );
 };

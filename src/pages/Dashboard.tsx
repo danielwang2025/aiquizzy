@@ -47,7 +47,6 @@ import {
   AreaChart as AreaChartIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 10 },
@@ -239,8 +238,6 @@ const Dashboard: React.FC = () => {
             </motion.div>
           </div>
         </main>
-        
-        <Footer />
       </div>
     );
   }
@@ -641,7 +638,6 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
