@@ -53,7 +53,7 @@ const InputOTPSlot = React.forwardRef<
       {...props}
     >
       {char ? (
-        <span className="text-foreground font-semibold text-2xl">{char}</span>
+        <span className="text-black dark:text-white font-medium text-2xl">{char}</span>
       ) : (
         <span className="text-transparent select-none">&nbsp;</span>
       )}
