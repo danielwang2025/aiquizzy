@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { verifyOTP, sendEmailOTP } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
@@ -99,23 +100,36 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onSuccess, onB
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex justify-center">
-          <InputOTP
-            maxLength={6}
-            value={otpValue}
-            onChange={(value) => {
-              setOtpValue(value);
-              setError(null);
-            }}
-            render={({ slots }) => (
-              <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} index={index} {...slot} className="w-12 h-12" />
-                ))}
-              </InputOTPGroup>
-            )}
-          />
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="flex flex-col items-center space-y-3">
+          <label className="text-sm font-medium text-muted-foreground">
+            Enter 6-digit code
+          </label>
+          <div className="flex justify-center">
+            <InputOTP
+              maxLength={6}
+              value={otpValue}
+              onChange={(value) => {
+                setOtpValue(value);
+                setError(null);
+              }}
+              render={({ slots }) => (
+                <InputOTPGroup className="gap-3">
+                  {slots.map((slot, index) => (
+                    <InputOTPSlot 
+                      key={index} 
+                      index={index} 
+                      {...slot}
+                      className="w-12 h-12 md:w-14 md:h-14 bg-background border-2 shadow-sm"
+                    />
+                  ))}
+                </InputOTPGroup>
+              )}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Type or paste your verification code
+          </p>
         </div>
         
         <div className="flex flex-col gap-3">
