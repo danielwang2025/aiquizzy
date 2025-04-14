@@ -1,55 +1,78 @@
-import React, { useState } from 'react';
 
-interface InputOtpProps {
-  onSubmit?: (otp: string) => void;
-}
+import * as React from "react"
+import { OTPInput, OTPInputContext } from "input-otp"
+import { Dot } from "lucide-react"
 
-const InputOtp: React.FC<InputOtpProps> = ({ onSubmit }) => {
-  const [otp, setOtp] = useState(''); // 用于存储用户输入的验证码
+import { cn } from "@/lib/utils"
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setOtp(event.target.value); // 更新状态
-  };
+const InputOTP = React.forwardRef<
+  React.ElementRef<typeof OTPInput>,
+  React.ComponentPropsWithoutRef<typeof OTPInput>
+>(({ className, containerClassName, ...props }, ref) => (
+  <OTPInput
+    ref={ref}
+    containerClassName={cn(
+      "flex items-center gap-2 has-[:disabled]:opacity-50",
+      containerClassName
+    )}
+    className={cn("disabled:cursor-not-allowed", className)}
+    {...props}
+  />
+))
+InputOTP.displayName = "InputOTP"
 
-  const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit(otp); // 提交验证码
-    }
-  };
+const InputOTPGroup = React.forwardRef<
+  React.ElementRef<"div">,
+  React.ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("flex items-center", className)} {...props} />
+))
+InputOTPGroup.displayName = "InputOTPGroup"
+
+const InputOTPSlot = React.forwardRef<
+  React.ElementRef<"div">,
+  React.ComponentPropsWithoutRef<"div"> & { index: number }
+>(({ index, className, ...props }, ref) => {
+  const inputOTPContext = React.useContext(OTPInputContext)
+  
+  // Safely access slots with additional checks
+  const slots = inputOTPContext?.slots || []
+  const slot = index >= 0 && index < slots.length ? slots[index] : null
+  const char = slot?.char || ""
+  const hasFakeCaret = slot?.hasFakeCaret || false
+  const isActive = slot?.isActive || false
 
   return (
-    <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h3>请输入验证码</h3>
-      <input
-        type="text"
-        value={otp}
-        onChange={handleChange}
-        placeholder="请输入验证码"
-        style={{
-          padding: '10px',
-          fontSize: '16px',
-          textAlign: 'center',
-          width: '200px',
-          marginBottom: '10px',
-        }}
-      />
-      <div>
-        <button
-          onClick={handleSubmit}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            cursor: 'pointer',
-          }}
-        >
-          提交
-        </button>
-      </div>
-      <div>
-        <p>您输入的验证码是：<strong>{otp}</strong></p> {/* 实时显示输入的验证码 */}
-      </div>
+    <div
+      ref={ref}
+      className={cn(
+        "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all first:rounded-l-md first:border-l last:rounded-r-md",
+        isActive && "z-10 ring-2 ring-ring ring-offset-background",
+        className
+      )}
+      {...props}
+    >
+      {{char || (
+    <span className="text-muted-foreground select-none">•</span> // 提示未输入
+  )}
+      {hasFakeCaret && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
+        </div>
+      )}
     </div>
-  );
-};
+  )
+})
+InputOTPSlot.displayName = "InputOTPSlot"
 
-export default InputOtp;
+const InputOTPSeparator = React.forwardRef<
+  React.ElementRef<"div">,
+  React.ComponentPropsWithoutRef<"div">
+>(({ ...props }, ref) => (
+  <div ref={ref} role="separator" {...props}>
+    <Dot />
+  </div>
+))
+InputOTPSeparator.displayName = "InputOTPSeparator"
+
+export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator }
