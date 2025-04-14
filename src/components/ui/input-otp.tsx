@@ -1,35 +1,55 @@
-const InputOTPSlot = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div"> & { index: number }
->(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext)
-  const slots = inputOTPContext?.slots || []
-  const slot = index >= 0 && index < slots.length ? slots[index] : null
-  const char = slot?.char || ""
-  const hasFakeCaret = slot?.hasFakeCaret || false
-  const isActive = slot?.isActive || false
+import React, { useState } from 'react';
+
+interface InputOtpProps {
+  onSubmit?: (otp: string) => void;
+}
+
+const InputOtp: React.FC<InputOtpProps> = ({ onSubmit }) => {
+  const [otp, setOtp] = useState(''); // 用于存储用户输入的验证码
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setOtp(event.target.value); // 更新状态
+  };
+
+  const handleSubmit = () => {
+    if (onSubmit) {
+      onSubmit(otp); // 提交验证码
+    }
+  };
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "relative flex h-14 w-14 items-center justify-center border-2 border-input rounded-md text-xl transition-all",
-        isActive && "z-10 ring-2 ring-primary/70 border-primary",
-        className
-      )}
-      {...props}
-    >
-      <span 
-        className="text-black font-medium text-2xl">
-        {char || "\u00A0"}
-      </span>
-
-
-      {hasFakeCaret && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-6 w-[2px] animate-caret-blink bg-primary duration-700" />
-        </div>
-      )}
+    <div style={{ textAlign: 'center', padding: '20px' }}>
+      <h3>请输入验证码</h3>
+      <input
+        type="text"
+        value={otp}
+        onChange={handleChange}
+        placeholder="请输入验证码"
+        style={{
+          padding: '10px',
+          fontSize: '16px',
+          textAlign: 'center',
+          width: '200px',
+          marginBottom: '10px',
+        }}
+      />
+      <div>
+        <button
+          onClick={handleSubmit}
+          style={{
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+          }}
+        >
+          提交
+        </button>
+      </div>
+      <div>
+        <p>您输入的验证码是：<strong>{otp}</strong></p> {/* 实时显示输入的验证码 */}
+      </div>
     </div>
-  )
-})
+  );
+};
+
+export default InputOtp;
