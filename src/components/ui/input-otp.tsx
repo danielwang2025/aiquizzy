@@ -3,12 +3,11 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentPropsWithoutRef<"div"> & { index: number }
 >(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
-  
   const slots = inputOTPContext?.slots || []
   const slot = index >= 0 && index < slots.length ? slots[index] : null
-  const char = slot?.char ?? ""
-  const hasFakeCaret = slot?.hasFakeCaret ?? false
-  const isActive = slot?.isActive ?? false
+  const char = slot?.char || ""
+  const hasFakeCaret = slot?.hasFakeCaret || false
+  const isActive = slot?.isActive || false
 
   return (
     <div
@@ -22,11 +21,10 @@ const InputOTPSlot = React.forwardRef<
     >
       <span
         className={cn(
-          "text-foreground font-semibold text-2xl transition-opacity duration-200",
-          char ? "opacity-100" : "opacity-0"
+          char ? "text-black dark:text-white font-medium text-2xl" : "text-transparent select-none"
         )}
       >
-        {char || "0"} {/* 默认填充避免空状态塌陷 */}
+        {char || "\u00A0"}
       </span>
 
       {hasFakeCaret && (
@@ -37,4 +35,3 @@ const InputOTPSlot = React.forwardRef<
     </div>
   )
 })
-InputOTPSlot.displayName = "InputOTPSlot"
