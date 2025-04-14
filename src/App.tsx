@@ -12,7 +12,6 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ReviewHub from "./pages/ReviewHub";
 import Contact from "./pages/Contact";
-import Pricing from "./pages/Pricing";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ApiKeyNotice from "./components/ApiKeyNotice";
@@ -56,7 +55,6 @@ const App = () => {
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
-            <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
             <Route path="/terms" element={<Layout><Terms /></Layout>} />
             <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
             <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />

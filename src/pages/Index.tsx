@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuizExampleCard } from "@/components/QuizExampleCard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { getSubscriptionPlans } from "@/utils/subscriptionService";
 
 const Index = () => {
   const history = loadQuizHistory();
   const hasHistory = history.attempts.length > 0;
   const [topic, setTopic] = useState("");
-  const plans = getSubscriptionPlans();
   
   // Animation variants
   const fadeIn = {
@@ -125,75 +124,6 @@ const Index = () => {
           {/* Decorative circles */}
           <div className="absolute top-1/4 -left-20 w-72 h-72 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
           <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-indigo-600 rounded-full blur-3xl opacity-20"></div>
-        </section>
-        
-        {/* Pricing Section - 新拟态设计 */}
-        <section className="container mx-auto px-4 space-section">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <Badge className="mb-4 py-1.5 px-6 bg-blue-50 text-blue-700 border-blue-100">Pricing</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">Simple, Transparent Pricing</h2>
-            <p className="text-muted-foreground text-lg">
-              Choose the right plan for your learning journey
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan) => (
-              <motion.div 
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: plan.tier === 'premium' ? 0.2 : 0 }}
-                whileHover={{ y: -5 }}
-              >
-                <Card className={`overflow-hidden neo-card h-full flex flex-col justify-between ${plan.tier === 'premium' ? 'gradient-border shadow-lg' : ''}`}>
-                  {plan.tier === 'premium' && (
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2 text-sm font-medium">
-                      RECOMMENDED
-                    </div>
-                  )}
-                  <div className="flex flex-col flex-grow">
-                    <div className="space-y-4 p-6">
-                      <h3 className="text-2xl font-semibold">{plan.name}</h3>
-                      <p className="text-muted-foreground">{plan.description}</p>
-                      <div className="mt-4 pt-2">
-                        <span className="text-4xl font-bold">${plan.price}</span>
-                        {plan.price > 0 && <span className="text-muted-foreground ml-1">/month</span>}
-                      </div>
-                    </div>
-                    <div className="p-6 pt-0 flex-grow">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                            <span className="text-muted-foreground">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="p-6 pt-4">
-                      <Link to="/pricing">
-                        <Button 
-                          className={`w-full h-11 ${plan.tier === 'premium' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700' : ''} btn-3d`}
-                          variant={plan.tier === 'premium' ? 'default' : 'outline'}
-                        >
-                          {plan.price === 0 ? 'Get Started' : 'Subscribe Now'}
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-8">
-            <Link to="/pricing" className="text-primary hover:underline inline-flex items-center">
-              View detailed pricing information
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-          </div>
         </section>
         
         {/* AI Question Examples - 带有卡片动画效果 */}
@@ -318,7 +248,7 @@ const Index = () => {
             
             <div className="mt-12 text-center relative z-10">
               <div className="inline-block gradient-bg-primary rounded-full px-8 py-4 text-white font-medium">
-                Try up to 5 practice questions for free, no registration required!
+                Try unlimited practice questions for free!
               </div>
             </div>
           </div>

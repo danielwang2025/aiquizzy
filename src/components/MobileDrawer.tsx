@@ -18,7 +18,6 @@ import {
   BarChart, 
   Book, 
   Mail, 
-  DollarSign,
   User,
   X
 } from 'lucide-react';
@@ -33,7 +32,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
 
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
-    { path: "/pricing", label: "Pricing", icon: <DollarSign className="h-5 w-5" /> },
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },

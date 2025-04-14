@@ -52,7 +52,6 @@ const Footer = () => {
                 { to: "/", label: "Home" },
                 { to: "/customize", label: "Create Quiz" },
                 { to: "/review", label: "Review Hub" },
-                { to: "/pricing", label: "Pricing" },
               ],
             },
             {
