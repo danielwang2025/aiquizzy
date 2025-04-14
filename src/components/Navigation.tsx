@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -32,16 +33,15 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
-  // Handle authenticated navigation - removed auth check for customize page
+  // Handle authenticated navigation - we don't need to check auth anymore
   const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
-    // Allow all paths now - we've removed the auth check for the customize page
     navigate(path);
   };
   
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/pricing", label: "Pricing", icon: <DollarSign className="h-5 w-5" /> },
-    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> }, // Removed requiresAuth flag
+    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
@@ -82,7 +82,6 @@ const Navigation: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={(e) => item.requiresAuth && handleAuthRequiredClick(e, item.path)}
                   className={cn(
                     "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
                     location.pathname === item.path
@@ -121,7 +120,6 @@ const Navigation: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={(e) => item.requiresAuth && handleAuthRequiredClick(e, item.path)}
                 className={cn(
                   "flex flex-col items-center justify-center py-2",
                   location.pathname === item.path

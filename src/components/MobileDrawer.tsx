@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -64,7 +65,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
                 key={item.path}
                 to={item.path}
                 onClick={(e) => {
-                  item.requiresAuth && handleAuthRequiredClick(e, item.path);
                   setOpen(false);
                 }}
                 className={cn(
