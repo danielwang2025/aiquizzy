@@ -19,13 +19,11 @@ const InputOTPSlot = React.forwardRef<
       )}
       {...props}
     >
-      <span
-        className={cn(
-          char ? "text-black dark:text-white font-medium text-2xl" : "text-transparent select-none"
-        )}
-      >
+      <span 
+        className="text-black font-medium text-2xl">
         {char || "\u00A0"}
       </span>
+
 
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
