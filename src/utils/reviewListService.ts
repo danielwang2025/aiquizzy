@@ -1,28 +1,19 @@
 
 import { QuizQuestion } from "@/types/quiz";
-import { loadQuizHistory, saveQuizHistory } from './historyCore';
 
-// Add a question to the review list
+// All functions are disabled to prevent local storage operations
+
 export const addToReviewList = (question: QuizQuestion): void => {
-  const history = loadQuizHistory();
-  // Check if question is already in review list
-  const exists = history.reviewList.some(q => q.id === question.id);
-  if (!exists) {
-    history.reviewList = [question, ...history.reviewList];
-    saveQuizHistory(history);
-  }
+  // Functionality disabled
+  console.log("Review list functionality is disabled");
 };
 
-// Remove a question from the review list
 export const removeFromReviewList = (questionId: string): void => {
-  const history = loadQuizHistory();
-  history.reviewList = history.reviewList.filter(q => q.id !== questionId);
-  saveQuizHistory(history);
+  // Functionality disabled
+  console.log("Review list functionality is disabled");
 };
 
-// Clear review list
 export const clearReviewList = (): void => {
-  const history = loadQuizHistory();
-  history.reviewList = [];
-  saveQuizHistory(history);
+  // Functionality disabled
+  console.log("Review list functionality is disabled");
 };

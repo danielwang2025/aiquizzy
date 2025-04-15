@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
@@ -226,7 +225,7 @@ const QuizCustomizer = () => {
               />
             </div>
             <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
-              <QuizGenerator initialTopic={topicFromUrl} onQuizGenerated={handleQuizGenerated} />
+              <QuizGenerator initialTopic={topicFromUrl} onGenerationComplete={handleQuizGenerated} />
             </div>
           </motion.div>
         </div>

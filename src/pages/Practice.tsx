@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -26,7 +25,6 @@ const Practice = () => {
   const [showResults, setShowResults] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   
-  // Use a more reliable way to track component mounting state
   useEffect(() => {
     let isMounted = true;
     
@@ -169,7 +167,6 @@ const Practice = () => {
   };
   
   const handleCreateNewQuiz = () => {
-    // Clear any cached data before navigating
     navigate("/customize", { replace: true });
   };
   
@@ -185,10 +182,8 @@ const Practice = () => {
       return;
     }
     
-    // Generate a shareable link
     const shareableLink = `${window.location.origin}/shared/${quiz.id}`;
     
-    // Copy to clipboard
     navigator.clipboard.writeText(shareableLink)
       .then(() => {
         toast.success("Quiz link copied! Share it with your friends.");
