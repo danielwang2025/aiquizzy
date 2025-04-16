@@ -18,6 +18,7 @@ import ApiKeyNotice from "./components/ApiKeyNotice";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Layout from "./components/Layout";
 import SharedQuiz from "./pages/SharedQuiz";
+import ProblemSolver from "./pages/ProblemSolver";
 import { useEffect } from "react";
 
 // Hidden features flag - only UI elements are hidden, routes remain accessible
@@ -64,6 +65,7 @@ const App = () => {
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
+            <Route path="/problem-solver" element={<Layout><ProblemSolver /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
             <Route path="/terms" element={<Layout><Terms /></Layout>} />
             <Route path="/privacy" element={<Layout><Privacy /></Layout>} />

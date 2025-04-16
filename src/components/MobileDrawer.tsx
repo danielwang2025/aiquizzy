@@ -18,7 +18,8 @@ import {
   Book, 
   Mail, 
   User,
-  X
+  X,
+  WandSparkles
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -37,6 +38,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
+    { path: "/problem-solver", label: "Problem Solver", icon: <WandSparkles className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
