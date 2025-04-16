@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { Share2, CheckCircle } from "lucide-react";
+import { Share2, CheckCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";

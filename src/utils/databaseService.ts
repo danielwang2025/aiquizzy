@@ -23,3 +23,29 @@ export const getQuizAttemptsByQuizId = (quizId: string) => {
   const attempts = getQuizAttemptsFromDatabase();
   return attempts.filter((attempt: any) => attempt.quizId === quizId);
 };
+
+// Save quiz to localStorage - this function was missing
+export const saveQuizToDatabase = (questions: QuizQuestion[], title: string): string => {
+  // Generate a unique ID for the quiz
+  const quizId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  
+  // Create the quiz object
+  const quiz = {
+    id: quizId,
+    title,
+    questions,
+    createdAt: new Date().toISOString(),
+  };
+  
+  // Get existing quizzes
+  const quizzesJson = localStorage.getItem(DB_QUIZZES_KEY);
+  const quizzes = quizzesJson ? JSON.parse(quizzesJson) : [];
+  
+  // Add the new quiz
+  quizzes.push(quiz);
+  
+  // Save back to localStorage
+  localStorage.setItem(DB_QUIZZES_KEY, JSON.stringify(quizzes));
+  
+  return quizId;
+};
