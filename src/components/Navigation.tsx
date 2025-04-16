@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Settings, Book, BarChart, User, PlusCircle, Mail } from "lucide-react";
+import { Home, Book, User, PlusCircle, Mail } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,7 +44,6 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
-    { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },

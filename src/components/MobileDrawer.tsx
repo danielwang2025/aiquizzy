@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -15,7 +14,6 @@ import {
   Menu, 
   Home, 
   PlusCircle, 
-  BarChart, 
   Book, 
   Mail, 
   User,
@@ -36,7 +34,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
-    { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },

@@ -3,12 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import QuizCustomizer from "./pages/QuizCustomizer";
 import Practice from "./pages/Practice";
-import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ReviewHub from "./pages/ReviewHub";
 import Contact from "./pages/Contact";
@@ -45,7 +44,7 @@ const App = () => {
     
     // Add a comment to the console to indicate hidden features
     if (HIDE_FEATURES) {
-      console.info("Note: Review and Dashboard features are hidden in the UI but their code remains in the application.");
+      console.info("Note: Dashboard and Review features are completely disabled in this version.");
     }
   }, []);
 
@@ -61,7 +60,8 @@ const App = () => {
             <Route path="/customize" element={<Layout><QuizCustomizer /></Layout>} />
             <Route path="/practice/:quizId?" element={<Layout><Practice /></Layout>} />
             <Route path="/shared/:quizId" element={<Layout><SharedQuiz /></Layout>} />
-            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+            {/* Redirect dashboard to home */}
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
