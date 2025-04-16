@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { loadQuizHistory, saveQuizAttempt, addToReviewList, removeFromReviewList, clearReviewList, clearAllHistory } from "@/utils/historyService";
-import { saveQuizToDatabase } from "@/utils/databaseService";
 import QuizHistory from "./QuizHistory";
 import ReviewList from "./ReviewList";
 import DisputedQuestions from "./DisputedQuestions";
@@ -22,9 +21,12 @@ import { exportToDocx } from "@/utils/documentExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Download, FileText, BookOpen, Lightbulb, Pencil, BookCheck, FileCheck, FilePlus } from "lucide-react";
+
 interface QuizGeneratorProps {
   initialTopic?: string;
+  onQuizGenerated?: (quizId: string) => void;
 }
+
 type QuizAction = {
   type: "SET_LOADING";
 } | {
@@ -51,6 +53,7 @@ type QuizAction = {
   type: "REMOVE_QUESTION";
   payload: string;
 };
+
 const initialState: QuizState = {
   questions: [],
   currentQuestion: 0,
@@ -59,6 +62,7 @@ const initialState: QuizState = {
   status: "idle",
   error: null
 };
+
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case "SET_LOADING":
@@ -139,8 +143,10 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
       return state;
   }
 }
+
 const QuizGenerator: React.FC<QuizGeneratorProps> = ({
-  initialTopic = ""
+  initialTopic = "",
+  onQuizGenerated
 }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState(initialTopic);
@@ -158,6 +164,8 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
   const [includeAnswers, setIncludeAnswers] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
   const [demoLimitReached, setDemoLimitReached] = useState(false);
+  const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
+
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
     if (!isAuth) {
@@ -177,17 +185,20 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       }
     }
   }, [isAuth]);
+
   useEffect(() => {
     if (objectives) {
       setDocumentTitle(objectives.length > 50 ? objectives.substring(0, 50) + "..." : objectives);
     }
   }, [objectives]);
+
   const handleGenerate = async () => {
     const combinedObjectives = objectives.trim();
     if (!combinedObjectives) {
       toast.error("Please enter learning objectives");
       return;
     }
+    
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : {
@@ -212,26 +223,35 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         setDemoLimitReached(true);
       }
     }
+
     dispatch({
       type: "SET_LOADING"
     });
+
     try {
       toast.loading("The AI is generating practice questions, which may take a little time...", {
         duration: 30000
       });
+      
       const questions = await generateQuestions(objectives, {
         bloomLevel,
         count: questionCount,
         questionTypes
       });
+      
       if (questions && questions.length > 0) {
         dispatch({
           type: "SET_QUESTIONS",
           payload: questions
         });
-        const quizTitle = objectives.length > 50 ? objectives.substring(0, 50) + "..." : objectives;
-        const quizId = saveQuizToDatabase(questions, quizTitle);
-        console.log("Quiz saved to database with ID:", quizId);
+        
+        const quizId = crypto.randomUUID();
+        setGeneratedQuizId(quizId);
+        
+        if (onQuizGenerated) {
+          onQuizGenerated(quizId);
+        }
+        
         toast.dismiss();
         toast.success("Quiz generated successfully!");
       } else {
@@ -247,6 +267,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       });
     }
   };
+
   const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
     setQuestionTypes(prev => {
       if (prev.includes(type) && prev.length > 1) {
@@ -257,6 +278,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       return prev;
     });
   };
+
   const handleAnswer = (index: number, answer: string | number) => {
     dispatch({
       type: "SET_ANSWER",
@@ -266,6 +288,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       }
     });
   };
+
   const handleComplete = () => {
     const {
       questions,
@@ -322,6 +345,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     saveQuizAttempt(attempt);
     setQuizHistory(loadQuizHistory());
   };
+
   const handleDisputeQuestion = (questionId: string) => {
     dispatch({
       type: "REMOVE_QUESTION",
@@ -329,6 +353,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     });
     setQuizHistory(loadQuizHistory());
   };
+
   const handleAddToReviewList = () => {
     if (selectedIncorrectQuestions.length === 0) {
       toast.error("No questions selected to add to review list");
@@ -343,9 +368,11 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     setQuizHistory(loadQuizHistory());
     setSelectedIncorrectQuestions([]);
   };
+
   const toggleSelectQuestion = (id: string) => {
     setSelectedIncorrectQuestions(prev => prev.includes(id) ? prev.filter(qId => qId !== id) : [...prev, id]);
   };
+
   const selectAllIncorrectQuestions = () => {
     const incorrectIds = state.questions.filter((_, index) => {
       const userAnswer = state.answers[index];
@@ -354,19 +381,23 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     }).map(q => q.id);
     setSelectedIncorrectQuestions(incorrectIds);
   };
+
   const deselectAllIncorrectQuestions = () => {
     setSelectedIncorrectQuestions([]);
   };
+
   const handleViewAttempt = (attempt: QuizAttempt) => {
     dispatch({
       type: "LOAD_ATTEMPT",
       payload: attempt
     });
   };
+
   const handleRemoveFromReviewList = (id: string) => {
     removeFromReviewList(id);
     setQuizHistory(loadQuizHistory());
   };
+
   const handleClearReviewList = () => {
     clearReviewList();
     setQuizHistory({
@@ -375,6 +406,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       disputedQuestions: []
     });
   };
+
   const handleClearHistory = () => {
     clearAllHistory();
     setQuizHistory({
@@ -383,14 +415,19 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       disputedQuestions: []
     });
   };
+
   const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
     if (questions.length === 0) {
       toast.error("No questions to practice");
       return;
     }
-    const quizId = saveQuizToDatabase(questions, "Review List Practice");
-    navigate(`/practice/${quizId}`);
+    if (generatedQuizId) {
+      navigate(`/practice/${generatedQuizId}`);
+    } else {
+      toast.error("No quiz ID available. Please generate a quiz first.");
+    }
   };
+
   const handleReset = () => {
     dispatch({
       type: "RESET_QUIZ"
@@ -398,9 +435,11 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     setObjectives("");
     setSelectedIncorrectQuestions([]);
   };
+
   const handleTryAgain = () => {
     handleGenerate();
   };
+
   const handleExportToDocument = async () => {
     try {
       if (!state.questions || state.questions.length === 0) {
@@ -418,9 +457,11 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       toast.error("Failed to export document. Please try again.");
     }
   };
+
   const handleUpdateHistory = () => {
     setQuizHistory(loadQuizHistory());
   };
+
   const getBloomLevelIcon = (level: string) => {
     switch (level) {
       case 'remember':
@@ -439,6 +480,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         return <Lightbulb className="h-4 w-4 mr-2" />;
     }
   };
+
   const getBloomLevelDescription = (level: string) => {
     switch (level) {
       case 'remember':
@@ -457,7 +499,9 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         return "";
     }
   };
-  return <div className="max-w-3xl mx-auto p-6">
+
+  return (
+    <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Quiz Generator</h2>
         
@@ -784,6 +828,8 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
               </div>
             </motion.div>}
         </div>}
-    </div>;
+    </div>
+  );
 };
+
 export default QuizGenerator;

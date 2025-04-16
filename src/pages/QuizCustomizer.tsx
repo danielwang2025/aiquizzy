@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { LockKeyhole, FileText, ArrowRight, Share2, CheckCircle } from "lucide-react";
+import { Share2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { getUserSubscription, getRemainingQuestions } from "@/utils/subscriptionService";
 import { UserSubscription } from "@/types/subscription";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { getQuizById } from "@/utils/databaseService";
 import QuizGenerator from "@/components/QuizGenerator";
 
 const QuizCustomizer = () => {
@@ -77,10 +76,6 @@ const QuizCustomizer = () => {
       isMounted = false;
     };
   }, [navigate]);
-
-  const handleLoginClick = () => {
-    document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click();
-  };
 
   const handleQuizGenerated = (generatedQuizId: string) => {
     setQuizId(generatedQuizId);
