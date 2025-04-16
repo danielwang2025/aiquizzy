@@ -22,12 +22,9 @@ import { exportToDocx } from "@/utils/documentExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Download, FileText, BookOpen, Lightbulb, Pencil, BookCheck, FileCheck, FilePlus } from "lucide-react";
-
 interface QuizGeneratorProps {
   initialTopic?: string;
-  onQuizGenerated?: (quizId: string) => void;
 }
-
 type QuizAction = {
   type: "SET_LOADING";
 } | {
@@ -54,7 +51,6 @@ type QuizAction = {
   type: "REMOVE_QUESTION";
   payload: string;
 };
-
 const initialState: QuizState = {
   questions: [],
   currentQuestion: 0,
@@ -63,7 +59,6 @@ const initialState: QuizState = {
   status: "idle",
   error: null
 };
-
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case "SET_LOADING":
@@ -144,10 +139,8 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
       return state;
   }
 }
-
 const QuizGenerator: React.FC<QuizGeneratorProps> = ({
-  initialTopic = "",
-  onQuizGenerated
+  initialTopic = ""
 }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState(initialTopic);
@@ -165,7 +158,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
   const [includeAnswers, setIncludeAnswers] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
   const [demoLimitReached, setDemoLimitReached] = useState(false);
-
   useEffect(() => {
     setQuizHistory(loadQuizHistory());
     if (!isAuth) {
@@ -185,20 +177,17 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       }
     }
   }, [isAuth]);
-
   useEffect(() => {
     if (objectives) {
       setDocumentTitle(objectives.length > 50 ? objectives.substring(0, 50) + "..." : objectives);
     }
   }, [objectives]);
-
   const handleGenerate = async () => {
     const combinedObjectives = objectives.trim();
     if (!combinedObjectives) {
       toast.error("Please enter learning objectives");
       return;
     }
-    
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : {
@@ -223,7 +212,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         setDemoLimitReached(true);
       }
     }
-    
     dispatch({
       type: "SET_LOADING"
     });
@@ -244,9 +232,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         const quizTitle = objectives.length > 50 ? objectives.substring(0, 50) + "..." : objectives;
         const quizId = saveQuizToDatabase(questions, quizTitle);
         console.log("Quiz saved to database with ID:", quizId);
-        if (onQuizGenerated && quizId) {
-          onQuizGenerated(quizId);
-        }
         toast.dismiss();
         toast.success("Quiz generated successfully!");
       } else {
@@ -262,234 +247,543 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       });
     }
   };
-
-  return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-4">Generate Quiz</h2>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="objectives" className="block mb-2 font-medium">Learning Objectives or Content</Label>
-            <textarea
-              id="objectives"
-              className="w-full h-32 p-3 border rounded-md"
-              placeholder="Enter your learning objectives, content you want to learn, or paste text from your notes..."
-              value={objectives}
-              onChange={(e) => setObjectives(e.target.value)}
-            ></textarea>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="block mb-2 font-medium">Question Type</Label>
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="multipleChoice" 
-                  checked={questionTypes.includes("multiple_choice")}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setQuestionTypes(prev => [...prev, "multiple_choice"]);
-                    } else if (questionTypes.length > 1) {
-                      setQuestionTypes(prev => prev.filter(type => type !== "multiple_choice"));
-                    }
-                  }}
-                />
-                <Label htmlFor="multipleChoice">Multiple Choice</Label>
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Checkbox 
-                  id="fillIn" 
-                  checked={questionTypes.includes("fill_in")}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setQuestionTypes(prev => [...prev, "fill_in"]);
-                    } else if (questionTypes.length > 1) {
-                      setQuestionTypes(prev => prev.filter(type => type !== "fill_in"));
-                    }
-                  }}
-                />
-                <Label htmlFor="fillIn">Fill in the Blank</Label>
-              </div>
-            </div>
-
-            <div>
-              <Label className="block mb-2 font-medium">Question Difficulty</Label>
-              <Select value={bloomLevel} onValueChange={(value: any) => setBloomLevel(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="remember">Remember (Easy)</SelectItem>
-                  <SelectItem value="understand">Understand (Basic)</SelectItem>
-                  <SelectItem value="apply">Apply (Medium)</SelectItem>
-                  <SelectItem value="analyze">Analyze (Challenging)</SelectItem>
-                  <SelectItem value="evaluate">Evaluate (Advanced)</SelectItem>
-                  <SelectItem value="create">Create (Expert)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="block mb-2 font-medium">Number of Questions: {questionCount}</Label>
-              <Slider
-                value={[questionCount]}
-                min={2}
-                max={20}
-                step={1}
-                onValueChange={(value) => setQuestionCount(value[0])}
-                className="py-4"
-              />
-            </div>
-          </div>
-
-          <Button 
-            onClick={handleGenerate} 
-            disabled={state.status === "loading" || demoLimitReached}
-            className="mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          >
-            {state.status === "loading" ? (
-              <>
-                <LoadingSpinner size="sm" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Lightbulb className="w-4 h-4 mr-2" />
-                Generate Practice Quiz
-              </>
-            )}
-          </Button>
-          
-          {demoLimitReached && (
-            <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-              <p className="text-yellow-800 dark:text-yellow-200 flex items-center">
-                <LockKeyhole className="inline-block mr-2 h-5 w-5" />
-                You've reached the demo limit. Please sign in to continue.
-              </p>
-              <Button 
-                variant="outline" 
-                className="mt-2 text-sm border-yellow-300 hover:bg-yellow-100 dark:border-yellow-700 dark:hover:bg-yellow-900/40"
-                onClick={handleLoginClick}
-              >
-                Sign In
-              </Button>
-            </div>
-          )}
-
-          {state.error && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-red-700 dark:text-red-200">{state.error}</p>
-            </div>
-          )}
-        </div>
+  const handleQuestionTypeChange = (type: "multiple_choice" | "fill_in") => {
+    setQuestionTypes(prev => {
+      if (prev.includes(type) && prev.length > 1) {
+        return prev.filter(t => t !== type);
+      } else if (!prev.includes(type)) {
+        return [...prev, type];
+      }
+      return prev;
+    });
+  };
+  const handleAnswer = (index: number, answer: string | number) => {
+    dispatch({
+      type: "SET_ANSWER",
+      payload: {
+        index,
+        answer
+      }
+    });
+  };
+  const handleComplete = () => {
+    const {
+      questions,
+      answers
+    } = state;
+    if (answers.some(answer => answer === null)) {
+      toast.error("Please answer all questions before submitting");
+      return;
+    }
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let incorrectQuestionIds: string[] = [];
+    questions.forEach((question, index) => {
+      const userAnswer = answers[index];
+      const isCorrect = question.type === "fill_in" ? String(userAnswer).toLowerCase().trim() === String(question.correctAnswer).toLowerCase().trim() : userAnswer === question.correctAnswer;
+      if (isCorrect) {
+        correctAnswers++;
+      } else {
+        incorrectAnswers++;
+        incorrectQuestionIds.push(question.id);
+      }
+    });
+    const score = Math.round(correctAnswers / questions.length * 100);
+    let feedback = "";
+    if (score >= 90) {
+      feedback = "Excellent! You've mastered these learning objectives.";
+    } else if (score >= 70) {
+      feedback = "Good job! You have a solid understanding of the material.";
+    } else if (score >= 50) {
+      feedback = "You're on the right track, but there's room for improvement.";
+    } else {
+      feedback = "You might want to review the material again to strengthen your understanding.";
+    }
+    const result: QuizResult = {
+      totalQuestions: questions.length,
+      correctAnswers,
+      incorrectAnswers,
+      score,
+      feedback
+    };
+    dispatch({
+      type: "COMPLETE_QUIZ",
+      payload: result
+    });
+    setSelectedIncorrectQuestions(incorrectQuestionIds);
+    const attempt: QuizAttempt = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      objectives,
+      questions,
+      userAnswers: answers,
+      result
+    };
+    saveQuizAttempt(attempt);
+    setQuizHistory(loadQuizHistory());
+  };
+  const handleDisputeQuestion = (questionId: string) => {
+    dispatch({
+      type: "REMOVE_QUESTION",
+      payload: questionId
+    });
+    setQuizHistory(loadQuizHistory());
+  };
+  const handleAddToReviewList = () => {
+    if (selectedIncorrectQuestions.length === 0) {
+      toast.error("No questions selected to add to review list");
+      return;
+    }
+    state.questions.forEach(question => {
+      if (selectedIncorrectQuestions.includes(question.id)) {
+        addToReviewList(question);
+      }
+    });
+    toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
+    setQuizHistory(loadQuizHistory());
+    setSelectedIncorrectQuestions([]);
+  };
+  const toggleSelectQuestion = (id: string) => {
+    setSelectedIncorrectQuestions(prev => prev.includes(id) ? prev.filter(qId => qId !== id) : [...prev, id]);
+  };
+  const selectAllIncorrectQuestions = () => {
+    const incorrectIds = state.questions.filter((_, index) => {
+      const userAnswer = state.answers[index];
+      const correctAnswer = state.questions[index].correctAnswer;
+      return state.questions[index].type === "fill_in" ? String(userAnswer).toLowerCase().trim() !== String(correctAnswer).toLowerCase().trim() : userAnswer !== correctAnswer;
+    }).map(q => q.id);
+    setSelectedIncorrectQuestions(incorrectIds);
+  };
+  const deselectAllIncorrectQuestions = () => {
+    setSelectedIncorrectQuestions([]);
+  };
+  const handleViewAttempt = (attempt: QuizAttempt) => {
+    dispatch({
+      type: "LOAD_ATTEMPT",
+      payload: attempt
+    });
+  };
+  const handleRemoveFromReviewList = (id: string) => {
+    removeFromReviewList(id);
+    setQuizHistory(loadQuizHistory());
+  };
+  const handleClearReviewList = () => {
+    clearReviewList();
+    setQuizHistory({
+      attempts: [],
+      reviewList: [],
+      disputedQuestions: []
+    });
+  };
+  const handleClearHistory = () => {
+    clearAllHistory();
+    setQuizHistory({
+      attempts: [],
+      reviewList: [],
+      disputedQuestions: []
+    });
+  };
+  const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
+    if (questions.length === 0) {
+      toast.error("No questions to practice");
+      return;
+    }
+    const quizId = saveQuizToDatabase(questions, "Review List Practice");
+    navigate(`/practice/${quizId}`);
+  };
+  const handleReset = () => {
+    dispatch({
+      type: "RESET_QUIZ"
+    });
+    setObjectives("");
+    setSelectedIncorrectQuestions([]);
+  };
+  const handleTryAgain = () => {
+    handleGenerate();
+  };
+  const handleExportToDocument = async () => {
+    try {
+      if (!state.questions || state.questions.length === 0) {
+        toast.error("No quiz questions to export");
+        return;
+      }
+      toast.loading("Exporting document...");
+      const title = documentTitle || objectives || "Quiz";
+      await exportToDocx(state.questions, title, includeAnswers);
+      toast.dismiss();
+      toast.success("Quiz exported to Word document");
+    } catch (error) {
+      console.error("Error exporting document:", error);
+      toast.dismiss();
+      toast.error("Failed to export document. Please try again.");
+    }
+  };
+  const handleUpdateHistory = () => {
+    setQuizHistory(loadQuizHistory());
+  };
+  const getBloomLevelIcon = (level: string) => {
+    switch (level) {
+      case 'remember':
+        return <BookOpen className="h-4 w-4 mr-2" />;
+      case 'understand':
+        return <Lightbulb className="h-4 w-4 mr-2" />;
+      case 'apply':
+        return <Pencil className="h-4 w-4 mr-2" />;
+      case 'analyze':
+        return <BookCheck className="h-4 w-4 mr-2" />;
+      case 'evaluate':
+        return <FileCheck className="h-4 w-4 mr-2" />;
+      case 'create':
+        return <FilePlus className="h-4 w-4 mr-2" />;
+      default:
+        return <Lightbulb className="h-4 w-4 mr-2" />;
+    }
+  };
+  const getBloomLevelDescription = (level: string) => {
+    switch (level) {
+      case 'remember':
+        return "Remember - Recalling facts, terms, and basic concepts";
+      case 'understand':
+        return "Understand - Explaining ideas or concepts";
+      case 'apply':
+        return "Apply - Using information in new situations";
+      case 'analyze':
+        return "Analyze - Distinguishing relationships between different parts";
+      case 'evaluate':
+        return "Evaluate - Making judgments and decisions";
+      case 'create':
+        return "Create - Producing new ideas or products";
+      default:
+        return "";
+    }
+  };
+  return <div className="max-w-3xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Quiz Generator</h2>
+        
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">History & Review</Button>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+            <Tabs defaultValue="history" className="mt-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="history">Quiz History</TabsTrigger>
+                <TabsTrigger value="review">Review List</TabsTrigger>
+                <TabsTrigger value="disputed">Disputed</TabsTrigger>
+              </TabsList>
+              <TabsContent value="history" className="mt-4">
+                <QuizHistory attempts={quizHistory.attempts} onViewAttempt={handleViewAttempt} onClearHistory={handleClearHistory} />
+              </TabsContent>
+              <TabsContent value="review" className="mt-4">
+                <ReviewList questions={quizHistory.reviewList} onRemoveQuestion={handleRemoveFromReviewList} onClearAll={handleClearReviewList} onPracticeQuestions={handlePracticeReviewQuestions} />
+              </TabsContent>
+              <TabsContent value="disputed" className="mt-4">
+                <DisputedQuestions questions={quizHistory.disputedQuestions} onUpdate={handleUpdateHistory} />
+              </TabsContent>
+            </Tabs>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {state.status === "completed" && state.result && (
-        <div className="my-8">
-          <h3 className="text-xl font-bold mb-4">Quiz Results</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="text-muted-foreground text-sm">Total Questions</div>
-              <div className="text-2xl font-bold">{state.result.totalQuestions}</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="text-muted-foreground text-sm">Correct Answers</div>
-              <div className="text-2xl font-bold text-green-600">{state.result.correctAnswers}</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="text-muted-foreground text-sm">Incorrect Answers</div>
-              <div className="text-2xl font-bold text-red-600">{state.result.incorrectAnswers}</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="text-muted-foreground text-sm">Score</div>
-              <div className="text-2xl font-bold">{state.result.score}%</div>
-            </div>
-          </div>
-
+      {state.status === "idle" && <motion.div initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} transition={{
+      duration: 0.5
+    }} className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border">
           <div className="mb-6">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Export to Document
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Export Quiz</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div>
-                    <Label htmlFor="docTitle">Document Title</Label>
-                    <input
-                      id="docTitle"
-                      className="w-full p-2 mt-1 border rounded"
-                      value={documentTitle}
-                      onChange={(e) => setDocumentTitle(e.target.value)}
-                    />
+            <label htmlFor="objectives" className="block text-sm font-medium mb-2">Learning Content
+        </label>
+            <textarea id="objectives" className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm" placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')" value={objectives} onChange={e => setObjectives(e.target.value)} />
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Bloom's Taxonomy Level
+              </label>
+              <Select value={bloomLevel} onValueChange={value => setBloomLevel(value as "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select cognitive level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="remember" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('remember')}
+                      <span>Remember</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="understand" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('understand')}
+                      <span>Understand</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="apply" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('apply')}
+                      <span>Apply</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="analyze" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('analyze')}
+                      <span>Analyze</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="evaluate" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('evaluate')}
+                      <span>Evaluate</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="create" className="flex items-center">
+                    <div className="flex items-center">
+                      {getBloomLevelIcon('create')}
+                      <span>Create</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="mt-2 text-sm text-muted-foreground">
+                {getBloomLevelDescription(bloomLevel)}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Question Types
+                </label>
+                <div className="flex space-x-4">
+                  <div className="flex items-center">
+                    <Checkbox id="multiple-choice" checked={questionTypes.includes("multiple_choice")} onCheckedChange={() => handleQuestionTypeChange("multiple_choice")} />
+                    <label htmlFor="multiple-choice" className="ml-2 text-sm">
+                      Multiple Choice
+                    </label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="includeAnswers"
-                      checked={includeAnswers}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked === 'boolean') {
-                          setIncludeAnswers(checked);
-                        }
-                      }}
-                    />
-                    <Label htmlFor="includeAnswers">Include Answers</Label>
+                  <div className="flex items-center">
+                    <Checkbox id="fill-in" checked={questionTypes.includes("fill_in")} onCheckedChange={() => handleQuestionTypeChange("fill_in")} />
+                    <label htmlFor="fill-in" className="ml-2 text-sm">
+                      Fill in the Blank
+                    </label>
                   </div>
                 </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button
-                    onClick={() => {
-                      exportToDocx(
-                        documentTitle || "Quiz",
-                        state.questions,
-                        state.answers,
-                        includeAnswers
-                      );
-                    }}
-                  >
-                    Download
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">
+                    Number of Questions: {questionCount}
+                  </label>
+                </div>
+                <Slider min={3} max={20} step={1} value={[questionCount]} onValueChange={value => setQuestionCount(value[0])} className="my-4" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>3</span>
+                  <span>10</span>
+                  <span>20</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {demoLimitReached && !isAuth ? <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-amber-800 font-medium">You've reached the demo limit (5 quizzes).</p>
+              <p className="text-sm text-amber-700 mb-4">Sign in to create unlimited quizzes and track your progress.</p>
+              <Button onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()} className="w-full">
+                Sign In to Continue
+              </Button>
+            </div> : <button className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" onClick={handleGenerate}>
+              Generate Quiz
+            </button>}
+          
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Enter specific learning objectives to generate customized questions tailored to your learning needs.
+          </p>
+        </motion.div>}
+
+      {state.status === "loading" && <div className="min-h-[300px] flex flex-col items-center justify-center">
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
+          <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
+        </div>}
+
+      {(state.status === "active" || state.status === "completed") && <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">{objectives}</h2>
+            <div className="flex gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Export
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Export Quiz to Document</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="document-title">Document Title</Label>
+                      <input id="document-title" value={documentTitle} onChange={e => setDocumentTitle(e.target.value)} className="w-full p-2 border rounded" placeholder="Quiz Title" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-answers" checked={includeAnswers} onCheckedChange={checked => setIncludeAnswers(!!checked)} />
+                      <Label htmlFor="include-answers">Include answers and explanations</Label>
+                    </div>
+                    <div className="pt-2 text-sm text-muted-foreground">
+                      Document will use Times New Roman font for professional formatting.
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Button onClick={handleExportToDocument} className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Export to Word
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              <button className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors" onClick={handleReset}>
+                New Quiz
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            {state.questions.map((question, index) => (
-              <QuizQuestionComponent
-                key={question.id}
-                question={question}
-                questionNumber={index + 1}
-                userAnswer={state.answers[index]}
-                showAnswer={true}
-                onAnswerChange={(answer) => {
-                  dispatch({
-                    type: "SET_ANSWER",
-                    payload: { index, answer }
-                  });
-                }}
-              />
-            ))}
+          <div className="mb-8">
+            {state.questions.map((question, index) => {
+          const isIncorrect = state.status === "completed" && state.answers[index] !== question.correctAnswer;
+          return <div key={question.id} className="mb-6">
+                  <QuizQuestionComponent question={question} userAnswer={state.answers[index]} onAnswer={answer => handleAnswer(index, answer)} showResult={state.status === "completed"} index={index} onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined} />
+                  
+                  {state.status === "completed" && isIncorrect && <div className="mt-2 ml-11 flex items-center space-x-2">
+                      <Checkbox id={`add-to-review-${question.id}`} checked={selectedIncorrectQuestions.includes(question.id)} onCheckedChange={() => toggleSelectQuestion(question.id)} />
+                      <label htmlFor={`add-to-review-${question.id}`} className="text-sm text-muted-foreground cursor-pointer">
+                        Add to review list
+                      </label>
+                    </div>}
+                </div>;
+        })}
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button variant="outline" onClick={() => dispatch({ type: "RESET_QUIZ" })}>
-              <FilePlus className="mr-2 h-4 w-4" />
-              New Quiz
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+          {state.status === "active" && <button className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" onClick={handleComplete}>
+              Check Answers
+            </button>}
+
+          {state.status === "completed" && state.result && <motion.div initial={{
+        opacity: 0,
+        scale: 0.95
+      }} animate={{
+        opacity: 1,
+        scale: 1
+      }} transition={{
+        duration: 0.3
+      }} className="rounded-xl p-6 border border-border bg-white shadow-sm">
+              <h3 className="text-xl font-semibold mb-2">Quiz Results</h3>
+              
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="p-4 rounded-lg bg-secondary/50 text-center">
+                  <p className="text-sm text-muted-foreground">Total Questions</p>
+                  <p className="text-2xl font-semibold">{state.result.totalQuestions}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-green-500/10 text-center">
+                  <p className="text-sm text-green-800">Correct</p>
+                  <p className="text-2xl font-semibold text-green-700">{state.result.correctAnswers}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-red-500/10 text-center">
+                  <p className="text-sm text-red-800">Incorrect</p>
+                  <p className="text-2xl font-semibold text-red-700">{state.result.incorrectAnswers}</p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">Score</span>
+                  <span className="font-semibold">{state.result.score}%</span>
+                </div>
+                <div className="w-full bg-secondary rounded-full h-2.5">
+                  <div className="h-2.5 rounded-full bg-primary transition-all duration-1000" style={{
+              width: `${state.result.score}%`
+            }}></div>
+                </div>
+              </div>
+              
+              <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
+              
+              {state.result.incorrectAnswers > 0 && <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Add incorrect questions to review list</span>
+                    <div className="space-x-2">
+                      <Button variant="outline" size="sm" onClick={selectAllIncorrectQuestions} className="text-xs h-7">
+                        Select All
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={deselectAllIncorrectQuestions} className="text-xs h-7">
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <Button variant="default" size="sm" onClick={handleAddToReviewList} disabled={selectedIncorrectQuestions.length === 0} className="w-full mt-2">
+                    Add {selectedIncorrectQuestions.length} Selected Question(s) to Review List
+                  </Button>
+                </div>}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export to Word
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Export Quiz to Document</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="document-title-results">Document Title</Label>
+                        <input id="document-title-results" value={documentTitle} onChange={e => setDocumentTitle(e.target.value)} className="w-full p-2 border rounded" placeholder="Quiz Title" />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="include-answers-results" checked={includeAnswers} onCheckedChange={checked => setIncludeAnswers(!!checked)} />
+                        <Label htmlFor="include-answers-results">Include answers and explanations</Label>
+                      </div>
+                      <div className="pt-2 text-sm text-muted-foreground">
+                        Document will use Times New Roman font for professional formatting.
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <DialogClose asChild>
+                        <Button onClick={handleExportToDocument} className="flex items-center gap-2">
+                          <Download className="w-4 h-4" />
+                          Export to Word
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                
+                <Button onClick={handleTryAgain} className="w-full">
+                  Try Again
+                </Button>
+              </div>
+            </motion.div>}
+        </div>}
+    </div>;
 };
-
 export default QuizGenerator;
