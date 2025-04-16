@@ -45,7 +45,7 @@ const App = () => {
     
     // Add a comment to the console to indicate hidden features
     if (HIDE_FEATURES) {
-      console.info("Note: Review and Dashboard features are hidden in the UI but their code remains in the application.");
+      console.info("Note: Review and Dashboard features are hidden in the UI but their routes remain accessible with disabled functionality.");
     }
   }, []);
 
