@@ -48,6 +48,9 @@ const App = () => {
     if (HIDE_FEATURES) {
       console.info("Note: Review and Dashboard features are hidden in the UI but their routes remain accessible with disabled functionality.");
     }
+
+    // Add a notice about the OCR Solver feature
+    console.info("OCR Solver is available at /problem-solver - Upload an image of a math problem to get step-by-step solutions");
   }, []);
 
   return (
