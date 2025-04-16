@@ -34,7 +34,6 @@ const QuizCustomizer = () => {
         if (!isMounted) return;
         setIsAuth(authStatus);
         
-        // If authenticated, load subscription data
         if (authStatus) {
           try {
             const user = await getCurrentUser();
@@ -58,8 +57,6 @@ const QuizCustomizer = () => {
             }
           }
         } else {
-          // For non-authenticated users, set subscription to null
-          // The SubscriptionBanner component will show demo mode
           setSubscription(null);
         }
       } catch (error) {
@@ -95,16 +92,13 @@ const QuizCustomizer = () => {
       return;
     }
     
-    // Generate a shareable link
     const shareableLink = `${window.location.origin}/shared/${quizId}`;
     
-    // Copy to clipboard
     navigator.clipboard.writeText(shareableLink)
       .then(() => {
         setCopySuccess(true);
         toast.success("Quiz link copied! Ready to share.");
         
-        // Reset copy success status after 2 seconds
         setTimeout(() => {
           setCopySuccess(false);
         }, 2000);
@@ -225,7 +219,10 @@ const QuizCustomizer = () => {
               />
             </div>
             <div className="glass-effect rounded-2xl border border-white/20 shadow-lg overflow-hidden">
-              <QuizGenerator initialTopic={topicFromUrl} onGenerationComplete={handleQuizGenerated} />
+              <QuizGenerator 
+                initialTopic={topicFromUrl} 
+                onQuizGenerated={handleQuizGenerated} 
+              />
             </div>
           </motion.div>
         </div>

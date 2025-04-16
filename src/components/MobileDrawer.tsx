@@ -26,6 +26,9 @@ interface MobileDrawerProps {
   handleAuthRequiredClick: (e: React.MouseEvent<HTMLAnchorElement>, path: string) => Promise<void>;
 }
 
+// Define which menu items should be hidden
+const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
+
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) => {
   const location = useLocation();
   const [open, setOpen] = React.useState(false);
@@ -38,6 +41,11 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
+
+  // Filter navigation items to hide specified ones
+  const visibleNavItems = navItems.filter(
+    item => !HIDDEN_MENU_ITEMS.includes(item.path.substring(1))
+  );
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -58,7 +66,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
             </DrawerClose>
           </DrawerHeader>
           <div className="px-4 py-2 space-y-2">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}

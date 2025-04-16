@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { isAuthenticated } from "@/utils/authService";
 import MobileDrawer from "./MobileDrawer";
 
+// Define which menu items should be hidden
+const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
+
 const Navigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,6 +41,7 @@ const Navigation: React.FC = () => {
     navigate(path);
   };
   
+  // Define all navigation items, including the hidden ones
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
@@ -46,6 +50,11 @@ const Navigation: React.FC = () => {
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
+
+  // Filter navigation items to hide specified ones
+  const visibleNavItems = navItems.filter(
+    item => !HIDDEN_MENU_ITEMS.includes(item.path.substring(1))
+  );
 
   return (
     <nav 
@@ -77,7 +86,7 @@ const Navigation: React.FC = () => {
           
           {!isMobile && (
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
@@ -115,7 +124,7 @@ const Navigation: React.FC = () => {
       {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border shadow-lg z-50">
           <div className="grid grid-cols-5 h-16">
-            {navItems.slice(0, 5).map((item) => (
+            {visibleNavItems.slice(0, 5).map((item) => (
               <Link
                 key={item.path}
                 to={item.path}

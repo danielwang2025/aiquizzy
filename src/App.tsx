@@ -20,6 +20,9 @@ import Layout from "./components/Layout";
 import SharedQuiz from "./pages/SharedQuiz";
 import { useEffect } from "react";
 
+// Hidden features flag - only UI elements are hidden, routes remain accessible
+const HIDE_FEATURES = true;
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,6 +41,11 @@ const App = () => {
       meta.name = 'viewport';
       meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
       document.head.appendChild(meta);
+    }
+    
+    // Add a comment to the console to indicate hidden features
+    if (HIDE_FEATURES) {
+      console.info("Note: Review and Dashboard features are hidden in the UI but their code remains in the application.");
     }
   }, []);
 
