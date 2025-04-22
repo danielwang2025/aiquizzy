@@ -28,9 +28,11 @@ const ReviewHub: React.FC = () => {
           <Card className="p-8 text-center border-dashed bg-white/70 backdrop-blur-md shadow-lg">
             <Lock className="h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-70" />
             <h2 className="text-2xl font-semibold mb-4">Feature Temporarily Unavailable</h2>
+            <p className="text-muted-foreground mb-4">
+              The review functionality has been disabled to conserve computational resources.
+            </p>
             <p className="text-muted-foreground mb-6">
-              The review functionality is currently disabled. 
-              Please check back later for updates.
+              Please use the Quiz Generator to create and practice with new questions instead.
             </p>
             <Button 
               onClick={() => navigate("/customize")}

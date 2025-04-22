@@ -9,11 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { loadQuizHistory, saveQuizAttempt, addToReviewList, removeFromReviewList, clearReviewList, clearAllHistory } from "@/utils/historyService";
-import QuizHistory from "./QuizHistory";
-import ReviewList from "./ReviewList";
-import DisputedQuestions from "./DisputedQuestions";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { loadQuizHistory, saveQuizAttempt } from "@/utils/historyService";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/utils/authService";
@@ -150,11 +146,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
 }) => {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [objectives, setObjectives] = useState(initialTopic);
-  const [quizHistory, setQuizHistory] = useState<QuizHistoryType>({
-    attempts: [],
-    reviewList: [],
-    disputedQuestions: []
-  });
   const [selectedIncorrectQuestions, setSelectedIncorrectQuestions] = useState<string[]>([]);
   const navigate = useNavigate();
   const isAuth = isAuthenticated();
@@ -167,7 +158,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
   const [generatedQuizId, setGeneratedQuizId] = useState<string | null>(null);
 
   useEffect(() => {
-    setQuizHistory(loadQuizHistory());
     if (!isAuth) {
       const demoUsage = localStorage.getItem("demoQuizUsage");
       const usage = demoUsage ? JSON.parse(demoUsage) : {
@@ -290,20 +280,22 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
   };
 
   const handleComplete = () => {
-    const {
-      questions,
-      answers
-    } = state;
+    const { questions, answers } = state;
     if (answers.some(answer => answer === null)) {
       toast.error("Please answer all questions before submitting");
       return;
     }
+    
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let incorrectQuestionIds: string[] = [];
+    
     questions.forEach((question, index) => {
       const userAnswer = answers[index];
-      const isCorrect = question.type === "fill_in" ? String(userAnswer).toLowerCase().trim() === String(question.correctAnswer).toLowerCase().trim() : userAnswer === question.correctAnswer;
+      const isCorrect = question.type === "fill_in" 
+        ? String(userAnswer).toLowerCase().trim() === String(question.correctAnswer).toLowerCase().trim() 
+        : userAnswer === question.correctAnswer;
+      
       if (isCorrect) {
         correctAnswers++;
       } else {
@@ -311,7 +303,9 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         incorrectQuestionIds.push(question.id);
       }
     });
+    
     const score = Math.round(correctAnswers / questions.length * 100);
+    
     let feedback = "";
     if (score >= 90) {
       feedback = "Excellent! You've mastered these learning objectives.";
@@ -322,6 +316,7 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
     } else {
       feedback = "You might want to review the material again to strengthen your understanding.";
     }
+    
     const result: QuizResult = {
       totalQuestions: questions.length,
       correctAnswers,
@@ -329,11 +324,14 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       score,
       feedback
     };
+    
     dispatch({
       type: "COMPLETE_QUIZ",
       payload: result
     });
+    
     setSelectedIncorrectQuestions(incorrectQuestionIds);
+    
     const attempt: QuizAttempt = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -342,8 +340,8 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       userAnswers: answers,
       result
     };
+    
     saveQuizAttempt(attempt);
-    setQuizHistory(loadQuizHistory());
   };
 
   const handleDisputeQuestion = (questionId: string) => {
@@ -351,81 +349,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       type: "REMOVE_QUESTION",
       payload: questionId
     });
-    setQuizHistory(loadQuizHistory());
-  };
-
-  const handleAddToReviewList = () => {
-    if (selectedIncorrectQuestions.length === 0) {
-      toast.error("No questions selected to add to review list");
-      return;
-    }
-    state.questions.forEach(question => {
-      if (selectedIncorrectQuestions.includes(question.id)) {
-        addToReviewList(question);
-      }
-    });
-    toast.success(`Added ${selectedIncorrectQuestions.length} question(s) to review list`);
-    setQuizHistory(loadQuizHistory());
-    setSelectedIncorrectQuestions([]);
-  };
-
-  const toggleSelectQuestion = (id: string) => {
-    setSelectedIncorrectQuestions(prev => prev.includes(id) ? prev.filter(qId => qId !== id) : [...prev, id]);
-  };
-
-  const selectAllIncorrectQuestions = () => {
-    const incorrectIds = state.questions.filter((_, index) => {
-      const userAnswer = state.answers[index];
-      const correctAnswer = state.questions[index].correctAnswer;
-      return state.questions[index].type === "fill_in" ? String(userAnswer).toLowerCase().trim() !== String(correctAnswer).toLowerCase().trim() : userAnswer !== correctAnswer;
-    }).map(q => q.id);
-    setSelectedIncorrectQuestions(incorrectIds);
-  };
-
-  const deselectAllIncorrectQuestions = () => {
-    setSelectedIncorrectQuestions([]);
-  };
-
-  const handleViewAttempt = (attempt: QuizAttempt) => {
-    dispatch({
-      type: "LOAD_ATTEMPT",
-      payload: attempt
-    });
-  };
-
-  const handleRemoveFromReviewList = (id: string) => {
-    removeFromReviewList(id);
-    setQuizHistory(loadQuizHistory());
-  };
-
-  const handleClearReviewList = () => {
-    clearReviewList();
-    setQuizHistory({
-      attempts: [],
-      reviewList: [],
-      disputedQuestions: []
-    });
-  };
-
-  const handleClearHistory = () => {
-    clearAllHistory();
-    setQuizHistory({
-      attempts: [],
-      reviewList: [],
-      disputedQuestions: []
-    });
-  };
-
-  const handlePracticeReviewQuestions = (questions: QuizQuestion[]) => {
-    if (questions.length === 0) {
-      toast.error("No questions to practice");
-      return;
-    }
-    if (generatedQuizId) {
-      navigate(`/practice/${generatedQuizId}`);
-    } else {
-      toast.error("No quiz ID available. Please generate a quiz first.");
-    }
   };
 
   const handleReset = () => {
@@ -456,10 +379,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       toast.dismiss();
       toast.error("Failed to export document. Please try again.");
     }
-  };
-
-  const handleUpdateHistory = () => {
-    setQuizHistory(loadQuizHistory());
   };
 
   const getBloomLevelIcon = (level: string) => {
@@ -505,44 +424,25 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Quiz Generator</h2>
         
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">History & Review</Button>
-          </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-            <Tabs defaultValue="history" className="mt-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="history">Quiz History</TabsTrigger>
-                <TabsTrigger value="review">Review List</TabsTrigger>
-                <TabsTrigger value="disputed">Disputed</TabsTrigger>
-              </TabsList>
-              <TabsContent value="history" className="mt-4">
-                <QuizHistory attempts={quizHistory.attempts} onViewAttempt={handleViewAttempt} onClearHistory={handleClearHistory} />
-              </TabsContent>
-              <TabsContent value="review" className="mt-4">
-                <ReviewList questions={quizHistory.reviewList} onRemoveQuestion={handleRemoveFromReviewList} onClearAll={handleClearReviewList} onPracticeQuestions={handlePracticeReviewQuestions} />
-              </TabsContent>
-              <TabsContent value="disputed" className="mt-4">
-                <DisputedQuestions questions={quizHistory.disputedQuestions} onUpdate={handleUpdateHistory} />
-              </TabsContent>
-            </Tabs>
-          </SheetContent>
-        </Sheet>
       </div>
 
-      {state.status === "idle" && <motion.div initial={{
-      opacity: 0,
-      y: 20
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.5
-    }} className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border">
+      {state.status === "idle" && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }} 
+          className="glass-card rounded-2xl p-8 bg-white/80 shadow-sm border border-border"
+        >
+          
           <div className="mb-6">
-            <label htmlFor="objectives" className="block text-sm font-medium mb-2">Learning Content
-        </label>
-            <textarea id="objectives" className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm" placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')" value={objectives} onChange={e => setObjectives(e.target.value)} />
+            <label htmlFor="objectives" className="block text-sm font-medium mb-2">Learning Content</label>
+            <textarea 
+              id="objectives" 
+              className="w-full p-3 h-32 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white/80 backdrop-blur-sm" 
+              placeholder="Enter your learning objectives here (e.g., 'Python float data type', 'JavaScript promises', 'React hooks')" 
+              value={objectives} 
+              onChange={e => setObjectives(e.target.value)} 
+            />
           </div>
           
           <div className="grid grid-cols-1 gap-4 mb-6">
@@ -550,7 +450,10 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
               <label className="block text-sm font-medium mb-2">
                 Bloom's Taxonomy Level
               </label>
-              <Select value={bloomLevel} onValueChange={value => setBloomLevel(value as "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create")}>
+              <Select 
+                value={bloomLevel} 
+                onValueChange={value => setBloomLevel(value as "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select cognitive level" />
                 </SelectTrigger>
@@ -606,13 +509,21 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                 </label>
                 <div className="flex space-x-4">
                   <div className="flex items-center">
-                    <Checkbox id="multiple-choice" checked={questionTypes.includes("multiple_choice")} onCheckedChange={() => handleQuestionTypeChange("multiple_choice")} />
+                    <Checkbox 
+                      id="multiple-choice" 
+                      checked={questionTypes.includes("multiple_choice")} 
+                      onCheckedChange={() => handleQuestionTypeChange("multiple_choice")} 
+                    />
                     <label htmlFor="multiple-choice" className="ml-2 text-sm">
                       Multiple Choice
                     </label>
                   </div>
                   <div className="flex items-center">
-                    <Checkbox id="fill-in" checked={questionTypes.includes("fill_in")} onCheckedChange={() => handleQuestionTypeChange("fill_in")} />
+                    <Checkbox 
+                      id="fill-in" 
+                      checked={questionTypes.includes("fill_in")} 
+                      onCheckedChange={() => handleQuestionTypeChange("fill_in")} 
+                    />
                     <label htmlFor="fill-in" className="ml-2 text-sm">
                       Fill in the Blank
                     </label>
@@ -626,7 +537,14 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                     Number of Questions: {questionCount}
                   </label>
                 </div>
-                <Slider min={3} max={20} step={1} value={[questionCount]} onValueChange={value => setQuestionCount(value[0])} className="my-4" />
+                <Slider 
+                  min={3} 
+                  max={20} 
+                  step={1} 
+                  value={[questionCount]} 
+                  onValueChange={value => setQuestionCount(value[0])} 
+                  className="my-4" 
+                />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>3</span>
                   <span>10</span>
@@ -636,28 +554,42 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
             </div>
           </div>
           
-          {demoLimitReached && !isAuth ? <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+          {demoLimitReached && !isAuth ? (
+            <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <p className="text-amber-800 font-medium">You've reached the demo limit (5 quizzes).</p>
               <p className="text-sm text-amber-700 mb-4">Sign in to create unlimited quizzes and track your progress.</p>
               <Button onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Login / Register"]')?.click()} className="w-full">
                 Sign In to Continue
               </Button>
-            </div> : <button className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" onClick={handleGenerate}>
+            </div>
+          ) : (
+            <button 
+              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" 
+              onClick={handleGenerate}
+            >
               Generate Quiz
-            </button>}
+            </button>
+          )}
           
           <p className="text-center text-sm text-muted-foreground mt-4">
             Enter specific learning objectives to generate customized questions tailored to your learning needs.
           </p>
-        </motion.div>}
+        </motion.div>
+      )}
 
-      {state.status === "loading" && <div className="min-h-[300px] flex flex-col items-center justify-center">
+      
+      
+      {state.status === "loading" && (
+        <div className="min-h-[300px] flex flex-col items-center justify-center">
           <LoadingSpinner size="lg" className="mb-4" />
           <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
           <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
-        </div>}
+        </div>
+      )}
 
-      {(state.status === "active" || state.status === "completed") && <div>
+      {(state.status === "active" || state.status === "completed") && (
+        
+        <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">{objectives}</h2>
             <div className="flex gap-2">
@@ -675,10 +607,20 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                   <div className="py-4 space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="document-title">Document Title</Label>
-                      <input id="document-title" value={documentTitle} onChange={e => setDocumentTitle(e.target.value)} className="w-full p-2 border rounded" placeholder="Quiz Title" />
+                      <input 
+                        id="document-title" 
+                        value={documentTitle} 
+                        onChange={e => setDocumentTitle(e.target.value)} 
+                        className="w-full p-2 border rounded" 
+                        placeholder="Quiz Title" 
+                      />
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="include-answers" checked={includeAnswers} onCheckedChange={checked => setIncludeAnswers(!!checked)} />
+                      <Checkbox 
+                        id="include-answers" 
+                        checked={includeAnswers} 
+                        onCheckedChange={checked => setIncludeAnswers(!!checked)} 
+                      />
                       <Label htmlFor="include-answers">Include answers and explanations</Label>
                     </div>
                     <div className="pt-2 text-sm text-muted-foreground">
@@ -699,7 +641,10 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                 </DialogContent>
               </Dialog>
               
-              <button className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors" onClick={handleReset}>
+              <button 
+                className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-secondary transition-colors" 
+                onClick={handleReset}
+              >
                 New Quiz
               </button>
             </div>
@@ -707,33 +652,40 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
 
           <div className="mb-8">
             {state.questions.map((question, index) => {
-          const isIncorrect = state.status === "completed" && state.answers[index] !== question.correctAnswer;
-          return <div key={question.id} className="mb-6">
-                  <QuizQuestionComponent question={question} userAnswer={state.answers[index]} onAnswer={answer => handleAnswer(index, answer)} showResult={state.status === "completed"} index={index} onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined} />
+              const isIncorrect = state.status === "completed" && state.answers[index] !== question.correctAnswer;
+              return (
+                <div key={question.id} className="mb-6">
+                  <QuizQuestionComponent 
+                    question={question} 
+                    userAnswer={state.answers[index]} 
+                    onAnswer={answer => handleAnswer(index, answer)} 
+                    showResult={state.status === "completed"} 
+                    index={index} 
+                    onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined} 
+                  />
                   
-                  {state.status === "completed" && isIncorrect && <div className="mt-2 ml-11 flex items-center space-x-2">
-                      <Checkbox id={`add-to-review-${question.id}`} checked={selectedIncorrectQuestions.includes(question.id)} onCheckedChange={() => toggleSelectQuestion(question.id)} />
-                      <label htmlFor={`add-to-review-${question.id}`} className="text-sm text-muted-foreground cursor-pointer">
-                        Add to review list
-                      </label>
-                    </div>}
-                </div>;
-        })}
+                  
+                </div>
+              );
+            })}
           </div>
 
-          {state.status === "active" && <button className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" onClick={handleComplete}>
+          {state.status === "active" && (
+            <button 
+              className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2" 
+              onClick={handleComplete}
+            >
               Check Answers
-            </button>}
+            </button>
+          )}
 
-          {state.status === "completed" && state.result && <motion.div initial={{
-        opacity: 0,
-        scale: 0.95
-      }} animate={{
-        opacity: 1,
-        scale: 1
-      }} transition={{
-        duration: 0.3
-      }} className="rounded-xl p-6 border border-border bg-white shadow-sm">
+          {state.status === "completed" && state.result && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              transition={{ duration: 0.3 }} 
+              className="rounded-xl p-6 border border-border bg-white shadow-sm"
+            >
               <h3 className="text-xl font-semibold mb-2">Quiz Results</h3>
               
               <div className="grid grid-cols-3 gap-4 mb-4">
@@ -757,31 +709,16 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                   <span className="font-semibold">{state.result.score}%</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2.5">
-                  <div className="h-2.5 rounded-full bg-primary transition-all duration-1000" style={{
-              width: `${state.result.score}%`
-            }}></div>
+                  <div 
+                    className="h-2.5 rounded-full bg-primary transition-all duration-1000" 
+                    style={{ width: `${state.result.score}%` }}
+                  ></div>
                 </div>
               </div>
               
               <p className="p-3 rounded-md bg-blue-500/10 text-blue-800 mb-4">{state.result.feedback}</p>
               
-              {state.result.incorrectAnswers > 0 && <div className="mb-4 p-3 border border-border rounded-lg bg-secondary/10">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Add incorrect questions to review list</span>
-                    <div className="space-x-2">
-                      <Button variant="outline" size="sm" onClick={selectAllIncorrectQuestions} className="text-xs h-7">
-                        Select All
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={deselectAllIncorrectQuestions} className="text-xs h-7">
-                        Deselect All
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button variant="default" size="sm" onClick={handleAddToReviewList} disabled={selectedIncorrectQuestions.length === 0} className="w-full mt-2">
-                    Add {selectedIncorrectQuestions.length} Selected Question(s) to Review List
-                  </Button>
-                </div>}
+              
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                 <Dialog>
@@ -798,10 +735,20 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                     <div className="py-4 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="document-title-results">Document Title</Label>
-                        <input id="document-title-results" value={documentTitle} onChange={e => setDocumentTitle(e.target.value)} className="w-full p-2 border rounded" placeholder="Quiz Title" />
+                        <input 
+                          id="document-title-results" 
+                          value={documentTitle} 
+                          onChange={e => setDocumentTitle(e.target.value)} 
+                          className="w-full p-2 border rounded" 
+                          placeholder="Quiz Title" 
+                        />
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Checkbox id="include-answers-results" checked={includeAnswers} onCheckedChange={checked => setIncludeAnswers(!!checked)} />
+                        <Checkbox 
+                          id="include-answers-results" 
+                          checked={includeAnswers} 
+                          onCheckedChange={checked => setIncludeAnswers(!!checked)} 
+                        />
                         <Label htmlFor="include-answers-results">Include answers and explanations</Label>
                       </div>
                       <div className="pt-2 text-sm text-muted-foreground">
@@ -826,8 +773,10 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                   Try Again
                 </Button>
               </div>
-            </motion.div>}
-        </div>}
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

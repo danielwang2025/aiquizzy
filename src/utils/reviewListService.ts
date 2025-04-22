@@ -1,19 +1,24 @@
 
 import { QuizQuestion } from "@/types/quiz";
 
-// All functions are disabled to prevent local storage operations
+// All functions are disabled to prevent local storage operations and reduce computational resource usage
 
 export const addToReviewList = (question: QuizQuestion): void => {
-  // Functionality disabled
-  console.log("Review list functionality is disabled");
+  // Functionality completely disabled
+  console.log("Review list functionality is disabled to conserve resources");
 };
 
 export const removeFromReviewList = (questionId: string): void => {
-  // Functionality disabled
-  console.log("Review list functionality is disabled");
+  // Functionality completely disabled
+  console.log("Review list functionality is disabled to conserve resources");
 };
 
 export const clearReviewList = (): void => {
-  // Functionality disabled
-  console.log("Review list functionality is disabled");
+  // Functionality completely disabled
+  console.log("Review list functionality is disabled to conserve resources");
+};
+
+export const getReviewList = (): QuizQuestion[] => {
+  // Return empty array to prevent any data loading
+  return [];
 };
