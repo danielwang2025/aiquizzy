@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { processImageWithOCR, initWasmIfNeeded } from '@/utils/wasm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Check, Calculator } from "lucide-react";
+import { Upload, Check } from "lucide-react";
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { generateSolution } from '@/utils/aiSolver';
@@ -25,7 +25,7 @@ const ProblemSolver = () => {
 
   const handleProcess = async () => {
     if (!selectedImage) {
-      toast.error("请先上传问题图片");
+      toast.error("Please upload a problem image first");
       return;
     }
 
@@ -49,7 +49,7 @@ const ProblemSolver = () => {
       
     } catch (error) {
       console.error('Error processing image:', error);
-      toast.error("处理图片过程中出错，请重试");
+      toast.error("Error processing image, please try again");
       setIsLoading(false);
     }
   };
@@ -68,20 +68,20 @@ const ProblemSolver = () => {
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              上传题目
+              Upload Problem
             </TabsTrigger>
             <TabsTrigger value="result" className="flex items-center gap-2">
               <Check className="h-4 w-4" />
-              解题结果
+              Solution
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="upload">
             <Card className="glass-effect border border-white/20">
               <CardHeader>
-                <CardTitle>上传STEM学科题目</CardTitle>
+                <CardTitle>Upload STEM Problem</CardTitle>
                 <CardDescription>
-                  上传或拍照一个数学、物理、化学或生物学问题
+                  Upload or take a photo of a math, physics, chemistry or biology problem
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -111,11 +111,11 @@ const ProblemSolver = () => {
                   className="absolute right-4 top-4"
                   onClick={() => setActiveTab('upload')}
                 >
-                  返回上传
+                  Back to Upload
                 </Button>
-                <CardTitle>解题结果</CardTitle>
+                <CardTitle>Solution Results</CardTitle>
                 <CardDescription>
-                  您的{subject === 'math' ? '数学' : subject === 'physics' ? '物理' : subject === 'chemistry' ? '化学' : '生物学'}问题的逐步解题过程
+                  Step-by-step solution to your {subject === 'math' ? 'mathematics' : subject === 'physics' ? 'physics' : subject === 'chemistry' ? 'chemistry' : 'biology'} problem
                 </CardDescription>
               </CardHeader>
               <CardContent>

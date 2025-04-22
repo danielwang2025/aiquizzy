@@ -46,7 +46,7 @@ const ProblemImageUpload: React.FC<ProblemImageUploadProps> = ({
               variant="outline"
               onClick={() => setSelectedImage(null)}
             >
-              删除
+              Delete
             </Button>
             <Button 
               onClick={onProcess}
@@ -55,12 +55,12 @@ const ProblemImageUpload: React.FC<ProblemImageUploadProps> = ({
               {isLoading ? (
                 <>
                   <LoadingSpinner size="sm" /> 
-                  <span className="ml-2">处理中...</span>
+                  <span className="ml-2">Processing...</span>
                 </>
               ) : (
                 <>
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  解题
+                  Solve
                 </>
               )}
             </Button>
@@ -70,9 +70,9 @@ const ProblemImageUpload: React.FC<ProblemImageUploadProps> = ({
         <div className="text-center space-y-4">
           <ImageIcon className="w-12 h-12 mx-auto text-gray-400" />
           <div>
-            <p className="text-lg font-medium">点击上传</p>
-            <p className="text-sm text-muted-foreground">或拖放图片</p>
-            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP 最大 10MB</p>
+            <p className="text-lg font-medium">Click to Upload</p>
+            <p className="text-sm text-muted-foreground">or drag and drop</p>
+            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP up to 10MB</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
@@ -80,7 +80,7 @@ const ProblemImageUpload: React.FC<ProblemImageUploadProps> = ({
               className="relative"
               disabled={isLoading}
             >
-              选择图片
+              Choose Image
               <input
                 type="file"
                 accept="image/*"
@@ -97,7 +97,7 @@ const ProblemImageUpload: React.FC<ProblemImageUploadProps> = ({
                 className="flex items-center"
               >
                 <Camera className="mr-2 h-4 w-4" />
-                使用相机
+                Use Camera
               </Button>
             )}
           </div>

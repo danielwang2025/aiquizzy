@@ -2,6 +2,19 @@
 // AI Solution generator for STEM problems
 
 /**
+ * Interface for the AI solution response
+ */
+interface AIResponse {
+  solution: string;
+  confidence: number;
+  steps: {
+    description: string;
+    formula?: string;
+    explanation: string;
+  }[];
+}
+
+/**
  * Sends the recognized text to an AI model for solving
  * @param recognizedText The OCR result from the image
  * @param subject The subject area (math, physics, chemistry, biology)
@@ -16,61 +29,83 @@ export async function generateSolution(recognizedText: string, subject: string):
   
   console.log(`Generating solution for ${subject} problem: ${recognizedText}`);
   
+  // Prepare request payload for DeepSeek API
+  const requestPayload = {
+    problem: recognizedText,
+    subject: subject,
+    format: "json",
+    requireStepByStep: true
+  };
+  
+  // In a real implementation, you would send this to DeepSeek API
+  // const response = await fetch('https://api.deepseek.com/v1/solve', {
+  //   method: 'POST',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //     'Authorization': 'Bearer YOUR_API_KEY'
+  //   },
+  //   body: JSON.stringify(requestPayload)
+  // });
+  // 
+  // const data = await response.json();
+  // return data.solution;
+  
+  // For now, simulate response based on subject
   // Generate different responses based on subject
   if (subject === 'math') {
     if (recognizedText.includes("\\int")) {
       return `
-Step 1: 识别积分问题 \\int_{0}^{\\pi} \\sin(x) dx
-Step 2: 回忆正弦函数的反导数是负余弦函数: \\int \\sin(x) dx = -\\cos(x) + C
-Step 3: 应用微积分基本定理: \\int_{0}^{\\pi} \\sin(x) dx = -\\cos(\\pi) - (-\\cos(0))
-Step 4: 计算得: -\\cos(\\pi) - (-\\cos(0)) = -(-1) - (-1) = 1 + 1 = 2
-Step 5: 因此，\\int_{0}^{\\pi} \\sin(x) dx = 2
+Step 1: Identify the integral problem \\int_{0}^{\\pi} \\sin(x) dx
+Step 2: Recall that the antiderivative of sine is negative cosine: \\int \\sin(x) dx = -\\cos(x) + C
+Step 3: Apply the Fundamental Theorem of Calculus: \\int_{0}^{\\pi} \\sin(x) dx = -\\cos(\\pi) - (-\\cos(0))
+Step 4: Calculate: -\\cos(\\pi) - (-\\cos(0)) = -(-1) - (-1) = 1 + 1 = 2
+Step 5: Therefore, \\int_{0}^{\\pi} \\sin(x) dx = 2
       `;
     } else if (recognizedText.includes("lim")) {
       return `
-Step 1: 识别极限问题 \\lim_{x \\to 0} \\frac{\\sin(x)}{x}
-Step 2: 这是一个著名的极限，通过 L'Hôpital 法则或泰勒展开可以求解
-Step 3: 通过泰勒展开，我们知道 \\sin(x) = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - ...
-Step 4: 所以 \\frac{\\sin(x)}{x} = 1 - \\frac{x^2}{3!} + \\frac{x^4}{5!} - ...
-Step 5: 当 x \\to 0 时，后面的项都趋近于 0
-Step 6: 因此，\\lim_{x \\to 0} \\frac{\\sin(x)}{x} = 1
+Step 1: Identify the limit problem \\lim_{x \\to 0} \\frac{\\sin(x)}{x}
+Step 2: This is a well-known limit that can be solved using L'Hôpital's rule or Taylor expansion
+Step 3: Using Taylor expansion, we know that \\sin(x) = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - ...
+Step 4: Therefore \\frac{\\sin(x)}{x} = 1 - \\frac{x^2}{3!} + \\frac{x^4}{5!} - ...
+Step 5: As x \\to 0, the higher-order terms approach 0
+Step 6: Thus, \\lim_{x \\to 0} \\frac{\\sin(x)}{x} = 1
       `;
     } else {
       return `
-Step 1: 分析问题 ${recognizedText}
-Step 2: 使用适当的数学方法解决此问题
-Step 3: 应用相关公式和定理
-Step 4: 进行计算和简化
-Step 5: 得出最终答案
+Step 1: Analyzing problem ${recognizedText}
+Step 2: Applying appropriate mathematical methods
+Step 3: Applying relevant formulas and theorems
+Step 4: Calculating and simplifying
+Step 5: Deriving the final answer
       `;
     }
   } else if (subject === 'physics') {
     return `
-Step 1: 分析物理问题 ${recognizedText}
-Step 2: 识别相关物理定律：牛顿第二定律 F = ma
-Step 3: 列出方程: 如果初始速度 u = 5 m/s，加速度 a = 2 m/s²，时间 t = 3 s
-Step 4: 应用运动学公式: v = u + at
-Step 5: 代入数值: v = 5 + 2 × 3
-Step 6: 计算得: v = 5 + 6 = 11 m/s
-Step 7: 因此，最终速度为 11 m/s
+Step 1: Analyzing the physics problem ${recognizedText}
+Step 2: Identifying relevant physical law: Newton's Second Law F = ma
+Step 3: Setting up the equation: If initial velocity u = 5 m/s, acceleration a = 2 m/s², time t = 3 s
+Step 4: Applying the kinematic equation: v = u + at
+Step 5: Substituting values: v = 5 + 2 × 3
+Step 6: Calculating: v = 5 + 6 = 11 m/s
+Step 7: Therefore, the final velocity is 11 m/s
     `;
   } else if (subject === 'chemistry') {
     return `
-Step 1: 分析化学问题 ${recognizedText}
-Step 2: 确定平衡化学方程式 2H₂ + O₂ → 2H₂O
-Step 3: 检查原子平衡:
-   - 左侧: 4 个 H 原子，2 个 O 原子
-   - 右侧: 4 个 H 原子，2 个 O 原子
-Step 4: 方程式已平衡
-Step 5: 基于此方程式的计算：当消耗 2 摩尔 H₂，需要 1 摩尔 O₂，生成 2 摩尔 H₂O
+Step 1: Analyzing the chemistry problem ${recognizedText}
+Step 2: Determining the balanced chemical equation 2H₂ + O₂ → 2H₂O
+Step 3: Checking atom balance:
+   - Left side: 4 H atoms, 2 O atoms
+   - Right side: 4 H atoms, 2 O atoms
+Step 4: Equation is balanced
+Step 5: Calculations based on this equation: When 2 moles of H₂ are consumed, 1 mole of O₂ is required, producing 2 moles of H₂O
     `;
   } else {
     return `
-Step 1: 分析生物学问题 ${recognizedText}
-Step 2: 确定涉及的生物学概念：细胞分裂
-Step 3: 解释有丝分裂的各个阶段：前期、中期、后期和末期
-Step 4: 分析染色体行为和细胞分裂的过程
-Step 5: 得出生物学现象的结论和意义
+Step 1: Analyzing the biology problem ${recognizedText}
+Step 2: Identifying biological concepts involved: Cell Division
+Step 3: Explaining the stages of mitosis: Prophase, Metaphase, Anaphase, and Telophase
+Step 4: Analyzing chromosome behavior and cell division process
+Step 5: Drawing conclusions and significance of the biological phenomenon
     `;
   }
 }
