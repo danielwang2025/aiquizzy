@@ -4,6 +4,7 @@ import { processImageWithOCR, initWasmIfNeeded } from '@/utils/wasm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Check } from "lucide-react";
 import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
 
 import ProblemSolverHeader from '@/components/ProblemSolver/ProblemSolverHeader';
 import SubjectSelector from '@/components/ProblemSolver/SubjectSelector';
