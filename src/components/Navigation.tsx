@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Book, BarChart, User, Atom, Mail, Calculator, FlaskConical, Microscope } from "lucide-react";
+import { Home, Book, BarChart, User, Atom, Mail, Calculator, FlaskConical, MessageCircle } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +48,7 @@ const Navigation: React.FC = () => {
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
+    { path: "/forum", label: "Forum", icon: <MessageCircle className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];

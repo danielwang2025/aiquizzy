@@ -23,7 +23,8 @@ import {
   ScanText,
   Calculator,
   Atom,
-  FlaskConical
+  FlaskConical,
+  MessageCircle
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -43,6 +44,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
+    { path: "/forum", label: "Forum", icon: <MessageCircle className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
