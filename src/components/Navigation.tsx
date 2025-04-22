@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
-  // Handle authenticated navigation - we don't need to check auth anymore
+  // Handle authenticated navigation
   const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     navigate(path);
   };
@@ -45,10 +44,10 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
+    { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
+    { path: "/forum", label: "STEM News", icon: <MessageCircle className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
-    { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
-    { path: "/forum", label: "Forum", icon: <MessageCircle className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];

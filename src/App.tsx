@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +22,7 @@ import Forum from "./pages/Forum";
 import { useEffect } from "react";
 
 // Hidden features flag - only UI elements are hidden, routes remain accessible
-const HIDE_FEATURES = true;
+const HIDE_FEATURES = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {
