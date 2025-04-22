@@ -24,13 +24,13 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Analyzing your problem...</p>
+          <p className="mt-4 text-muted-foreground">正在分析您的问题...</p>
         </div>
       ) : (
         <div className="space-y-6">
           {selectedImage && (
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted p-2 text-sm font-medium">Original Problem</div>
+              <div className="bg-muted p-2 text-sm font-medium">原始题目</div>
               <div className="p-4">
                 <img 
                   src={selectedImage} 
@@ -43,7 +43,7 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
           
           {recognizedText && (
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted p-2 text-sm font-medium">Recognized Text</div>
+              <div className="bg-muted p-2 text-sm font-medium">识别文本</div>
               <div className="p-4 font-mono text-sm">
                 {recognizedText}
               </div>
@@ -52,7 +52,7 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
           
           {solution && (
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-muted p-2 text-sm font-medium">Step-by-Step Solution</div>
+              <div className="bg-muted p-2 text-sm font-medium">逐步解题过程</div>
               <div className="p-4 whitespace-pre-line">
                 {solution}
               </div>
@@ -62,18 +62,18 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
               <Calculator className="h-5 w-5" />
-              Ask Follow-up Questions
+              提问解题助手
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Need more help understanding this solution? Ask our AI tutor!
+              需要更详细的解释？向我们的AI助手提问
             </p>
             <div className="flex gap-2">
               <input 
                 type="text" 
-                placeholder="Ask about this solution..." 
+                placeholder="请输入您的问题..." 
                 className="flex-1 px-3 py-2 rounded-md border"
               />
-              <Button>Ask</Button>
+              <Button>提问</Button>
             </div>
           </div>
         </div>
