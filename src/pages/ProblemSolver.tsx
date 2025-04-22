@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { processImageWithOCR, initWasmIfNeeded } from '@/utils/wasm';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calculator, Upload, ImageIcon, Check, MathOperations, Atom, FlaskConical, Microscope } from "lucide-react";
+import { Calculator, Upload, ImageIcon, Check, PlusCircle, Atom, FlaskConical, Microscope } from "lucide-react";
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Label } from '@/components/ui/label';
@@ -191,7 +190,7 @@ Step 4: Calculate P(A or B) = P(A) + P(B) - P(A and B) = 0.4 + 0.3 - 0.12 = 0.58
                             </>
                           ) : (
                             <>
-                              <MathOperations className="mr-2 h-4 w-4" />
+                              <PlusCircle className="mr-2 h-4 w-4" />
                               Solve Problem
                             </>
                           )}
