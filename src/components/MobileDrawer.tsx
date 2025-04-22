@@ -21,7 +21,9 @@ import {
   User,
   X,
   ScanText,
-  WandSparkles
+  Calculator,
+  Atom,
+  FlaskConical
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -37,10 +39,10 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
 
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
-    { path: "/customize", label: "Create Quiz", icon: <PlusCircle className="h-5 w-5" /> },
+    { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
-    { path: "/problem-solver", label: "OCR Solver", icon: <ScanText className="h-5 w-5" /> },
+    { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
@@ -61,7 +63,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
       <DrawerContent className="h-[80vh] max-h-[80vh] overflow-auto">
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader className="flex flex-row items-center justify-between">
-            <DrawerTitle>Menu</DrawerTitle>
+            <DrawerTitle>STEM AI Quizzy</DrawerTitle>
             <DrawerClose asChild>
               <Button variant="ghost" size="icon">
                 <X className="h-4 w-4" />

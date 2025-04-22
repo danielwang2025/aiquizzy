@@ -50,7 +50,7 @@ const App = () => {
     }
 
     // Add a notice about the OCR Solver feature
-    console.info("OCR Solver is available at /problem-solver - Upload an image of a math problem to get step-by-step solutions");
+    console.info("STEM OCR Solver is available at /problem-solver - Upload an image of a math or science problem to get step-by-step solutions");
   }, []);
 
   return (

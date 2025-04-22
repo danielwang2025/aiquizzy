@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isAuthenticated, getCurrentUser } from "@/utils/authService";
 import { Button } from "@/components/ui/button";
-import { Share2, CheckCircle, FileText } from "lucide-react";
+import { Share2, CheckCircle, FileText, Atom, Calculator, Microscope } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
@@ -92,7 +93,7 @@ const QuizCustomizer = () => {
     navigator.clipboard.writeText(shareableLink)
       .then(() => {
         setCopySuccess(true);
-        toast.success("Quiz link copied! Ready to share.");
+        toast.success("STEM quiz link copied! Ready to share.");
         
         setTimeout(() => {
           setCopySuccess(false);
@@ -105,7 +106,7 @@ const QuizCustomizer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-emerald-50 dark:from-indigo-950/20 dark:via-blue-950/20 dark:to-emerald-950/20">
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
           <LoadingSpinner />
         </main>
@@ -115,7 +116,7 @@ const QuizCustomizer = () => {
 
   if (loadingError) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-emerald-50 dark:from-indigo-950/20 dark:via-blue-950/20 dark:to-emerald-950/20">
         <main className="py-20 px-4 md:py-24 flex-grow flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-500 mb-4">{loadingError}</p>
@@ -136,8 +137,16 @@ const QuizCustomizer = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5 } }
   };
 
+  // STEM subject categories
+  const stemCategories = [
+    { name: "Mathematics", icon: <Calculator className="h-4 w-4" /> },
+    { name: "Physics", icon: <Atom className="h-4 w-4" /> },
+    { name: "Chemistry", icon: <Microscope className="h-4 w-4" /> },
+    { name: "Biology", icon: <FileText className="h-4 w-4" /> },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-emerald-50 dark:from-indigo-950/20 dark:via-blue-950/20 dark:to-emerald-950/20">
       <main className="py-20 px-4 md:py-24 flex-grow">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -148,28 +157,41 @@ const QuizCustomizer = () => {
           >
             <motion.span 
               variants={itemVariants}
-              className="px-4 py-1.5 text-sm font-medium bg-indigo-100 text-indigo-700 rounded-full inline-block mb-4"
+              className="px-4 py-1.5 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full inline-block mb-4"
             >
-              Create Quiz
+              Create STEM Quiz
             </motion.span>
             <motion.h1 
               variants={itemVariants} 
               className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gradient-primary"
             >
-              Customize Your Quiz
+              Customize Your STEM Quiz
             </motion.h1>
             <motion.p 
               variants={itemVariants} 
               className="text-center text-muted-foreground mb-6 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
             >
-              Enter your learning objectives to get personalized practice questions
+              Enter your science, technology, engineering, or math learning objectives to get personalized practice questions
             </motion.p>
+            
             <motion.div
               variants={itemVariants}
-              className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-8"
+              className="flex flex-wrap items-center justify-center gap-3 mb-8"
+            >
+              {stemCategories.map((category, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm bg-white/50 dark:bg-white/10 px-4 py-2 rounded-full shadow-sm">
+                  {category.icon}
+                  <span>{category.name}</span>
+                </div>
+              ))}
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="flex items-center justify-center gap-2 text-sm text-emerald-600 mb-8"
             >
               <FileText className="h-4 w-4" />
-              <span>Create and export quizzes to Word documents with Times New Roman formatting</span>
+              <span>Create and export STEM quizzes with scientific notation and mathematical formulas</span>
             </motion.div>
 
             {quizId && (
@@ -191,12 +213,12 @@ const QuizCustomizer = () => {
                   ) : (
                     <>
                       <Share2 className="h-4 w-4" />
-                      Share Quiz
+                      Share STEM Quiz
                     </>
                   )}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Share this quiz with your friends or colleagues
+                  Share this quiz with students or colleagues
                 </p>
               </motion.div>
             )}
