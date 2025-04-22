@@ -45,11 +45,11 @@ const ProblemSolver = () => {
       // Send the OCR result to AI for solving
       const solutionResult = await generateSolution(ocrResult, subject);
       setSolution(solutionResult);
-      setIsLoading(false);
       
     } catch (error) {
       console.error('Error processing image:', error);
       toast.error("Error processing image, please try again");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -125,6 +125,7 @@ const ProblemSolver = () => {
                   solution={solution}
                   isLoading={isLoading}
                   onBackClick={() => setActiveTab('upload')}
+                  subject={subject}
                 />
               </CardContent>
             </Card>

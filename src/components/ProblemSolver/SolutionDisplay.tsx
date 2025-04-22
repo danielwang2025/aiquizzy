@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Calculator } from "lucide-react";
+import { Calculator, Send } from "lucide-react";
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { generateSolution } from '@/utils/aiSolver';
+import { toast } from 'sonner';
 
 interface SolutionDisplayProps {
   selectedImage: string | null;
@@ -10,6 +12,7 @@ interface SolutionDisplayProps {
   solution: string | null;
   isLoading: boolean;
   onBackClick: () => void;
+  subject: string;
 }
 
 const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ 
@@ -17,8 +20,35 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
   recognizedText, 
   solution, 
   isLoading, 
-  onBackClick 
+  onBackClick,
+  subject 
 }) => {
+  const [assistantQuestion, setAssistantQuestion] = useState<string>("");
+  const [assistantResponse, setAssistantResponse] = useState<string | null>(null);
+  const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+
+  const handleAskAssistant = async () => {
+    if (!assistantQuestion.trim() || !recognizedText) {
+      toast.error("Please enter a question");
+      return;
+    }
+
+    setIsAssistantLoading(true);
+    try {
+      // Combine the original problem with the user's question
+      const combinedQuestion = `Original problem: ${recognizedText}\n\nMy question: ${assistantQuestion}`;
+      
+      // Use the aiSolver to generate a response
+      const response = await generateSolution(combinedQuestion, subject);
+      setAssistantResponse(response);
+    } catch (error) {
+      console.error("Error asking assistant:", error);
+      toast.error("Failed to get a response from the assistant");
+    } finally {
+      setIsAssistantLoading(false);
+    }
+  };
+
   return (
     <div>
       {isLoading ? (
@@ -72,9 +102,36 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({
                 type="text" 
                 placeholder="Enter your question..." 
                 className="flex-1 px-3 py-2 rounded-md border"
+                value={assistantQuestion}
+                onChange={(e) => setAssistantQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAskAssistant()}
               />
-              <Button>Ask</Button>
+              <Button 
+                onClick={handleAskAssistant}
+                disabled={isAssistantLoading}
+              >
+                {isAssistantLoading ? (
+                  <>
+                    <LoadingSpinner size="sm" /> 
+                    <span className="ml-2">Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Ask
+                  </>
+                )}
+              </Button>
             </div>
+            
+            {assistantResponse && (
+              <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                <h4 className="font-medium mb-2">Assistant Response:</h4>
+                <div className="whitespace-pre-line text-sm">
+                  {assistantResponse}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

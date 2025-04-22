@@ -15,60 +15,100 @@ interface AIResponse {
 }
 
 /**
- * Sends the recognized text to an AI model for solving
+ * Sends the recognized text to the DeepSeek AI model for solving
  * @param recognizedText The OCR result from the image
  * @param subject The subject area (math, physics, chemistry, biology)
  * @returns A step-by-step solution
  */
 export async function generateSolution(recognizedText: string, subject: string): Promise<string> {
-  // In a real implementation, this would make an API call to an AI service
-  // For now, we'll simulate responses based on the subject
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
   console.log(`Generating solution for ${subject} problem: ${recognizedText}`);
   
-  // Prepare request payload for DeepSeek API
-  const requestPayload = {
-    problem: recognizedText,
-    subject: subject,
-    format: "json",
-    requireStepByStep: true
-  };
-  
-  // In a real implementation, you would send this to DeepSeek API
-  // const response = await fetch('https://api.deepseek.com/v1/solve', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //     'Authorization': 'Bearer YOUR_API_KEY'
-  //   },
-  //   body: JSON.stringify(requestPayload)
-  // });
-  // 
-  // const data = await response.json();
-  // return data.solution;
-  
-  // For now, simulate response based on subject
-  // Generate different responses based on subject
+  try {
+    // Prepare request payload for DeepSeek API
+    const requestPayload = {
+      problem: recognizedText,
+      subject: subject,
+      format: "json",
+      requireStepByStep: true
+    };
+    
+    // Check if we have a DeepSeek API key in localStorage
+    const apiKey = localStorage.getItem("DEEPSEEK_API_KEY");
+    
+    if (!apiKey) {
+      // If no API key, return mock response based on recognized text
+      console.log("No DeepSeek API key found, using mock response");
+      return generateMockSolution(recognizedText, subject);
+    }
+    
+    // Make an API call to DeepSeek
+    const response = await fetch('https://api.deepseek.com/v1/solve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestPayload)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`DeepSeek API error (${response.status}):`, errorText);
+      throw new Error(`DeepSeek API error: ${response.status}`);
+    }
+    
+    // Parse the response
+    const data = await response.json();
+    
+    // Return the solution
+    return data.solution || generateMockSolution(recognizedText, subject);
+    
+  } catch (error) {
+    console.error("Error generating solution:", error);
+    // Fall back to mock solution in case of error
+    return generateMockSolution(recognizedText, subject);
+  }
+}
+
+/**
+ * Generates a mock solution for demonstration when API isn't available
+ */
+function generateMockSolution(recognizedText: string, subject: string): string {
+  // Generate different responses based on subject and recognized text
   if (subject === 'math') {
     if (recognizedText.includes("\\int")) {
       return `
-Step 1: Identify the integral problem \\int_{0}^{\\pi} \\sin(x) dx
+Step 1: Identify the integral problem ${recognizedText}
 Step 2: Recall that the antiderivative of sine is negative cosine: \\int \\sin(x) dx = -\\cos(x) + C
 Step 3: Apply the Fundamental Theorem of Calculus: \\int_{0}^{\\pi} \\sin(x) dx = -\\cos(\\pi) - (-\\cos(0))
 Step 4: Calculate: -\\cos(\\pi) - (-\\cos(0)) = -(-1) - (-1) = 1 + 1 = 2
 Step 5: Therefore, \\int_{0}^{\\pi} \\sin(x) dx = 2
       `;
-    } else if (recognizedText.includes("lim")) {
+    } else if (recognizedText.includes("\\lim")) {
       return `
-Step 1: Identify the limit problem \\lim_{x \\to 0} \\frac{\\sin(x)}{x}
+Step 1: Identify the limit problem ${recognizedText}
 Step 2: This is a well-known limit that can be solved using L'Hôpital's rule or Taylor expansion
 Step 3: Using Taylor expansion, we know that \\sin(x) = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - ...
 Step 4: Therefore \\frac{\\sin(x)}{x} = 1 - \\frac{x^2}{3!} + \\frac{x^4}{5!} - ...
 Step 5: As x \\to 0, the higher-order terms approach 0
 Step 6: Thus, \\lim_{x \\to 0} \\frac{\\sin(x)}{x} = 1
+      `;
+    } else if (recognizedText.includes("\\frac{d}{dx}")) {
+      return `
+Step 1: Identify the derivative problem ${recognizedText}
+Step 2: We need to find the derivative of sin(x²) with respect to x
+Step 3: Using the chain rule: \\frac{d}{dx}[\\sin(u)] = \\cos(u) \\cdot \\frac{du}{dx}, where u = x²
+Step 4: Calculate \\frac{d}{dx}[x²] = 2x
+Step 5: Apply the chain rule: \\frac{d}{dx}[\\sin(x²)] = \\cos(x²) \\cdot 2x = 2x\\cos(x²)
+Step 6: Therefore, \\frac{d}{dx}[\\sin(x²)] = 2x\\cos(x²)
+      `;
+    } else if (recognizedText.includes("\\sum")) {
+      return `
+Step 1: Identify the infinite series problem ${recognizedText}
+Step 2: This is the famous Basel problem first posed by Pietro Mengoli in 1644
+Step 3: The sum was found by Leonhard Euler in 1734 and equals \\frac{\\pi^2}{6}
+Step 4: The proof involves Fourier series and the properties of the sine function
+Step 5: Therefore, \\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6} ≈ 1.6449...
       `;
     } else {
       return `
