@@ -24,7 +24,8 @@ import {
   Calculator,
   Atom,
   FlaskConical,
-  MessageCircle
+  MessageCircle,
+  Play // 新增图标
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -43,6 +44,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
     { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
     { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
     { path: "/forum", label: "STEM News", icon: <MessageCircle className="h-5 w-5" /> },
+    { path: "/game", label: "Game", icon: <Play className="h-5 w-5" /> }, // 新增游戏栏目
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },

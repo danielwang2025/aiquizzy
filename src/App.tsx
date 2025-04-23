@@ -19,6 +19,7 @@ import Layout from "./components/Layout";
 import SharedQuiz from "./pages/SharedQuiz";
 import ProblemSolver from "./pages/ProblemSolver";
 import Forum from "./pages/Forum";
+import Game from "./pages/Game";
 import { useEffect } from "react";
 
 // Hidden features flag - only UI elements are hidden, routes remain accessible
@@ -70,6 +71,7 @@ const App = () => {
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
             <Route path="/problem-solver" element={<Layout><ProblemSolver /></Layout>} />
             <Route path="/forum" element={<Layout><Forum /></Layout>} />
+            <Route path="/game" element={<Layout><Game /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
             <Route path="/terms" element={<Layout><Terms /></Layout>} />
             <Route path="/privacy" element={<Layout><Privacy /></Layout>} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Book, BarChart, User, Atom, Mail, Calculator, FlaskConical, MessageCircle } from "lucide-react";
+import { Home, Book, BarChart, User, Atom, Mail, Calculator, FlaskConical, MessageCircle, Play } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { isAuthenticated } from "@/utils/authService";
 import MobileDrawer from "./MobileDrawer";
 
-// Define which menu items should be hidden
 const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
 
 const Navigation: React.FC = () => {
@@ -20,7 +19,6 @@ const Navigation: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const isHomePage = location.pathname === "/";
   
-  // Listen for scroll events to control nav bar style
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -35,24 +33,22 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
-  // Handle authenticated navigation
   const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     navigate(path);
   };
   
-  // Define all navigation items, including the hidden ones
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
     { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
     { path: "/forum", label: "STEM News", icon: <MessageCircle className="h-5 w-5" /> },
+    { path: "/game", label: "Game", icon: <Play className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
 
-  // Filter navigation items to hide specified ones
   const visibleNavItems = navItems.filter(
     item => !HIDDEN_MENU_ITEMS.includes(item.path.substring(1))
   );
@@ -122,7 +118,6 @@ const Navigation: React.FC = () => {
         </div>
       </div>
       
-      {/* Mobile bottom navigation */}
       {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border shadow-lg z-50">
           <div className="grid grid-cols-5 h-16">
