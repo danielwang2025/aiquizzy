@@ -1,11 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Reset, Text, Timer } from "lucide-react";
+import { Play, Pause, Text, Timer, reset as Reset } from "lucide-react";
 
 const splitText = (text: string): string[] => {
-  // Split by Chinese character or English words
   return text
     .replace(/\s+/g, " ")
     .split("")
@@ -15,7 +13,6 @@ const splitText = (text: string): string[] => {
       } else if (char === " ") {
         acc.push(" ");
       } else {
-        // Merge continuous English letters/numbers as a word
         if (
           acc.length > 0 &&
           /[a-zA-Z0-9]/.test(char) &&
@@ -73,43 +70,48 @@ const Game = () => {
   const disabled = started;
 
   return (
-    <div className="max-w-2xl w-full mx-auto my-12 p-0 flex flex-col items-center justify-center">
-      <div className="w-full rounded-2xl bg-card shadow-card border border-border md:p-8 px-2 py-6 flex flex-col gap-7 items-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gradient">
-          Speed Reading Game
-        </h2>
-        <p className="text-muted-foreground text-center text-base mb-2 max-w-xl">
-          Enter your own English or Chinese text. Set how many words/chars per minute you want to practice speed reading.<br />
-          <span className="text-xs text-muted-foreground">
-            Each word (English) or character (Chinese) will appear one by one with the interval controlled by you.
-          </span>
-        </p>
-        <div className="w-full flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
+    <div className="flex justify-center items-center min-h-[calc(100vh-5rem)] py-8 w-full bg-background">
+      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-xl border border-border p-0 md:p-8 flex flex-col gap-8">
+        <div className="flex flex-col gap-2 items-center mt-4 mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 drop-shadow-sm">
+            Speed Reading Game
+          </h2>
+          <p className="text-muted-foreground text-center">
+            Enter your English or Chinese text then set how many words/chars per minute to practice.
+            <br />
+            <span className="text-xs text-muted-foreground">
+              Each word (English) or character (Chinese) will appear one by one.<br />
+              Control the reading pace to improve your speed!
+            </span>
+          </p>
+        </div>
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-end w-full">
           <div className="flex-1 flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm text-foreground font-medium mb-1" htmlFor="input-text">
+            <label htmlFor="input-text" className="flex items-center gap-2 text-sm font-medium mb-1 text-foreground">
               <Text className="w-4 h-4 text-muted-foreground" />
               Input Text
             </label>
             <Input
               id="input-text"
-              className="text-base mobile-input"
+              className="text-base"
               type="text"
               placeholder="Type your text (English or Chinese) here..."
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={disabled}
               autoFocus
+              spellCheck={false}
             />
           </div>
-          <div className="flex flex-col gap-2 md:w-44">
-            <label className="flex items-center gap-2 text-sm text-foreground font-medium mb-1" htmlFor="wpm-input">
+          <div className="md:w-40 flex flex-col gap-2">
+            <label htmlFor="wpm-input" className="flex items-center gap-2 text-sm font-medium mb-1 text-foreground">
               <Timer className="w-4 h-4 text-muted-foreground" />
               Words/Min
             </label>
             <Input
               id="wpm-input"
               type="number"
-              className="w-full text-base mobile-input"
+              className="text-base"
               min={10}
               max={3000}
               value={wpm}
@@ -119,7 +121,7 @@ const Game = () => {
             />
           </div>
         </div>
-        <div className="flex gap-3 w-full items-center justify-center">
+        <div className="flex gap-3 w-full items-center justify-center mt-2">
           <Button
             onClick={handleStart}
             disabled={!text.trim() || started}
@@ -149,14 +151,14 @@ const Game = () => {
             Reset
           </Button>
         </div>
-        <div className="w-full mt-4 bg-black/95 rounded-xl min-h-[120px] flex items-center justify-center border border-white/10 shadow-inner px-2 py-8 md:py-10 max-h-52">
+        <div className="w-full mt-2 bg-black/95 rounded-xl min-h-[120px] flex items-center justify-center border border-white/10 shadow-inner px-2 py-8 md:py-10 max-h-52 transition-all duration-300">
           {started && words.length > 0 ? (
             <span className="text-5xl md:text-6xl font-bold text-white animate-fade-in transition-all duration-200 select-none font-mono tracking-wide">
               {words[currentIndex]}
             </span>
           ) : (
-            <span className="text-lg text-gray-400 py-4 transition-all">
-              Type your text and click <b>Start</b> to begin!
+            <span className="text-lg text-gray-400 py-4 transition-all text-center w-full">
+              Type your text above and click <b>Start</b> to begin!
             </span>
           )}
         </div>
@@ -166,4 +168,3 @@ const Game = () => {
 };
 
 export default Game;
-
