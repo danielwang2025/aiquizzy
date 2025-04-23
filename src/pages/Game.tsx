@@ -1,10 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Text, Timer, reset } from "lucide-react";
-
-// Assign to a capital letter for React usage:
-const Reset = reset;
+import { Play, Pause, Text, Timer, RotateCw } from "lucide-react";
 
 const splitText = (text: string): string[] => {
   return text
@@ -150,7 +147,7 @@ const Game = () => {
             size="lg"
             className="btn-scale btn-3d"
           >
-            <Reset className="mr-1 w-5 h-5" />
+            <RotateCw className="mr-1 w-5 h-5" />
             Reset
           </Button>
         </div>
