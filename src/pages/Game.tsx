@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Text, Timer, Reset } from "lucide-react";
+import { Play, Pause, Text, Timer, reset } from "lucide-react";
+
+// Assign to a capital letter for React usage:
+const Reset = reset;
 
 const splitText = (text: string): string[] => {
   return text
