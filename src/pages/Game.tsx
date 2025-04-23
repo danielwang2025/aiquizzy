@@ -2,9 +2,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Play, Pause, Reset, Text, Timer } from "lucide-react";
 
 const splitText = (text: string): string[] => {
-  // 按中文字符或空格分割
+  // Split by Chinese character or English words
   return text
     .replace(/\s+/g, " ")
     .split("")
@@ -14,7 +15,7 @@ const splitText = (text: string): string[] => {
       } else if (char === " ") {
         acc.push(" ");
       } else {
-        // 合并连续英文到一个单词
+        // Merge continuous English letters/numbers as a word
         if (
           acc.length > 0 &&
           /[a-zA-Z0-9]/.test(char) &&
@@ -32,7 +33,7 @@ const splitText = (text: string): string[] => {
 
 const Game = () => {
   const [text, setText] = useState("");
-  const [wpm, setWpm] = useState(200); // 默认200词/分钟
+  const [wpm, setWpm] = useState(200);
   const [started, setStarted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -69,59 +70,100 @@ const Game = () => {
     setCurrentIndex(0);
   };
 
+  const disabled = started;
+
   return (
-    <div className="max-w-xl mx-auto mt-8 bg-black rounded-xl p-6 shadow-lg flex flex-col gap-6">
-      <h2 className="text-2xl font-bold text-white mb-6">速读游戏</h2>
-      <div className="space-y-3">
-        <Input
-          className="text-base"
-          type="text"
-          placeholder="请输入要显示的文本（支持中英文）"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          disabled={started}
-        />
-        <div className="flex gap-2 items-center">
-          <Input
-            type="number"
-            className="w-32 text-base"
-            min={10}
-            max={3000}
-            value={wpm}
-            onChange={(e) => setWpm(Number(e.target.value))}
-            disabled={started}
-          />
-          <span className="text-white text-sm">词/分钟</span>
+    <div className="max-w-2xl w-full mx-auto my-12 p-0 flex flex-col items-center justify-center">
+      <div className="w-full rounded-2xl bg-card shadow-card border border-border md:p-8 px-2 py-6 flex flex-col gap-7 items-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gradient">
+          Speed Reading Game
+        </h2>
+        <p className="text-muted-foreground text-center text-base mb-2 max-w-xl">
+          Enter your own English or Chinese text. Set how many words/chars per minute you want to practice speed reading.<br />
+          <span className="text-xs text-muted-foreground">
+            Each word (English) or character (Chinese) will appear one by one with the interval controlled by you.
+          </span>
+        </p>
+        <div className="w-full flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
+          <div className="flex-1 flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-sm text-foreground font-medium mb-1" htmlFor="input-text">
+              <Text className="w-4 h-4 text-muted-foreground" />
+              Input Text
+            </label>
+            <Input
+              id="input-text"
+              className="text-base mobile-input"
+              type="text"
+              placeholder="Type your text (English or Chinese) here..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              disabled={disabled}
+              autoFocus
+            />
+          </div>
+          <div className="flex flex-col gap-2 md:w-44">
+            <label className="flex items-center gap-2 text-sm text-foreground font-medium mb-1" htmlFor="wpm-input">
+              <Timer className="w-4 h-4 text-muted-foreground" />
+              Words/Min
+            </label>
+            <Input
+              id="wpm-input"
+              type="number"
+              className="w-full text-base mobile-input"
+              min={10}
+              max={3000}
+              value={wpm}
+              onChange={(e) => setWpm(Number(e.target.value))}
+              disabled={disabled}
+              inputMode="numeric"
+            />
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={handleStart} disabled={!text.trim() || started}>
-            开始
+        <div className="flex gap-3 w-full items-center justify-center">
+          <Button
+            onClick={handleStart}
+            disabled={!text.trim() || started}
+            size="lg"
+            className="btn-scale btn-3d"
+          >
+            <Play className="mr-1 w-5 h-5" />
+            Start
           </Button>
           <Button
             variant="secondary"
             onClick={handlePause}
             disabled={!started}
+            size="lg"
+            className="btn-scale btn-3d"
           >
-            {paused ? "继续" : "暂停"}
+            <Pause className="mr-1 w-5 h-5" />
+            {paused ? "Resume" : "Pause"}
           </Button>
-          <Button variant="destructive" onClick={handleReset}>
-            重置
+          <Button
+            variant="destructive"
+            onClick={handleReset}
+            size="lg"
+            className="btn-scale btn-3d"
+          >
+            <Reset className="mr-1 w-5 h-5" />
+            Reset
           </Button>
         </div>
-      </div>
-      <div className="flex-1 min-h-[160px] flex items-center justify-center">
-        {started && words.length > 0 ? (
-          <span className="text-5xl md:text-6xl font-bold text-white transition-all duration-200 animate-fade-in">
-            {words[currentIndex]}
-          </span>
-        ) : (
-          <span className="text-lg text-gray-400 py-8">
-            请填写文本并点击“开始”
-          </span>
-        )}
+        <div className="w-full mt-4 bg-black/95 rounded-xl min-h-[120px] flex items-center justify-center border border-white/10 shadow-inner px-2 py-8 md:py-10 max-h-52">
+          {started && words.length > 0 ? (
+            <span className="text-5xl md:text-6xl font-bold text-white animate-fade-in transition-all duration-200 select-none font-mono tracking-wide">
+              {words[currentIndex]}
+            </span>
+          ) : (
+            <span className="text-lg text-gray-400 py-4 transition-all">
+              Type your text and click <b>Start</b> to begin!
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default Game;
+
