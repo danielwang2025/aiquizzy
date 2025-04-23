@@ -43,6 +43,11 @@ const SnakeGame = () => {
   }, []);
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    // Prevent default scrolling behavior for arrow keys
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+    }
+    
     switch (event.key) {
       case 'ArrowUp':
         setDirection(prev => prev !== 'DOWN' ? 'UP' : prev);
