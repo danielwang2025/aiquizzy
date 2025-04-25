@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -14,16 +13,16 @@ import { Button } from '@/components/ui/button';
 import { 
   Menu, 
   Home, 
-  PlusCircle, 
+  Atom, 
   BarChart, 
   Book, 
   Mail, 
   User,
   X,
-  Atom,
   FlaskConical,
   Play
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface MobileDrawerProps {
   handleAuthRequiredClick: (e: React.MouseEvent<HTMLAnchorElement>, path: string) => Promise<void>;
@@ -69,22 +68,27 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
           </DrawerHeader>
           <div className="p-4 space-y-1">
             {visibleNavItems.map((item) => (
-              <Link
+              <motion.div
                 key={item.path}
-                to={item.path}
-                onClick={(e) => {
-                  setOpen(false);
-                }}
-                className={cn(
-                  "flex items-center gap-4 py-3.5 px-4 rounded-lg w-full transition-all duration-200",
-                  location.pathname === item.path
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-foreground/80 hover:bg-secondary hover:text-foreground"
-                )}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {item.icon}
-                <span className="text-base">{item.label}</span>
-              </Link>
+                <Link
+                  to={item.path}
+                  onClick={(e) => {
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-4 py-3.5 px-4 rounded-lg w-full transition-all duration-200",
+                    location.pathname === item.path
+                      ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground font-medium"
+                      : "text-foreground/80 hover:bg-secondary dark:hover:bg-secondary/20 hover:text-foreground dark:hover:text-primary-foreground"
+                  )}
+                >
+                  {item.icon}
+                  <span className="text-base">{item.label}</span>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </div>

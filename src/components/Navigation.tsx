@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Book, BarChart, User, Atom, Mail, Calculator, FlaskConical, MessageCircle, Play } from "lucide-react";
+import { Home, Book, BarChart, User, Atom, Mail, Play, FlaskConical } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
-import { isAuthenticated } from "@/utils/authService";
+import { motion } from "framer-motion";
+import ThemeToggle from "./ThemeToggle";
 import MobileDrawer from "./MobileDrawer";
 
 const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
@@ -58,7 +57,7 @@ const Navigation: React.FC = () => {
         isHomePage ? (
           scrolled 
             ? "bg-white/90 dark:bg-background/90 backdrop-blur-lg shadow-sm" 
-            : "bg-white/40 backdrop-blur-md border-b border-white/20 shadow-sm"
+            : "bg-white/40 dark:bg-background/40 backdrop-blur-md border-b border-white/20 shadow-sm"
         ) : (
           scrolled 
             ? "bg-background/80 backdrop-blur-lg shadow-sm" 
@@ -70,72 +69,87 @@ const Navigation: React.FC = () => {
         <div className="flex justify-between h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className={cn(
-                "text-xl font-bold flex items-center gap-2",
-                isHomePage && !scrolled ? "text-white drop-shadow-md" : "gradient-text"
-              )}>
+              <motion.span 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "text-xl font-bold flex items-center gap-2",
+                  isHomePage && !scrolled ? "text-white dark:text-white drop-shadow-md" : "gradient-text"
+                )}
+              >
                 <FlaskConical className="h-5 w-5" />
                 STEM AI Quizzy
-              </span>
+              </motion.span>
             </Link>
           </div>
           
           {!isMobile && (
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
               {visibleNavItems.map((item) => (
-                <Link
+                <motion.div
                   key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
-                    location.pathname === item.path
-                      ? isHomePage && !scrolled 
-                        ? "bg-white/30 text-white shadow-sm backdrop-blur-sm" 
-                        : "bg-primary/10 text-primary"
-                      : isHomePage && !scrolled
-                        ? "text-white hover:bg-white/20 hover:text-white"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <span className="flex items-center gap-2">
-                    {item.icon}
-                    {item.label}
-                  </span>
-                </Link>
+                  <Link
+                    to={item.path}
+                    className={cn(
+                      "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
+                      location.pathname === item.path
+                        ? isHomePage && !scrolled 
+                          ? "bg-white/30 dark:bg-white/10 text-white shadow-sm backdrop-blur-sm" 
+                          : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                        : isHomePage && !scrolled
+                          ? "text-white hover:bg-white/20 dark:text-white dark:hover:bg-white/10"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary/20"
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      {item.icon}
+                      {item.label}
+                    </span>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           )}
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <AuthManager />
-            
-            {isMobile && (
-              <MobileDrawer handleAuthRequiredClick={handleAuthRequiredClick} />
-            )}
+            {isMobile && <MobileDrawer handleAuthRequiredClick={handleAuthRequiredClick} />}
           </div>
         </div>
       </div>
       
       {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-lg border-t border-border shadow-lg z-50">
+        <motion.div 
+          initial={false}
+          animate={{ y: 0 }}
+          className="fixed bottom-0 left-0 right-0 bg-background/95 dark:bg-background/90 backdrop-blur-lg border-t border-border shadow-lg z-50"
+        >
           <div className="grid grid-cols-5 h-16">
             {visibleNavItems.slice(0, 5).map((item) => (
-              <Link
+              <motion.div
                 key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center py-2 transition-colors duration-200",
-                  location.pathname === item.path
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                whileTap={{ scale: 0.95 }}
               >
-                {item.icon}
-                <span className="mt-1 text-xs font-medium">{item.label}</span>
-              </Link>
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "flex flex-col items-center justify-center py-2 transition-colors duration-200",
+                    location.pathname === item.path
+                      ? "text-primary dark:text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground dark:hover:text-primary-foreground"
+                  )}
+                >
+                  {item.icon}
+                  <span className="mt-1 text-xs font-medium">{item.label}</span>
+                </Link>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
     </nav>
   );
