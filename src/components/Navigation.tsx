@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -54,15 +53,9 @@ const Navigation: React.FC = () => {
     <nav 
       className={cn(
         "fixed top-0 w-full z-50 transition-all duration-300",
-        isHomePage ? (
-          scrolled 
-            ? "cyber-glass shadow-md border-b border-primary/30" 
-            : "cyber-glass border-b border-primary/20"
-        ) : (
-          scrolled 
-            ? "cyber-glass shadow-md" 
-            : "bg-transparent"
-        )
+        scrolled 
+          ? "cyber-glass shadow-lg border-b border-primary/30 backdrop-blur-xl" 
+          : "bg-transparent"
       )}
     >
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">

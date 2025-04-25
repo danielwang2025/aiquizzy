@@ -20,11 +20,11 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200",
-      glass && "glass-effect bg-white/20 backdrop-blur-md border-white/30 dark:bg-black/20 dark:border-white/10",
-      neo && "neo-card shadow-[0_4px_12px_rgba(0,0,0,0.05),inset_2px_2px_4px_rgba(255,255,255,0.6),inset_-2px_-2px_4px_rgba(0,0,0,0.05)]",
+      "rounded-lg border bg-black/60 text-white shadow-sm transition-all duration-200",
+      glass && "glass-effect bg-black/20 backdrop-blur-md border-white/10",
+      neo && "neo-card shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_2px_2px_4px_rgba(255,255,255,0.1)]",
       hover && "card-hover transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10",
-      gradient && "bg-gradient-to-br from-blue-50/90 to-indigo-50/90 dark:from-blue-900/30 dark:to-indigo-900/30",
+      gradient && "bg-gradient-to-br from-gray-900/90 to-black/90",
       glow && "shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30",
       bordered && "border-2 border-primary/20 hover:border-primary/40",
       cyber && "cyber-card",
