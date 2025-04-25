@@ -1,20 +1,16 @@
 
 import { QuizQuestion } from "@/types/quiz";
 
-// All functions are disabled to prevent local storage operations and reduce computational resource usage
-
+// All functions now just log that functionality is disabled
 export const addToReviewList = (question: QuizQuestion): void => {
-  // Functionality completely disabled
   console.log("Review list functionality is disabled to conserve resources");
 };
 
 export const removeFromReviewList = (questionId: string): void => {
-  // Functionality completely disabled
   console.log("Review list functionality is disabled to conserve resources");
 };
 
 export const clearReviewList = (): void => {
-  // Functionality completely disabled
   console.log("Review list functionality is disabled to conserve resources");
 };
 
