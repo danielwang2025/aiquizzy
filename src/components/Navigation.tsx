@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,6 @@ const Navigation: React.FC = () => {
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
-    { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
 
   const visibleNavItems = navItems.filter(
@@ -56,11 +56,11 @@ const Navigation: React.FC = () => {
         "fixed top-0 w-full z-50 transition-all duration-300",
         isHomePage ? (
           scrolled 
-            ? "bg-white/90 dark:bg-background/90 backdrop-blur-lg shadow-sm" 
-            : "bg-white/40 dark:bg-background/40 backdrop-blur-md border-b border-white/20 shadow-sm"
+            ? "cyber-glass shadow-md border-b border-primary/30" 
+            : "cyber-glass border-b border-primary/20"
         ) : (
           scrolled 
-            ? "bg-background/80 backdrop-blur-lg shadow-sm" 
+            ? "cyber-glass shadow-md" 
             : "bg-transparent"
         )
       )}
@@ -73,11 +73,12 @@ const Navigation: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "text-xl font-bold flex items-center gap-2",
-                  isHomePage && !scrolled ? "text-white dark:text-white drop-shadow-md" : "gradient-text"
+                  "text-xl font-bold flex items-center gap-2 cyber-glitch-random",
+                  isHomePage && !scrolled ? "text-white neon-text" : "gradient-text"
                 )}
+                data-text="STEM AI Quizzy"
               >
-                <FlaskConical className="h-5 w-5" />
+                <FlaskConical className="h-5 w-5 cyber-pulse" />
                 STEM AI Quizzy
               </motion.span>
             </Link>
@@ -97,11 +98,11 @@ const Navigation: React.FC = () => {
                       "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
                       location.pathname === item.path
                         ? isHomePage && !scrolled 
-                          ? "bg-white/30 dark:bg-white/10 text-white shadow-sm backdrop-blur-sm" 
-                          : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                          ? "bg-primary/30 cyber-glass text-white neon-text" 
+                          : "bg-primary/20 cyber-glass neon-border text-primary-foreground"
                         : isHomePage && !scrolled
-                          ? "text-white hover:bg-white/20 dark:text-white dark:hover:bg-white/10"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-secondary/20"
+                          ? "text-white hover:bg-white/10 hover:cyber-glass"
+                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground hover:cyber-glass"
                     )}
                   >
                     <span className="flex items-center gap-2">
@@ -126,7 +127,7 @@ const Navigation: React.FC = () => {
         <motion.div 
           initial={false}
           animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 bg-background/95 dark:bg-background/90 backdrop-blur-lg border-t border-border shadow-lg z-50"
+          className="fixed bottom-0 left-0 right-0 cyber-glass backdrop-blur-lg border-t border-primary/30 shadow-lg z-50"
         >
           <div className="grid grid-cols-5 h-16">
             {visibleNavItems.slice(0, 5).map((item) => (
@@ -139,8 +140,8 @@ const Navigation: React.FC = () => {
                   className={cn(
                     "flex flex-col items-center justify-center py-2 transition-colors duration-200",
                     location.pathname === item.path
-                      ? "text-primary dark:text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground dark:hover:text-primary-foreground"
+                      ? "text-primary cyber-flicker"
+                      : "text-muted-foreground hover:text-primary-foreground"
                   )}
                 >
                   {item.icon}

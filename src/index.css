@@ -4,7 +4,45 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 220 15% 16%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 20% 18%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 20% 18%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 26%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 26%;
+    --muted-foreground: 215 20% 70%;
+
+    --accent: 261 73% 60%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 30%;
+    --input: 217 33% 30%;
+    --ring: 212 70% 70%;
+
+    --radius: 0.5rem;
+
+    /* Glassmorphism values */
+    --glass-background: 220 15% 16% / 0.7;
+    --glass-border: 220 15% 16% / 0.2;
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 240, 0.3);
+    --glass-blur: 8px;
+  }
+
+  .light {
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -13,7 +51,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 212 100% 47%;
+    --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96%;
@@ -22,7 +60,7 @@
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96%;
+    --accent: 261 73% 60%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
@@ -32,49 +70,11 @@
     --input: 214 32% 91%;
     --ring: 215 20% 65%;
 
-    --radius: 0.75rem;
-
     /* Glassmorphism values */
-    --glass-background: 210 40% 98% / 0.7;
-    --glass-border: 210 40% 98% / 0.2;
+    --glass-background: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.2;
     --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
     --glass-blur: 8px;
-  }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 100% 50%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 212 27% 84%;
-
-    /* Glassmorphism values for dark mode */
-    --glass-background: 222 47% 11% / 0.7;
-    --glass-border: 222 47% 11% / 0.2;
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    --glass-blur: 10px;
   }
 }
 
@@ -87,10 +87,12 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     line-height: 1.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%231A1C2A' fill-opacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-medium tracking-tight leading-tight;
+    text-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
   }
 
   h1 {
@@ -119,11 +121,13 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply bg-primary/40 rounded-full;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-primary/70;
   }
 
   ::selection {
@@ -131,70 +135,280 @@
   }
 }
 
-/* 玻璃态效果 Glassmorphism */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
+/* 霓虹效果 Neon Effects */
+.neon-text {
+  text-shadow: 0 0 5px rgba(66, 153, 225, 0.8), 0 0 10px rgba(66, 153, 225, 0.5), 0 0 15px rgba(66, 153, 225, 0.3);
+}
+
+.neon-box {
+  box-shadow: 0 0 5px rgba(66, 153, 225, 0.8), 0 0 10px rgba(66, 153, 225, 0.5), 0 0 15px rgba(66, 153, 225, 0.3);
+}
+
+.neon-border {
+  border: 1px solid rgba(79, 70, 229, 0.6);
+  box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+}
+
+/* 赛博朋克玻璃态效果 Cyberpunk Glassmorphism */
+.cyber-glass {
+  background: rgba(30, 30, 46, 0.7);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  border: 1px solid rgba(123, 97, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(123, 97, 255, 0.2);
 }
 
-.glass-effect {
-  @apply bg-opacity-70 backdrop-filter backdrop-blur-md bg-white border border-white/20 shadow-lg dark:bg-black/40 dark:border-white/10;
+.cyber-card {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.5) 0%, rgba(60, 30, 90, 0.5) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(123, 97, 255, 0.3);
+  box-shadow: 0 0 15px rgba(123, 97, 255, 0.2);
 }
 
-.glass-card-dark {
-  background: rgba(30, 30, 30, 0.2);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+.cyber-input {
+  background: rgba(30, 30, 46, 0.6);
+  border: 1px solid rgba(123, 97, 255, 0.3);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-/* 新拟态效果 Neumorphism */
-.neo-card {
-  background: #f0f4f8;
-  box-shadow: 10px 10px 20px #d1d9e6, -10px -10px 20px #ffffff;
-  border-radius: 16px;
-  border: none;
+/* 赛博朋克按钮效果 Cyberpunk Button Effects */
+.cyber-btn {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(147, 51, 234, 0.8) 100%);
+  border: 1px solid rgba(123, 97, 255, 0.6);
+  box-shadow: 0 0 10px rgba(123, 97, 255, 0.4);
+  transition: all 0.3s ease;
 }
 
-.dark .neo-card {
-  background: #1a1d2b;
-  box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(40, 45, 60, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.cyber-btn:hover {
+  box-shadow: 0 0 20px rgba(123, 97, 255, 0.7);
+  transform: translateY(-2px);
 }
 
-/* 渐变文本和背景 */
-.gradient-text {
-  @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+.cyber-btn:active {
+  box-shadow: 0 0 5px rgba(123, 97, 255, 0.3);
+  transform: translateY(1px);
 }
 
-.gradient-bg-primary {
-  @apply bg-gradient-to-r from-blue-600 to-blue-500;
+/* 电路板效果 Circuit Board Effect */
+.circuit-bg {
+  background-color: #1E1E2E;
+  background-image: 
+    radial-gradient(circle at 25px 25px, rgba(79, 70, 229, 0.2) 2px, transparent 0),
+    linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 50px 50px;
+  background-position: 0 0;
 }
 
-.gradient-bg-secondary {
-  @apply bg-gradient-to-r from-purple-600 to-indigo-500;
+/* 科技感动画 Tech Animations */
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    opacity: 1;
+  }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+    opacity: 0.4;
+  }
 }
 
-/* 渐变边框 */
+@keyframes glitch {
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 20%, 0 20%);
+    transform: translate(10px);
+  }
+  20% {
+    clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+    transform: translate(-10px);
+  }
+  40% {
+    clip-path: polygon(0 40%, 100% 40%, 100% 60%, 0 60%);
+    transform: translate(10px);
+  }
+  60% {
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    transform: translate(-10px);
+  }
+  80% {
+    clip-path: polygon(0 80%, 100% 80%, 100% 100%, 0 100%);
+    transform: translate(10px);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(0);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(123, 97, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(123, 97, 255, 0.8);
+  }
+}
+
+.cyber-flicker {
+  animation: flicker 5s infinite;
+}
+
+.cyber-glitch {
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-glitch::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  animation: glitch 3s infinite linear alternate;
+}
+
+.cyber-scanline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgba(123, 97, 255, 0.4);
+  animation: scanline 3s linear infinite;
+}
+
+.cyber-pulse {
+  animation: pulse-glow 2s infinite;
+}
+
+/* 数据流效果 Data Stream Effect */
+@keyframes data-stream {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+.data-stream {
+  position: relative;
+}
+
+.data-stream::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    transparent 40%, 
+    rgba(123, 97, 255, 0.1) 40%, 
+    rgba(123, 97, 255, 0.1) 42%, 
+    transparent 42%, 
+    transparent 60%,
+    rgba(123, 97, 255, 0.1) 60%, 
+    rgba(123, 97, 255, 0.1) 62%, 
+    transparent 62%, 
+    transparent 80%,
+    rgba(123, 97, 255, 0.1) 80%, 
+    rgba(123, 97, 255, 0.1) 82%, 
+    transparent 82%);
+  background-size: 100% 500px;
+  animation: data-stream 10s linear infinite;
+  pointer-events: none;
+}
+
+/* 全息效果 Holographic Effect */
+@keyframes holographic {
+  0% { 
+    filter: hue-rotate(0deg) saturate(1); 
+  }
+  50% { 
+    filter: hue-rotate(180deg) saturate(1.5); 
+  }
+  100% { 
+    filter: hue-rotate(360deg) saturate(1); 
+  }
+}
+
+.holographic {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.6) 0%, rgba(147, 51, 234, 0.6) 50%, rgba(236, 72, 153, 0.6) 100%);
+  animation: holographic 5s infinite;
+}
+
+/* 终端效果 Terminal Effect */
+@keyframes terminal-cursor {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.terminal {
+  font-family: "Courier New", monospace;
+  background-color: rgba(30, 30, 46, 0.9);
+  border: 1px solid rgba(123, 97, 255, 0.3);
+  padding: 1rem;
+  color: #6ee7b7;
+}
+
+.terminal-cursor::after {
+  content: '|';
+  color: #6ee7b7;
+  animation: terminal-cursor 1s infinite;
+}
+
+/* 渐变边框 Gradient Border */
 .gradient-border {
   position: relative;
+  border-radius: var(--radius);
 }
 
 .gradient-border::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: linear-gradient(to right, #3b82f6, #6366f1);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #4f46e5, #9333ea, #ec4899, #4f46e5);
+  background-size: 400% 400%;
+  animation: holographic 10s ease infinite;
+  border-radius: calc(var(--radius) + 2px);
+  z-index: -1;
 }
 
+/* 优化已有类 Optimize existing classes */
+.glass-card, .glass-effect {
+  @apply cyber-glass;
+}
+
+.neo-card {
+  @apply cyber-card;
+}
+
+.btn-scale {
+  @apply cyber-btn;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-400 via-blue-400 to-indigo-300 bg-clip-text text-transparent;
+  text-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+}
+
+/* 保留现有动画与实用工具类 Keep existing animations and utility classes */
 /* Animation classes */
 .question-enter {
   opacity: 0;

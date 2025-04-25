@@ -12,8 +12,11 @@ const Card = React.forwardRef<
     gradient?: boolean;
     glow?: boolean;
     bordered?: boolean;
+    cyber?: boolean;
+    terminal?: boolean;
+    holographic?: boolean;
   }
->(({ className, glass, neo, hover, gradient, glow, bordered, ...props }, ref) => (
+>(({ className, glass, neo, hover, gradient, glow, bordered, cyber, terminal, holographic, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
@@ -24,6 +27,9 @@ const Card = React.forwardRef<
       gradient && "bg-gradient-to-br from-blue-50/90 to-indigo-50/90 dark:from-blue-900/30 dark:to-indigo-900/30",
       glow && "shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30",
       bordered && "border-2 border-primary/20 hover:border-primary/40",
+      cyber && "cyber-card",
+      terminal && "terminal",
+      holographic && "holographic",
       className
     )}
     {...props}
@@ -45,14 +51,20 @@ CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLHeadingElement> & {
+    glitch?: boolean;
+    neon?: boolean;
+  }
+>(({ className, glitch, neon, ...props }, ref) => (
   <h3
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight",
+      glitch && "cyber-glitch-random",
+      neon && "neon-text",
       className
     )}
+    data-text={props.children?.toString()}
     {...props}
   />
 ))
