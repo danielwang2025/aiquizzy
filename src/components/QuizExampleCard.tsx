@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CheckCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -63,10 +62,10 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl p-6 shadow-md border border-border h-full"
+      className="bg-black/80 rounded-xl p-6 shadow-lg border border-white/10 text-white h-full cyber-glitch-random"
     >
       <div className="mb-5 flex justify-between items-center">
-        <span className="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+        <span className="px-3 py-1.5 bg-blue-900/40 text-blue-300 text-sm font-medium rounded-full">
           {props.type}
         </span>
         <div className="flex space-x-2">
@@ -75,7 +74,7 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
               onClick={showNotSureHint} 
               variant="outline"
               size="sm"
-              className="text-muted-foreground"
+              className="text-white/70 border-white/20 hover:bg-white/10"
             >
               <HelpCircle className="mr-1 h-3.5 w-3.5" />
               Not Sure
@@ -86,7 +85,7 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
               onClick={toggleAnswer}
               variant="ghost"
               size="sm"
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              className="text-blue-300 hover:text-blue-200 hover:bg-white/10"
             >
               Show Answer
             </Button>
@@ -94,7 +93,7 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
         </div>
       </div>
 
-      <h3 className="text-xl font-medium mb-6 leading-relaxed tracking-wide">
+      <h3 className="text-xl font-medium mb-6 leading-relaxed tracking-wide text-white">
         {props.question}
       </h3>
 
@@ -103,9 +102,9 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           transition={{ duration: 0.3 }}
-          className="mb-4 p-3 border border-amber-200 bg-amber-50 rounded-lg"
+          className="mb-4 p-3 border border-blue-900/40 bg-blue-950/30 rounded-lg"
         >
-          <p className="text-amber-800">
+          <p className="text-blue-300">
             <strong>Hint:</strong> {getHint()}
           </p>
         </motion.div>
@@ -117,12 +116,11 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
             <motion.button
               key={i}
               className={cn(
-                "w-full text-left p-4 rounded-lg border-2 transition-all duration-300",
-                "hover:border-blue-300 hover:bg-blue-50/50",
-                showAnswer && isCorrectOption(option) && "border-green-500 bg-green-50",
-                showAnswer && isSelectedWrong(option) && "border-red-300 bg-red-50",
-                selectedOption === option && !showAnswer && "border-blue-500 bg-blue-50",
-                !selectedOption && !showAnswer && "hover:border-blue-300 hover:bg-blue-50 border-gray-200"
+                "w-full text-left p-4 rounded-lg border-2 transition-all duration-300 cyber-pulse",
+                "border-white/20 bg-black/40 hover:border-blue-300 hover:bg-blue-950/50",
+                showAnswer && isCorrectOption(option) && "border-green-500 bg-green-950/50",
+                showAnswer && isSelectedWrong(option) && "border-red-500 bg-red-950/50",
+                selectedOption === option && !showAnswer && "border-blue-500 bg-blue-950/50"
               )}
               onClick={() => handleOptionSelect(option)}
               whileHover={{ scale: 1.01 }}
@@ -186,11 +184,11 @@ export const QuizExampleCard: React.FC<QuizExampleCardProps> = (props) => {
           transition={{ duration: 0.4, delay: 0.1 }}
           className={cn(
             "mt-5 p-4 rounded-lg animate-fade-in",
-            "bg-blue-50 border border-blue-100"
+            "bg-blue-950/30 border border-white/10"
           )}
         >
-          <p className="font-medium text-blue-800 mb-2">Answer Explanation:</p>
-          <p className="text-blue-700 leading-relaxed">
+          <p className="font-medium text-blue-300 mb-2">Answer Explanation:</p>
+          <p className="text-white/80 leading-relaxed">
             {props.type === "Multiple Choice" ? 
               `The correct answer is: ${props.correctAnswer}. This is because...` : 
               `The correct answer is: ${props.answer}. For fill-in questions, precision is important...`}

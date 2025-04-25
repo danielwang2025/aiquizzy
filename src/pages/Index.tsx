@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,6 @@ const Index = () => {
   const hasHistory = history.attempts.length > 0;
   const [topic, setTopic] = useState("");
   
-  // Animation variants
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -54,11 +52,10 @@ const Index = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black text-white transition-colors duration-300">
       <Navigation />
       
       <main className="flex-grow">
-        {/* Hero Section - 玻璃态设计 */}
         <section className="relative py-24 md:py-32 mb-16 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
           <div className="absolute inset-0 opacity-20">
@@ -121,20 +118,18 @@ const Index = () => {
             </div>
           </motion.div>
           
-          {/* Decorative circles */}
           <div className="absolute top-1/4 -left-20 w-72 h-72 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
           <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-indigo-600 rounded-full blur-3xl opacity-20"></div>
         </section>
         
-        {/* AI Question Examples - 带有卡片动画效果 */}
-        <section className="py-20 bg-gradient-to-b from-white to-blue-50 dark:from-background dark:to-blue-950/10">
+        <section className="py-20 bg-black">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <Badge className="mb-4 py-1.5 px-6 bg-indigo-50 text-indigo-700 border-indigo-100">Examples</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
+              <Badge className="mb-4 py-1.5 px-6 bg-blue-900/40 text-blue-300 border-blue-900/40">Examples</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white cyber-glitch-random">
                 AI Question Examples
               </h2>
-              <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto text-lg">
+              <p className="text-center text-white/70 mb-10 max-w-2xl mx-auto text-lg">
                 See how our AI creates tailored practice questions based on your learning objectives
               </p>
             </div>
@@ -173,14 +168,14 @@ const Index = () => {
                   </CarouselItem>
                 </CarouselContent>
                 <div className="hidden md:flex">
-                  <CarouselPrevious className="-left-4" />
-                  <CarouselNext className="-right-4" />
+                  <CarouselPrevious className="-left-4 text-white hover:text-blue-300" />
+                  <CarouselNext className="-right-4 text-white hover:text-blue-300" />
                 </div>
               </Carousel>
             </div>
             
             <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-14 px-8 rounded-lg text-lg font-medium btn-3d">
+              <Button asChild size="lg" className="bg-blue-900/60 text-white hover:bg-blue-900/80 cyber-pulse">
                 <Link to="/customize">
                   Create Your Practice Quiz
                   <ChevronRight className="ml-1 h-5 w-5" />
@@ -190,10 +185,8 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Trust Indicators - 玻璃态设计 */}
         <section className="container mx-auto px-4 space-section">
           <div className="relative glass-effect rounded-2xl p-12 overflow-hidden">
-            {/* 装饰性背景元素 */}
             <div className="absolute -top-12 -right-12 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-10"></div>
             <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-indigo-500 rounded-full blur-3xl opacity-10"></div>
             
@@ -254,7 +247,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* How It Works Section - 新拟态设计 */}
         <section className="container mx-auto px-4 space-section">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <Badge className="mb-4 py-1.5 px-6 bg-purple-50 text-purple-700 border-purple-100">Process</Badge>
@@ -302,7 +294,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Team Section - 卡片效果和动画 */}
         <section className="py-20 bg-gradient-to-b from-white to-blue-50 dark:from-background dark:to-blue-950/10">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-12">
@@ -380,7 +371,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Vision and Mission Section - 玻璃态设计 */}
         <section className="container mx-auto px-4 space-section">
           <div className="grid md:grid-cols-2 gap-8">
             <motion.div 
