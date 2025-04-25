@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +8,6 @@ import NotFound from "./pages/NotFound";
 import QuizCustomizer from "./pages/QuizCustomizer";
 import Practice from "./pages/Practice";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import ReviewHub from "./pages/ReviewHub";
 import Contact from "./pages/Contact";
 import Terms from "./pages/Terms";
@@ -63,7 +61,6 @@ const App = () => {
             <Route path="/practice/:quizId?" element={<Layout><Practice /></Layout>} />
             <Route path="/shared/:quizId" element={<Layout><SharedQuiz /></Layout>} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-            <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
             <Route path="/game" element={<Layout><Game /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />

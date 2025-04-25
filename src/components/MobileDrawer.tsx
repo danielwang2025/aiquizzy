@@ -28,7 +28,7 @@ interface MobileDrawerProps {
   handleAuthRequiredClick: (e: React.MouseEvent<HTMLAnchorElement>, path: string) => Promise<void>;
 }
 
-const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
+const HIDDEN_MENU_ITEMS = ["dashboard", "review", "profile"];
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) => {
   const location = useLocation();
@@ -41,7 +41,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
-    { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
 
   const visibleNavItems = navItems.filter(

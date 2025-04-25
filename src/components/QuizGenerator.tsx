@@ -577,14 +577,35 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
         </motion.div>
       )}
 
-      
-      
       {state.status === "loading" && (
-        <div className="min-h-[300px] flex flex-col items-center justify-center">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-muted-foreground animate-pulse-subtle">Generating personalized quiz questions with DeepSeek AI...</p>
-          <p className="text-xs text-muted-foreground mt-2">This may take a few moments</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="min-h-[400px] relative flex flex-col items-center justify-center overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20">
+            <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            <div className="absolute inset-0">
+              <div className="aurora-beam"></div>
+              <div className="aurora-beam delay-75"></div>
+              <div className="aurora-beam delay-150"></div>
+            </div>
+          </div>
+          
+          <div className="relative z-10 text-center">
+            <div className="cosmic-loader mb-6"></div>
+            <h3 className="text-xl font-semibold mb-3 text-gradient animate-pulse">
+              AI is Processing Your Request
+            </h3>
+            <p className="text-muted-foreground">
+              Generating personalized questions with advanced algorithms...
+            </p>
+          </div>
+          
+          <div className="absolute inset-0">
+            <div className="particles"></div>
+          </div>
+        </motion.div>
       )}
 
       {(state.status === "active" || state.status === "completed") && (
@@ -663,7 +684,6 @@ const QuizGenerator: React.FC<QuizGeneratorProps> = ({
                     index={index} 
                     onDisputeQuestion={state.status === "completed" ? handleDisputeQuestion : undefined} 
                   />
-                  
                   
                 </div>
               );
