@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -25,14 +24,13 @@ import {
   Atom,
   FlaskConical,
   MessageCircle,
-  Play // 新增图标
+  Play
 } from 'lucide-react';
 
 interface MobileDrawerProps {
   handleAuthRequiredClick: (e: React.MouseEvent<HTMLAnchorElement>, path: string) => Promise<void>;
 }
 
-// Define which menu items should be hidden
 const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) => {
@@ -42,16 +40,13 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
-    { path: "/problem-solver", label: "Math Solver", icon: <Calculator className="h-5 w-5" /> },
-    { path: "/forum", label: "STEM News", icon: <MessageCircle className="h-5 w-5" /> },
-    { path: "/game", label: "Game", icon: <Play className="h-5 w-5" /> }, // 新增游戏栏目
+    { path: "/game", label: "Game", icon: <Play className="h-5 w-5" /> },
     { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
     { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
     { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
   ];
 
-  // Filter navigation items to hide specified ones
   const visibleNavItems = navItems.filter(
     item => !HIDDEN_MENU_ITEMS.includes(item.path.substring(1))
   );

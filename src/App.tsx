@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,8 +18,6 @@ import ApiKeyNotice from "./components/ApiKeyNotice";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Layout from "./components/Layout";
 import SharedQuiz from "./pages/SharedQuiz";
-import ProblemSolver from "./pages/ProblemSolver";
-import Forum from "./pages/Forum";
 import Game from "./pages/Game";
 import { useEffect } from "react";
 
@@ -49,9 +48,6 @@ const App = () => {
     if (HIDE_FEATURES) {
       console.info("Note: Review and Dashboard features are hidden in the UI but their routes remain accessible with disabled functionality.");
     }
-
-    // Add a notice about the OCR Solver feature
-    console.info("STEM OCR Solver is available at /problem-solver - Upload an image of a math or science problem to get step-by-step solutions");
   }, []);
 
   return (
@@ -69,8 +65,6 @@ const App = () => {
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/review" element={<Layout><ReviewHub /></Layout>} />
-            <Route path="/problem-solver" element={<Layout><ProblemSolver /></Layout>} />
-            <Route path="/forum" element={<Layout><Forum /></Layout>} />
             <Route path="/game" element={<Layout><Game /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
             <Route path="/terms" element={<Layout><Terms /></Layout>} />
