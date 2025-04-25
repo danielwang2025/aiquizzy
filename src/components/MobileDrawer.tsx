@@ -89,7 +89,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
                 <Link
                   to={item.path}
                   onClick={(e) => {
-                    handleAuthRequiredClick(e, item.path);
                     setOpen(false);
                   }}
                   className={cn(
