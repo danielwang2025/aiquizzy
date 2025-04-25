@@ -3,6 +3,7 @@ import React from 'react';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface LayoutProps {
   children: React.ReactNode;
