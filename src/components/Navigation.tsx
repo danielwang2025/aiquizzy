@@ -117,21 +117,21 @@ const Navigation: React.FC = () => {
       </div>
       
       {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t border-border shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-lg border-t border-border shadow-lg z-50">
           <div className="grid grid-cols-5 h-16">
             {visibleNavItems.slice(0, 5).map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center justify-center py-2",
+                  "flex flex-col items-center justify-center py-2 transition-colors duration-200",
                   location.pathname === item.path
                     ? "text-primary"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {item.icon}
-                <span className="mt-1 text-xs">{item.label}</span>
+                <span className="mt-1 text-xs font-medium">{item.label}</span>
               </Link>
             ))}
           </div>

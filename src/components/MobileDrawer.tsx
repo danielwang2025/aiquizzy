@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -19,11 +20,8 @@ import {
   Mail, 
   User,
   X,
-  ScanText,
-  Calculator,
   Atom,
   FlaskConical,
-  MessageCircle,
   Play
 } from 'lucide-react';
 
@@ -59,17 +57,17 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
           <span className="sr-only">Toggle menu</span>
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="h-[80vh] max-h-[80vh] overflow-auto">
+      <DrawerContent className="h-[85vh] max-h-[85vh] overflow-auto">
         <div className="mx-auto w-full max-w-sm">
-          <DrawerHeader className="flex flex-row items-center justify-between">
-            <DrawerTitle>STEM AI Quizzy</DrawerTitle>
+          <DrawerHeader className="flex flex-row items-center justify-between px-4 py-6 border-b">
+            <DrawerTitle className="text-xl font-bold">STEM AI Quizzy</DrawerTitle>
             <DrawerClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary">
+                <X className="h-5 w-5" />
               </Button>
             </DrawerClose>
           </DrawerHeader>
-          <div className="px-4 py-2 space-y-2">
+          <div className="p-4 space-y-1">
             {visibleNavItems.map((item) => (
               <Link
                 key={item.path}
@@ -78,14 +76,14 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-3 py-3 px-4 rounded-lg w-full transition-colors",
+                  "flex items-center gap-4 py-3.5 px-4 rounded-lg w-full transition-all duration-200",
                   location.pathname === item.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-foreground hover:bg-secondary"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-foreground/80 hover:bg-secondary hover:text-foreground"
                 )}
               >
                 {item.icon}
-                <span>{item.label}</span>
+                <span className="text-base">{item.label}</span>
               </Link>
             ))}
           </div>

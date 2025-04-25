@@ -14,7 +14,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex min-h-screen flex-col">
       <Navigation />
-      <main className={`flex-grow ${isMobile ? 'pb-20' : ''}`}>
+      <main className={cn(
+        "flex-grow",
+        isMobile && "pb-24" // More padding for mobile to account for the bottom bar
+      )}>
         {children}
       </main>
       <Footer />
