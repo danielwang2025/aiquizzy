@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -22,6 +21,7 @@ import {
   FlaskConical,
   Play
 } from 'lucide-react';
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface MobileDrawerProps {
   handleAuthRequiredClick: (e: React.MouseEvent<HTMLAnchorElement>, path: string) => Promise<void>;
@@ -63,11 +63,14 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ handleAuthRequiredClick }) 
                 STEM AI Quizzy
               </span>
             </DrawerTitle>
-            <DrawerClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-5 w-5" />
-              </Button>
-            </DrawerClose>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon">
+                  <X className="h-5 w-5" />
+                </Button>
+              </DrawerClose>
+            </div>
           </DrawerHeader>
           <div className="p-4 space-y-1">
             {visibleNavItems.map((item) => (
