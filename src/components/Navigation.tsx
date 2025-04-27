@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Book, BarChart, User, Atom, Mail, Play, FlaskConical } from "lucide-react";
+import { Home, Book, BarChart, Atom, Mail, Play, FlaskConical } from "lucide-react";
 import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { motion } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
 import MobileDrawer from "./MobileDrawer";
 
@@ -32,10 +31,6 @@ const Navigation: React.FC = () => {
     };
   }, [scrolled]);
   
-  const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
-    navigate(path);
-  };
-  
   const navItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
     { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
@@ -49,12 +44,16 @@ const Navigation: React.FC = () => {
     item => !HIDDEN_MENU_ITEMS.includes(item.path.substring(1))
   );
 
+  const handleAuthRequiredClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    navigate(path);
+  };
+
   return (
     <nav 
       className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300",
+        "fixed top-0 w-full z-50 transition-colors",
         scrolled 
-          ? "cyber-glass shadow-lg border-b border-primary/30 backdrop-blur-xl" 
+          ? "bg-background/95 shadow-sm border-b backdrop-blur supports-[backdrop-filter]:bg-background/60" 
           : "bg-transparent"
       )}
     >
@@ -62,48 +61,31 @@ const Navigation: React.FC = () => {
         <div className="flex justify-between h-16 md:h-20">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <motion.span 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={cn(
-                  "text-xl font-bold flex items-center gap-2 cyber-glitch-random",
-                  isHomePage && !scrolled ? "text-white neon-text" : "gradient-text"
-                )}
-                data-text="STEM AI Quizzy"
-              >
-                <FlaskConical className="h-5 w-5 cyber-pulse" />
+              <span className="text-xl font-bold flex items-center gap-2">
+                <FlaskConical className="h-5 w-5" />
                 STEM AI Quizzy
-              </motion.span>
+              </span>
             </Link>
           </div>
           
           {!isMobile && (
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
               {visibleNavItems.map((item) => (
-                <motion.div
+                <Link
                   key={item.path}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  to={item.path}
+                  className={cn(
+                    "px-3 py-2 mx-1 rounded-md text-sm font-medium",
+                    location.pathname === item.path
+                      ? "bg-primary/20 text-primary-foreground"
+                      : "text-muted-foreground"
+                  )}
                 >
-                  <Link
-                    to={item.path}
-                    className={cn(
-                      "px-3 py-2 mx-1 rounded-md text-sm font-medium transition-all duration-200",
-                      location.pathname === item.path
-                        ? isHomePage && !scrolled 
-                          ? "bg-primary/30 cyber-glass text-white neon-text" 
-                          : "bg-primary/20 cyber-glass neon-border text-primary-foreground"
-                        : isHomePage && !scrolled
-                          ? "text-white hover:bg-white/10 hover:cyber-glass"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground hover:cyber-glass"
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      {item.icon}
-                      {item.label}
-                    </span>
-                  </Link>
-                </motion.div>
+                  <span className="flex items-center gap-2">
+                    {item.icon}
+                    {item.label}
+                  </span>
+                </Link>
               ))}
             </div>
           )}
@@ -115,36 +97,6 @@ const Navigation: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {isMobile && (
-        <motion.div 
-          initial={false}
-          animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 cyber-glass backdrop-blur-lg border-t border-primary/30 shadow-lg z-50"
-        >
-          <div className="grid grid-cols-5 h-16">
-            {visibleNavItems.slice(0, 5).map((item) => (
-              <motion.div
-                key={item.path}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link
-                  to={item.path}
-                  className={cn(
-                    "flex flex-col items-center justify-center py-2 transition-colors duration-200",
-                    location.pathname === item.path
-                      ? "text-primary cyber-flicker"
-                      : "text-muted-foreground hover:text-primary-foreground"
-                  )}
-                >
-                  {item.icon}
-                  <span className="mt-1 text-xs font-medium">{item.label}</span>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
     </nav>
   );
 };
