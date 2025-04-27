@@ -7,7 +7,6 @@ import AuthManager from "@/components/auth/AuthManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ThemeToggle from "./ThemeToggle";
 import MobileDrawer from "./MobileDrawer";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
 
@@ -92,7 +91,6 @@ const Navigation: React.FC = () => {
           )}
           
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
             <ThemeToggle />
             <AuthManager />
             {isMobile && <MobileDrawer handleAuthRequiredClick={handleAuthRequiredClick} />}
