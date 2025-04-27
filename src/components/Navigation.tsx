@@ -8,12 +8,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ThemeToggle from "./ThemeToggle";
 import MobileDrawer from "./MobileDrawer";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { useTranslation } from "react-i18next";
 
 const HIDDEN_MENU_ITEMS = ["dashboard", "review"];
 
 const Navigation: React.FC = () => {
-  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -35,12 +33,12 @@ const Navigation: React.FC = () => {
   }, [scrolled]);
   
   const navItems = [
-    { path: "/", label: t('nav.home'), icon: <Home className="h-5 w-5" /> },
-    { path: "/customize", label: t('nav.createQuiz'), icon: <Atom className="h-5 w-5" /> },
-    { path: "/game", label: t('nav.game'), icon: <Play className="h-5 w-5" /> },
-    { path: "/dashboard", label: t('nav.dashboard'), icon: <BarChart className="h-5 w-5" /> },
-    { path: "/review", label: t('nav.review'), icon: <Book className="h-5 w-5" /> },
-    { path: "/contact", label: t('nav.contact'), icon: <Mail className="h-5 w-5" /> },
+    { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
+    { path: "/customize", label: "Create STEM Quiz", icon: <Atom className="h-5 w-5" /> },
+    { path: "/game", label: "Game", icon: <Play className="h-5 w-5" /> },
+    { path: "/dashboard", label: "Dashboard", icon: <BarChart className="h-5 w-5" /> },
+    { path: "/review", label: "Review", icon: <Book className="h-5 w-5" /> },
+    { path: "/contact", label: "Contact", icon: <Mail className="h-5 w-5" /> },
   ];
 
   const visibleNavItems = navItems.filter(

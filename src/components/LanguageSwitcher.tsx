@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
 import {
@@ -11,10 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
+  const [currentLang, setCurrentLang] = React.useState('中文');
 
   const handleLanguageChange = (lang: string) => {
-    i18n.changeLanguage(lang);
+    setCurrentLang(lang);
+    // TODO: Implement actual language switching logic
+    console.log(`Switching to ${lang}`);
   };
 
   return (
@@ -28,13 +29,13 @@ const LanguageSwitcher = () => {
       <DropdownMenuContent align="end" className="bg-black/90 border border-white/20">
         <DropdownMenuItem 
           className="text-white/90 focus:bg-white/20 focus:text-white cursor-pointer"
-          onClick={() => handleLanguageChange('zh')}
+          onClick={() => handleLanguageChange('中文')}
         >
           中文
         </DropdownMenuItem>
         <DropdownMenuItem 
           className="text-white/90 focus:bg-white/20 focus:text-white cursor-pointer"
-          onClick={() => handleLanguageChange('en')}
+          onClick={() => handleLanguageChange('English')}
         >
           English
         </DropdownMenuItem>
