@@ -174,7 +174,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           <input
             type="text"
             className={cn(
-              "w-full p-3 border-2 border-border rounded-md text-foreground",
+              "w-full p-3 border-2 border-border rounded-md text-black",
               "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
               "text-lg font-medium transition-all",
               showResult && isCorrect && "border-green-500 ring-green-500/30",
