@@ -109,13 +109,13 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium">
             {index + 1}
           </span>
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+          <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
             {question.type === "multiple_choice" ? "Multiple Choice" : "Fill in the Blank"}
           </span>
         </div>
       </div>
 
-      <h3 className="text-xl font-medium mb-5 leading-relaxed tracking-wide pl-11">
+      <h3 className="text-xl font-medium mb-5 leading-relaxed tracking-wide pl-11 text-foreground">
         {question.question}
       </h3>
 
