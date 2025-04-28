@@ -196,7 +196,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             transition={{ duration: 0.4, delay: 0.2 }}
             className={cn(
               "mt-5 p-4 rounded-md ml-11",
-              isCorrect ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"
+              isCorrect ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100",
+              "text-black" // Adding text-black here to ensure all text inside is black
             )}
           >
             <div className="flex justify-between items-start">
