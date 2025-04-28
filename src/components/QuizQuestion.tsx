@@ -62,9 +62,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     
     if (isCorrect) {
       return (
-        <div>
-          <p className="font-medium mb-2 text-lg text-black">Correct!</p>
-          <p className="text-base leading-relaxed text-black">
+        <div className="text-black">
+          <p className="font-medium mb-2 text-lg">Correct!</p>
+          <p className="text-base leading-relaxed">
             {question.explanation || "Great job! You've selected the correct answer."}
           </p>
         </div>
@@ -80,9 +80,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
       }
       
       return (
-        <div>
-          <p className="font-medium mb-2 text-lg text-black">Incorrect</p>
-          <p className="text-base leading-relaxed text-black">
+        <div className="text-black">
+          <p className="font-medium mb-2 text-lg">Incorrect</p>
+          <p className="text-base leading-relaxed">
             {correctAnswerText} {question.explanation || "Review the related concepts to understand this better."}
           </p>
         </div>
