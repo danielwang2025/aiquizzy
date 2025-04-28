@@ -195,7 +195,7 @@ const Practice = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -210,7 +210,7 @@ const Practice = () => {
   
   if (loadingError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-grow flex items-center justify-center">
           <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
@@ -227,7 +227,7 @@ const Practice = () => {
   
   if (!quiz) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-grow flex items-center justify-center">
           <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-border text-center">
@@ -245,7 +245,7 @@ const Practice = () => {
   const progressPercentage = quiz ? (currentQuestionIndex / (quiz.questions.length - 1)) * 100 : 0;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navigation />
       
       <main className="py-8 px-4 flex-grow">

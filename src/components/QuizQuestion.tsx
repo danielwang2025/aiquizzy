@@ -93,8 +93,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   return (
     <motion.div 
       className={cn(
-        "bg-white rounded-xl p-6 shadow-sm border border-border transition-all duration-300 mb-6",
-        "transform",
+        "bg-card rounded-xl p-6 shadow-sm border border-border transition-all duration-300 mb-6",
+        "transform text-foreground",
         animatedIn && "opacity-100 translate-y-0",
         showResult && isCorrect && "border-l-4 border-l-green-500",
         showResult && isIncorrect && "border-l-4 border-l-red-500",
